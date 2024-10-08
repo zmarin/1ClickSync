@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ZT One Click Sync{% endblock %}
+
+{% block content %}
+<div class="bg-white bg-opacity-90 p-8 rounded-lg shadow-2xl mb-8">
+    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Welcome to Your Dashboard</h1>
+    <div class="grid md:grid-cols-2 gap-8">
+        <div class="bg-blue-100 p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-bold text-blue-600 mb-4">Zoho Projects</h2>
+            <p class="mb-4 text-gray-700">Connect your Zoho Projects account to start syncing.</p>
+            {% if current_user.zoho_access_token %}
+                <p class="mb-2 text-green-600">Connected to Zoho Projects</p>
+                {% if current_user.zoho_portal_id %}
+                    <p class="mb-2 text-blue-600">Current Portal: <span id="currentPortal">{{ zoho_portals|selectattr('id', 'equalto', current_user.zoho_portal_id)|map(attribute='name')|first }}</span></p>
+                {% endif %}
+                <form id="portalForm" class="mb-4">
+                    <select id="zohoPortalSelect" class="mb-2 p-2 border rounded w-full" {% if current_user.zoho_portal_id %}disabled{% endif %}>
+                        <option value="">Select a Zoho Portal</option>
+                        {% if zoho_portals %}
+                            {% for portal in zoho_portals %}
+                                <option value="{{ portal.id }}" {% if portal.id == current_user.zoho_portal_id %}selected{% endif %}>{{ portal.name }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                    <button type="submit" id="savePortalBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full mb-2" {% if current_user.zoho_portal_id %}disabled{% endif %}>Save Portal</button>
+                    <button type="button" id="detachPortalBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded w-full" {% if not current_user.zoho_portal_id %}disabled{% endif %}>Detach Portal</button>
+                </form>
+                <a href="{{ url_for('revoke_zoho_authorization') }}" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-block">Disconnect Zoho</a>
+            {% else %}
+                <a href="{{ url_for('zoho_auth') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-block">Connect Zoho Projects</a>
+            {% endif %}
+        </div>
+        <div class="bg-red-100 p-6 rounded-lg shadow">
+            <h2 class="text-2xl font-bold text-red-600 mb-4">Todoist</h2>
+            <p class="mb-4 text-gray-700">Connect your Todoist account to start syncing.</p>
+            {% if current_user.todoist_access_token %}
+                <p class="mb-2 text-green-600">Connected to Todoist</p>
+                <a href="{{ url_for('revoke_todoist_authorization') }}" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-block">Disconnect Todoist</a>
+            {% else %}
+                <a href="{{ url_for('todoist_auth') }}" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-block">Connect Todoist</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="bg-white bg-opacity-90 p-8 rounded-lg shadow-2xl">
+    <h2 class="text-2xl font-bold mb-4 text-gray-800">Sync Status</h2>
+    <p class="mb-4 text-gray-700">Your last sync was: <strong>Not synced yet</strong></p>
+    <a href="#" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded inline-block">Start Sync</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const portalForm = document.getElementById('portalForm');
+    const zohoPortalSelect = document.getElementById('zohoPortalSelect');
+    const savePortalBtn = document.getElementById('savePortalBtn');
+    const detachPortalBtn = document.getElementById('detachPortalBtn');
+    const currentPortalSpan = document.getElementById('currentPortal');
+
+    if (portalForm) {
+        portalForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            fetch('{{ url_for("select_zoho_portal") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ portal_id: zohoPortalSelect.value }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    zohoPortalSelect.disabled = true;
+                    savePortalBtn.disabled = true;
+                    detachPortalBtn.disabled = false;
+                    currentPortalSpan.textContent = zohoPortalSelect.options[zohoPortalSelect.selectedIndex].text;
+                }
+            })
+            .catch(error => console.error('Error selecting Zoho portal:', error));
+        });
+
+        detachPortalBtn.addEventListener('click', function() {
+            fetch('{{ url_for("detach_zoho_portal") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    zohoPortalSelect.disabled = false;
+                    savePortalBtn.disabled = false;
+                    detachPortalBtn.disabled = true;
+                    zohoPortalSelect.value = '';
+                    currentPortalSpan.textContent = '';
+                }
+            })
+            .catch(error => console.error('Error detaching Zoho portal:', error));
+        });
+    }
+});
+</script>
+{% endblock %}

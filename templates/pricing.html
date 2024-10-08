@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Pricing - ZT One Click Sync{% endblock %}
+
+{% block content %}
+<div class="bg-white bg-opacity-90 p-8 rounded-lg shadow-2xl mb-16">
+    <h1 class="text-4xl font-bold text-center mb-4 text-gray-800">Choose Your Plan</h1>
+    <p class="text-xl text-gray-600 text-center mb-12">Select the perfect plan for your task synchronization needs</p>
+
+    <div class="grid md:grid-cols-4 gap-8">
+        {% for plan in plans %}
+            <div class="bg-white rounded-lg shadow-md p-6 {% if loop.index0 == 2 %}border-2 border-red-500{% endif %}">
+                <h2 class="text-2xl font-bold mb-2">{{ plan.name }}</h2>
+                <p class="text-3xl font-bold mb-4">{{ plan.price }}<span class="text-base font-normal">/month</span></p>
+                <ul class="list-disc list-inside text-sm text-gray-600 space-y-2 mb-6">
+                    {% for feature in plan.features %}
+                        <li>{{ feature }}</li>
+                    {% endfor %}
+                </ul>
+                <a href="#" class="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Choose {{ plan.name }}
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="bg-white bg-opacity-90 p-8 rounded-lg shadow-2xl mb-16">
+    <h2 class="text-2xl font-bold mb-4">Don't have a Zoho or Todoist account?</h2>
+    <p class="mb-4">Get started with these powerful tools and supercharge your productivity:</p>
+    <div class="flex space-x-4">
+        <a href="https://go.zoho.com/wDt" target="_blank" rel="noopener noreferrer" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Try Zoho Projects
+        </a>
+        <a href="https://go.zoho.com/wDt" target="_blank" rel="noopener noreferrer" class="bg-white hover:bg-gray-100 text-blue-600 font-bold py-2 px-4 rounded border border-blue-600">
+            Try Todoist
+        </a>
+    </div>
+</div>
+
+<div class="bg-white bg-opacity-90 p-8 rounded-lg shadow-2xl text-center">
+    <h2 class="text-2xl font-bold mb-4">Not sure which plan is right for you?</h2>
+    <p class="mb-4">Try our 14-day free trial with all Pro features included!</p>
+    <a href="#" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Start Free Trial
+    </a>
+</div>
+{% endblock %}
