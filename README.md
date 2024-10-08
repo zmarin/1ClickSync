@@ -12,7 +12,7 @@ ZTsync Python is a synchronization tool that integrates Zoho Projects with Todoi
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/ZTsync_python.git
+   git clone https://github.com/zmarin/ZTsync_python.git
    cd ZTsync_python
    ```
 
@@ -37,7 +37,7 @@ ZTsync Python is a synchronization tool that integrates Zoho Projects with Todoi
    Create a `.env` file in the project root and add the following variables:
    ```
    SECRET_KEY=your_secret_key
-   SQLALCHEMY_DATABASE_URI=postgresql://postgres:your_password@localhost/ztsync_python
+   SQLALCHEMY_DATABASE_URI=postgresql://postgres:2404979@localhost/ztsync_python
    REDIS_BROKER_URL=redis://localhost:6379/0
    REDIS_RESULT_BACKEND=redis://localhost:6379/0
    ZOHO_CLIENT_ID=your_zoho_client_id
@@ -67,7 +67,7 @@ ZTsync Python is a synchronization tool that integrates Zoho Projects with Todoi
    ```
    This will start the Flask application in debug mode.
 
-3. For production deployment, use:
+3. For production deployment use:
    ```
    ./start_app.sh
    ```
@@ -91,7 +91,7 @@ ZTsync Python is a synchronization tool that integrates Zoho Projects with Todoi
 
 ## Contributing
 
-Please read CONTRIBUTING.md for details on our code of conduct, and the process for submitting pull requests to us.
+Please read CONTRIBUTING.md for details on our code of conduct and the process for submitting pull requests to us.
 
 ## License
 
