@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>User Details</h1>
+
+<h2>{{ user.name }}</h2>
+<p><strong>Email:</strong> {{ user.email }}</p>
+<p><strong>Current Role:</strong> {{ user.role.name if user.role else 'No role' }}</p>
+
+<form action="{{ url_for('main.admin_update_user_role', user_id=user.id) }}" method="POST">
+    <div class="form-group">
+        <label for="role_id">Update Role:</label>
+        <select name="role_id" id="role_id" class="form-control">
+            {% for role in Role.query.all() %}
+            <option value="{{ role.id }}" {% if user.role and user.role.id == role.id %}selected{% endif %}>
+                {{ role.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Update Role</button>
+</form>
+
+<p><strong>Zoho Connected:</strong> {{ 'Yes' if user.zoho_access_token else 'No' }}</p>
+<p><strong>Todoist Connected:</strong> {{ 'Yes' if user.todoist_access_token else 'No' }}</p>
+<p><strong>Sync Direction:</strong> {{ user.sync_direction }}</p>
+<p><strong>Sync Frequency:</strong> {{ user.sync_frequency }}</p>
+
+<h3>Recent Sync Logs</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>Synced Count</th>
+            <th>Conflict Count</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in user.sync_logs[-5:] %}
+        <tr>
+            <td>{{ log.timestamp }}</td>
+            <td>{{ log.synced_count }}</td>
+            <td>{{ log.conflict_count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('main.admin_dashboard') }}" class="btn btn-secondary">Back to Admin Dashboard</a>
+{% endblock %}

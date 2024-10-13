@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-20">
+    <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-center">Choose Your Perfect Plan</h1>
+        <p class="text-xl text-center mb-8">Unlock the full potential of ZTsync with our flexible pricing options</p>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 py-16 -mt-16">
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {% set plans = [
+            {
+                "name": "Starter",
+                "price": "$4",
+                "features": [
+                    "Two-way sync of projects and tasks",
+                    "Sync frequency: Every 24 hours"
+                ],
+                "highlight": false
+            },
+            {
+                "name": "Professional",
+                "price": "$9",
+                "features": [
+                    "Two-way sync between both platforms",
+                    "Sync frequency: Every 6 hours",
+                    "Tags/Labels syncing"
+                ],
+                "highlight": false
+            },
+            {
+                "name": "Business",
+                "price": "$15",
+                "features": [
+                    "Two-way sync with advanced features",
+                    "Sync frequency: Every hour",
+                    "Tags/Labels syncing",
+                    "Comments syncing",
+                    "Zoho project stages as layouts in Todoist",
+                    "Priority access to new features"
+                ],
+                "highlight": true
+            },
+            {
+                "name": "Enterprise",
+                "price": "$19",
+                "features": [
+                    "All features from Business plan",
+                    "Zoho sync every 5 minutes",
+                    "Instant Todoist sync",
+                    "Early access to new features",
+                    "Priority access to new integrations",
+                    "Access to project and tasks visualization app (coming soon)"
+                ],
+                "highlight": false
+            }
+        ] %}
+
+        {% for plan in plans %}
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden transform transition duration-300 hover:scale-105 {% if plan.highlight %}border-4 border-blue-500{% endif %}">
+                <div class="p-6 {% if plan.highlight %}bg-blue-50{% endif %}">
+                    <h2 class="text-2xl font-semibold mb-4 {% if plan.highlight %}text-blue-600{% endif %}">{{ plan.name }}</h2>
+                    <p class="text-4xl font-bold mb-4">{{ plan.price }}<span class="text-sm font-normal">/month</span></p>
+                    <ul class="text-left mb-6 space-y-2">
+                        {% for feature in plan.features %}
+                            <li class="flex items-start">
+                                <svg class="w-5 h-5 text-green-500 mr-2 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                {{ feature }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="p-6 bg-gray-50">
+                    <a href="#" class="bg-blue-600 text-white hover:bg-blue-700 font-bold py-3 px-4 rounded-full block text-center transition duration-300">Choose {{ plan.name }}</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="mt-20 text-center max-w-3xl mx-auto">
+        <h3 class="text-3xl font-semibold mb-6">Frequently Asked Questions</h3>
+        <div class="space-y-6">
+            <div>
+                <h4 class="text-xl font-semibold mb-2">Is there a free trial?</h4>
+                <p class="text-gray-600">Yes, we offer a 14-day free trial for all plans. No credit card required.</p>
+            </div>
+            <div>
+                <h4 class="text-xl font-semibold mb-2">Can I change my plan later?</h4>
+                <p class="text-gray-600">You can upgrade or downgrade your plan at any time.</p>
+            </div>
+            <div>
+                <h4 class="text-xl font-semibold mb-2">What's the refund policy?</h4>
+                <p class="text-gray-600">We don't offer refunds, but you can cancel your subscription at any time. Your access to premium features will remain until the end of the billing cycle.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-20 text-center bg-blue-50 py-12 rounded-lg">
+        <h3 class="text-3xl font-semibold mb-6">Still have questions?</h3>
+        <p class="text-xl mb-8">Our team is here to help you find the perfect plan for your needs.</p>
+        <a href="#" class="bg-blue-600 text-white hover:bg-blue-700 font-bold py-3 px-8 rounded-full inline-block transition duration-300">Contact Us</a>
+    </div>
+</div>
+{% endblock %}

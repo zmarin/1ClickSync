@@ -3,141 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ZT One Click Sync{% endblock %}</title>
+    <title>{% block title %}ZTsync{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3498db',
+                        secondary: '#2c3e50',
+                        accent: '#e74c3c',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        .bg-gradient {
-            background: linear-gradient(to bottom, #3b82f6, #8b5cf6, #ef4444);
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
         }
     </style>
 </head>
-<body class="bg-gradient min-h-screen flex flex-col">
-    <nav class="bg-white bg-opacity-90 p-4 text-gray-800">
+<body class="bg-gray-50 flex flex-col min-h-screen">
+    <nav class="bg-primary text-white p-4 shadow-md">
         <div class="container mx-auto flex justify-between items-center">
-            <a href="{{ url_for('home') }}" class="text-2xl font-bold">ZT One Click Sync</a>
-            <ul class="flex space-x-4">
-                <li><a href="{{ url_for('home') }}" class="hover:text-blue-600">Home</a></li>
-                <li><a href="{{ url_for('pricing') }}" class="hover:text-blue-600">Pricing</a></li>
+            <a href="{{ url_for('main.index') }}" class="text-2xl font-bold flex items-center">
+                <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                ZTsync
+            </a>
+            <div class="hidden md:flex space-x-4">
                 {% if current_user.is_authenticated %}
-                    <li><a href="{{ url_for('dashboard') }}" class="hover:text-blue-600">Dashboard</a></li>
-                    <li><a href="{{ url_for('logout') }}" class="hover:text-blue-600">Logout</a></li>
+                    <a href="{{ url_for('user.dashboard') }}" class="hover:text-blue-200 transition duration-300">Dashboard</a>
+                    <a href="{{ url_for('sync.sync_history') }}" class="hover:text-blue-200 transition duration-300">Sync History</a>
+                    <a href="{{ url_for('user.task_history') }}" class="hover:text-blue-200 transition duration-300">Task History</a>
+                    <a href="{{ url_for('user.settings') }}" class="hover:text-blue-200 transition duration-300">Settings</a>
+                    <a href="{{ url_for('auth.logout') }}" class="bg-accent hover:bg-red-600 text-white px-4 py-2 rounded transition duration-300">Logout</a>
                 {% else %}
-                    <li><a href="{{ url_for('login') }}" class="hover:text-blue-600">Login</a></li>
-                    <li><a href="{{ url_for('register') }}" class="hover:text-blue-600">Register</a></li>
+                    <a href="{{ url_for('main.index') }}" class="hover:text-blue-200 transition duration-300">Home</a>
+                    <a href="{{ url_for('main.pricing') }}" class="hover:text-blue-200 transition duration-300">Pricing</a>
+                    <a href="{{ url_for('auth.login') }}" class="hover:text-blue-200 transition duration-300">Login</a>
+                    <a href="{{ url_for('auth.register') }}" class="bg-accent hover:bg-red-600 text-white px-4 py-2 rounded transition duration-300">Register</a>
                 {% endif %}
-            </ul>
+            </div>
+            <button class="md:hidden text-white focus:outline-none" id="mobile-menu-button">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
         </div>
     </nav>
 
-    <div class="bg-yellow-100 p-3 text-center">
-        <p class="text-lg font-bold">This is a work in progress. <a href="#" class="text-blue-600 hover:underline" onclick="toggleForm()">Click here for early access</a></p>
-    </div>
-
-    <div id="miniForm" class="hidden bg-blue-100 p-4">
-        <div class="container mx-auto">
-            <form action="#" method="POST" class="flex items-center justify-center">
-                <input type="email" placeholder="Enter your email" class="p-2 rounded-l-lg" required>
-                <button type="submit" class="bg-blue-600 text-white p-2 rounded-r-lg">Subscribe</button>
-            </form>
-        </div>
-    </div>
-
-    <div class="container mx-auto flex-grow flex px-4 py-8">
-        <!-- Left Sidebar -->
-        <div class="w-1/4 bg-white bg-opacity-90 p-4 rounded-lg shadow-lg mr-4 overflow-y-auto" style="max-height: 90vh;">
-            <a href="https://go.zoho.com/89D" class="block w-full mb-4">
-                <img src="{{ url_for('static', filename='placeholder.svg') }}?height=200&width=400" alt="Zoho Projects" class="w-full">
-            </a>
-            <h2 class="text-2xl font-bold mb-4">Zoho Projects: Comprehensive Project Management Solution</h2>
-            <p class="mb-4 text-gray-700">Zoho Projects is a versatile, cloud-based project management tool designed to help businesses of all sizes plan, track, and collaborate on projects efficiently. With its user-friendly interface and powerful features, Zoho Projects streamlines your workflow and boosts productivity.</p>
-            
-            <h3 class="text-xl font-semibold mb-2">Key Features:</h3>
-            <ul class="list-disc list-inside space-y-2 mb-4 text-gray-700">
-                <li><strong>Project Planning:</strong> Create and manage tasks, subtasks, and milestones with ease.</li>
-                <li><strong>Gantt Charts:</strong> Visualize project timelines and dependencies for better planning.</li>
-                <li><strong>Time Tracking:</strong> Log hours spent on tasks and generate detailed timesheets.</li>
-                <li><strong>Team Collaboration:</strong> Foster teamwork with built-in chat, forums, and file sharing.</li>
-                <li><strong>Resource Management:</strong> Optimize workload distribution and track resource utilization.</li>
-                <li><strong>Customizable Workflows:</strong> Tailor project stages to fit your unique business processes.</li>
-                <li><strong>Reporting and Analytics:</strong> Generate insightful reports to track project progress and performance.</li>
-                <li><strong>Mobile Apps:</strong> Stay connected and manage projects on-the-go with iOS and Android apps.</li>
-                <li><strong>Integrations:</strong> Seamlessly connect with other Zoho apps and third-party tools.</li>
-            </ul>
-
-            <h3 class="text-xl font-semibold mb-2">Benefits:</h3>
-            <ul class="list-disc list-inside space-y-2 mb-4 text-gray-700">
-                <li>Improved project visibility and control</li>
-                <li>Enhanced team collaboration and communication</li>
-                <li>Increased productivity and efficiency</li>
-                <li>Better resource allocation and utilization</li>
-                <li>Accurate time tracking and billing</li>
-                <li>Customizable to fit various industries and project types</li>
-            </ul>
-
-            <h3 class="text-xl font-semibold mb-2">Ideal For:</h3>
-            <ul class="list-disc list-inside space-y-2 mb-4 text-gray-700">
-                <li>Small to large businesses</li>
-                <li>Freelancers and agencies</li>
-                <li>IT and software development teams</li>
-                <li>Marketing and creative agencies</li>
-                <li>Construction and engineering firms</li>
-                <li>Educational institutions and non-profits</li>
-            </ul>
-
-            <a href="https://go.zoho.com/89D" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded text-center mt-4 transition duration-300 ease-in-out transform hover:scale-105">
-                Try Zoho Projects Free for 10 Days
-            </a>
-            <p class="text-sm text-gray-600 mt-2 text-center">No credit card required. Cancel anytime.</p>
-        </div>
-
-        <!-- Main Content -->
-        <main class="w-3/5 p-4 bg-white bg-opacity-90 rounded-lg shadow-lg">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} bg-{{ category }}-100 border border-{{ category }}-400 text-{{ category }}-700 px-4 py-3 rounded relative mb-4" role="alert">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            {% block content %}{% endblock %}
-        </main>
-
-        <!-- Right Sidebar -->
-        <div class="w-1/6 bg-white bg-opacity-90 p-4 rounded-lg shadow-lg ml-4 overflow-y-auto" style="max-height: 90vh;">
-            <h2 class="text-2xl font-bold mb-4">Zoho Apps</h2>
-            {% if zoho_apps %}
-                <ul class="space-y-4">
-                    {% for app in zoho_apps %}
-                        <li>
-                            <a href="{{ app.affiliate_link }}" class="block p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-300">
-                                <h3 class="text-lg font-semibold">{{ app.name }}</h3>
-                                <p class="text-sm text-gray-600">{{ app.description }}</p>
-                            </a>
-                        </li>
-                    {% endfor %}
-                </ul>
+    <div class="md:hidden" id="mobile-menu">
+        <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('user.dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Dashboard</a>
+                <a href="{{ url_for('sync.sync_history') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Sync History</a>
+                <a href="{{ url_for('user.task_history') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Task History</a>
+                <a href="{{ url_for('user.settings') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Settings</a>
+                <a href="{{ url_for('auth.logout') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-accent hover:bg-red-600">Logout</a>
             {% else %}
-                <p>No Zoho apps available at the moment.</p>
+                <a href="{{ url_for('main.index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Home</a>
+                <a href="{{ url_for('main.pricing') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Pricing</a>
+                <a href="{{ url_for('auth.login') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Login</a>
+                <a href="{{ url_for('auth.register') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-accent hover:bg-red-600">Register</a>
             {% endif %}
         </div>
     </div>
 
-    <footer class="bg-white bg-opacity-90 p-4 mt-8">
-        <div class="container mx-auto text-center">
-            <p>&copy; 2024 ZT One Click Sync. All rights reserved.</p>
+    <main class="container mx-auto mt-8 px-4 flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-secondary text-white py-8 mt-12">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-wrap justify-between">
+                <div class="w-full md:w-1/3 mb-6 md:mb-0">
+                    <h3 class="text-xl font-bold mb-2">ZTsync</h3>
+                    <p class="text-sm">Seamlessly synchronize your tasks between Zoho Projects and Todoist.</p>
+                </div>
+                <div class="w-full md:w-1/3 mb-6 md:mb-0">
+                    <h3 class="text-xl font-bold mb-2">Quick Links</h3>
+                    <ul class="text-sm">
+                        <li><a href="{{ url_for('main.index') }}" class="hover:text-blue-200">Home</a></li>
+                        <li><a href="{{ url_for('main.pricing') }}" class="hover:text-blue-200">Pricing</a></li>
+                        <li><a href="#" class="hover:text-blue-200">About Us</a></li>
+                        <li><a href="#" class="hover:text-blue-200">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="w-full md:w-1/3">
+                    <h3 class="text-xl font-bold mb-2">Connect With Us</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-white hover:text-blue-200">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="text-white hover:text-blue-200">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="text-white hover:text-blue-200">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm4.441 16.892c-2.102.144-6.784.144-8.883 0C5.282 16.736 5.017 15.622 5 12c.017-3.629.285-4.736 2.558-4.892 2.099-.144 6.782-.144 8.883 0C18.718 7.264 18.982 8.378 19 12c-.018 3.629-.285 4.736-2.559 4.892zM10 9.658l4.917 2.338L10 14.342V9.658z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-gray-700 text-center text-sm">
+                <p>&copy; 2024 ZTsync. All rights reserved.</p>
+            </div>
         </div>
     </footer>
 
     <script>
-        function toggleForm() {
-            const form = document.getElementById('miniForm');
-            form.classList.toggle('hidden');
-        }
+        // Mobile menu toggle
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
     </script>
-
-    {% block scripts %}{% endblock %}
 </body>
 </html>

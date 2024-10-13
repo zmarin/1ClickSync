@@ -13,7 +13,7 @@ This document outlines the process of setting up LocalXpose to expose our Flask 
 
 1. **Install LocalXpose**
    
-   Download and install LocalXpose CLI tool from the official website.
+   Download and install LocalXpose CLI tool from the [official website](https://localxpose.io/download).
 
 2. **Login to LocalXpose**
 
@@ -76,18 +76,23 @@ This document outlines the process of setting up LocalXpose to expose our Flask 
    sudo systemctl start localxpose.service
    ```
 
+   After starting the service, check its status to ensure it is running correctly:
+   ```
+   sudo systemctl status localxpose.service
+   ```
+
 ## Verification
 
 - Check if the tunnel is running: `sudo systemctl status localxpose.service`
 - Verify HTTPS redirection: Visit https://www.1clicksync.com and http://1clicksync.com in a web browser
+- Check the LocalXpose dashboard for additional verification.
 
 ## Notes
 
 - LocalXpose provides free SSL/TLS certificates for custom domains.
 - The tunnel will automatically restart if the server reboots.
 - Monitor the LocalXpose logs for any issues: `sudo journalctl -u localxpose.service`
-
-Remember to keep your LocalXpose CLI tool updated and periodically check for any changes in the LocalXpose service that might affect your setup.
+- Keep your LocalXpose CLI tool updated and periodically check for any changes in the LocalXpose service that might affect your setup.
 
 ## Troubleshooting
 
@@ -97,6 +102,7 @@ If you encounter any issues:
 2. View the logs: `sudo journalctl -u localxpose.service -n 50`
 3. Ensure your Flask application is running on localhost:8085
 4. Verify your DNS settings are correct in Namecheap
+5. Check the Flask application logs if the tunnel is not working.
 
 ## Updating Configuration
 
@@ -105,3 +111,4 @@ If you need to make changes to the LocalXpose configuration:
 1. Edit the service file: `sudo nano /etc/systemd/system/localxpose.service`
 2. Reload the systemd daemon: `sudo systemctl daemon-reload`
 3. Restart the service: `sudo systemctl restart localxpose.service`
+4. Restart the Flask application if changes are made to the LocalXpose configuration.

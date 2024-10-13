@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>User Management</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Subscription Plan</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users.items %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.subscription_plan }}</td>
+                <td>{{ user.subscription_status }}</td>
+                <td>
+                    <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-sm btn-info">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <nav aria-label="User list pagination">
+        <ul class="pagination">
+            {% for page in users.iter_pages() %}
+                {% if page %}
+                    {% if page != users.page %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('admin.user_list', page=page) }}">{{ page }}</a></li>
+                    {% else %}
+                        <li class="page-item active"><span class="page-link">{{ page }}</span></li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+    </nav>
+</div>
+{% endblock %}

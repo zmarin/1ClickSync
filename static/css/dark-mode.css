@@ -1,0 +1,45 @@
+/* Dark mode styles */
+body.dark-mode {
+    background-color: #1a202c;
+    color: #e2e8f0;
+}
+
+.dark-mode .bg-white {
+    background-color: #2d3748;
+}
+
+.dark-mode .text-gray-700 {
+    color: #e2e8f0;
+}
+
+.dark-mode .text-gray-600 {
+    color: #cbd5e0;
+}
+
+.dark-mode .text-gray-500 {
+    color: #a0aec0;
+}
+
+.dark-mode .bg-gray-100 {
+    background-color: #2d3748;
+}
+
+.dark-mode .bg-gray-200 {
+    background-color: #4a5568;
+}
+
+.dark-mode .border-gray-200 {
+    border-color: #4a5568;
+}
+
+.dark-mode .shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .hover\:bg-gray-100:hover {
+    background-color: #4a5568;
+}
+
+.dark-mode .hover\:text-gray-900:hover {
+    color: #f7fafc;
+}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Feature Flags</h1>
+
+<form method="POST">
+    <div class="form-group">
+        <label for="flag_name">Feature Name</label>
+        <input type="text" class="form-control" id="flag_name" name="flag_name" required>
+    </div>
+    <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="is_enabled" name="is_enabled">
+        <label class="form-check-label" for="is_enabled">Enabled</label>
+    </div>
+    <div class="form-group">
+        <label for="users">Users (comma-separated IDs)</label>
+        <input type="text" class="form-control" id="users" name="users">
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>
+
+<h2>Existing Flags</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Enabled</th>
+            <th>Users</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for flag in flags %}
+        <tr>
+            <td>{{ flag.name }}</td>
+            <td>{{ 'Yes' if flag.is_enabled else 'No' }}</td>
+            <td>{{ flag.users or 'All' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

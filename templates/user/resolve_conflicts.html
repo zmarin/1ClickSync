@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Resolve Conflicts</h1>
+    
+    {% if conflicts %}
+        <form id="conflict-resolution-form">
+            {% for conflict in conflicts %}
+                <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+                    <h2 class="text-xl font-semibold mb-4">Conflict #{{ loop.index }}</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h3 class="font-bold mb-2">Zoho Task</h3>
+                            <p><strong>Title:</strong> {{ conflict.zoho_task.title }}</p>
+                            <p><strong>Description:</strong> {{ conflict.zoho_task.description }}</p>
+                            <p><strong>Due Date:</strong> {{ conflict.zoho_task.due_date }}</p>
+                            <p><strong>Status:</strong> {{ conflict.zoho_task.status }}</p>
+                        </div>
+                        <div>
+                            <h3 class="font-bold mb-2">Todoist Task</h3>
+                            <p><strong>Title:</strong> {{ conflict.todoist_task.title }}</p>
+                            <p><strong>Description:</strong> {{ conflict.todoist_task.description }}</p>
+                            <p><strong>Due Date:</strong> {{ conflict.todoist_task.due_date }}</p>
+                            <p><strong>Status:</strong> {{ conflict.todoist_task.status }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="resolution-{{ loop.index }}">
+                            Resolution
+                        </label>
+                        <select class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="resolution-{{ loop.index }}" name="resolution-{{ loop.index }}">
+                            <option value="keep_zoho">Keep Zoho version</option>
+                            <option value="keep_todoist">Keep Todoist version</option>
+                            <option value="merge">Merge changes</option>
+                        </select>
+                    </div>
+                </div>
+            {% endfor %}
+            <div class="flex items-center justify-between">
+                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                    Resolve Conflicts
+                </button>
+            </div>
+        </form>
+    {% else %}
+        <p class="text-xl">No conflicts found. All tasks are in sync!</p>
+    {% endif %}
+</div>
+
+<script>
+document.getElementById('conflict-resolution-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const resolutions = [];
+    const selects = this.querySelectorAll('select');
+    
+    selects.forEach((select, index) => {
+        resolutions.push({
+            conflict_index: index,
+            resolution: select.value
+        });
+    });
+
+    fetch('{{ url_for("user.resolve_conflicts") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(resolutions),
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        window.location.reload();
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+        alert('An error occurred while resolving conflicts.');
+    });
+});
+</script>
+{% endblock %}

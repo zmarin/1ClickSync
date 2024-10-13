@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: ./wait-for-postgres.sh db ./start-app.sh
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://zmarin:2404979@db:5432/1clicksync
+      - REDIS_URL=redis://redis:6379/0
+      - LOCALXPOSE_TOKEN=${LOCALXPOSE_TOKEN}
+      - LOCALXPOSE_TUNNEL=${LOCALXPOSE_TUNNEL}
+    depends_on:
+      - db
+      - redis
+    restart: always
+    network_mode: "host"
+
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=zmarin
+      - POSTGRES_PASSWORD=2404979
+      - POSTGRES_DB=1clicksync
+    restart: always
+
+  redis:
+    image: redis:6
+    restart: always
+
+volumes:
+  postgres_data:

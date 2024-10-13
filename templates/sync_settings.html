@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Customize Synchronization Settings</h1>
+
+    <form method="POST" action="{{ url_for('sync_settings') }}" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="sync_frequency">
+                Sync Frequency
+            </label>
+            <select name="sync_frequency" id="sync_frequency" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <option value="hourly" {% if settings.sync_frequency == 'hourly' %}selected{% endif %}>Hourly</option>
+                <option value="daily" {% if settings.sync_frequency == 'daily' %}selected{% endif %}>Daily</option>
+                <option value="weekly" {% if settings.sync_frequency == 'weekly' %}selected{% endif %}>Weekly</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2">
+                Sync Direction
+            </label>
+            <div class="mt-2">
+                <label class="inline-flex items-center">
+                    <input type="radio" class="form-radio" name="sync_direction" value="bidirectional" {% if settings.sync_direction == 'bidirectional' %}checked{% endif %}>
+                    <span class="ml-2">Bidirectional</span>
+                </label>
+                <label class="inline-flex items-center ml-6">
+                    <input type="radio" class="form-radio" name="sync_direction" value="zoho_to_todoist" {% if settings.sync_direction == 'zoho_to_todoist' %}checked{% endif %}>
+                    <span class="ml-2">Zoho to Todoist</span>
+                </label>
+                <label class="inline-flex items-center ml-6">
+                    <input type="radio" class="form-radio" name="sync_direction" value="todoist_to_zoho" {% if settings.sync_direction == 'todoist_to_zoho' %}checked{% endif %}>
+                    <span class="ml-2">Todoist to Zoho</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-bold mb-2">
+                Sync Items
+            </label>
+            <div class="mt-2">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" class="form-checkbox" name="sync_tasks" {% if settings.sync_tasks %}checked{% endif %}>
+                    <span class="ml-2">Tasks</span>
+                </label>
+                <label class="inline-flex items-center ml-6">
+                    <input type="checkbox" class="form-checkbox" name="sync_comments" {% if settings.sync_comments %}checked{% endif %}>
+                    <span class="ml-2">Comments</span>
+                </label>
+                <label class="inline-flex items-center ml-6">
+                    <input type="checkbox" class="form-checkbox" name="sync_attachments" {% if settings.sync_attachments %}checked{% endif %}>
+                    <span class="ml-2">Attachments</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between">
+            <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                Save Settings
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

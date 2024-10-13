@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Synchronization History</h1>
+    
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="px-4 py-2 text-left">Date</th>
+                    <th class="px-4 py-2 text-left">Direction</th>
+                    <th class="px-4 py-2 text-left">Status</th>
+                    <th class="px-4 py-2 text-left">Tasks Synced</th>
+                    <th class="px-4 py-2 text-left">Duration</th>
+                    <th class="px-4 py-2 text-left">Details</th>
+                </tr>
+            </thead>
+            <tbody id="syncHistoryBody">
+                <!-- This will be populated by JavaScript -->
+            </tbody>
+        </table>
+        
+        <div class="mt-4 flex justify-between items-center">
+            <div>
+                <label for="entriesPerPage">Entries per page:</label>
+                <select id="entriesPerPage" class="ml-2 p-1 border rounded">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            <div id="pagination" class="space-x-2">
+                <!-- Pagination will be added here by JavaScript -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for sync details -->
+    <div id="syncDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center">
+        <div class="bg-white p-8 rounded-lg max-w-2xl w-full">
+            <h2 class="text-2xl font-bold mb-4">Sync Details</h2>
+            <div id="syncDetailsContent">
+                <!-- Sync details will be populated here -->
+            </div>
+            <button id="closeSyncDetails" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/sync_history.js') }}"></script>
+{% endblock %}
