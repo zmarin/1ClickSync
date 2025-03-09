@@ -12,4 +12,4 @@ def setup_logging(app):
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
     app.logger.setLevel(logging.INFO)
-    app.logger.info('ZTsync startup')
+    app.logger.info('1ClickSync startup')

@@ -18,7 +18,7 @@
 - [Appendices](#appendices)
 
 ## Introduction
-This document provides an updated and improved overview of ZTsync, a web application designed to synchronize tasks and project data between Zoho Projects and Todoist. The improvements include:
+This document provides an updated and improved overview of 1ClickSync, a web application designed to synchronize tasks and project data between Zoho Projects and Todoist. The improvements include:
 
 - Simplification of the application architecture by working without Flask blueprints.
 - Integration of the onboarding process into the dashboard, where each step unlocks the next feature.
@@ -27,10 +27,10 @@ This documentation reflects these changes and provides detailed insights into th
 
 ## Project Overview
 ### Purpose and Scope
-ZTsync aims to provide seamless integration between Zoho Projects and Todoist, enabling users to synchronize tasks, subtasks, comments, statuses, and other relevant data. By automating synchronization, the application reduces manual effort and enhances project management efficiency.
+1ClickSync aims to provide seamless integration between Zoho Projects and Todoist, enabling users to synchronize tasks, subtasks, comments, statuses, and other relevant data. By automating synchronization, the application reduces manual effort and enhances project management efficiency.
 
 ### Goals and Objectives
-- **Simplified Architecture**: Streamline the application by eliminating unnecessary complexity.
+- **Simplified Architecture**: Streamline the application architecture by eliminating unnecessary complexity.
 - **Integrated Onboarding**: Incorporate the onboarding process into the dashboard, unlocking features progressively.
 - **Seamless Integration**: Allow two-way synchronization between Zoho Projects and Todoist.
 - **User-Friendly Experience**: Provide an intuitive interface for configuration and management.
@@ -72,7 +72,7 @@ ZTsync aims to provide seamless integration between Zoho Projects and Todoist, e
   - Integrates with Stripe API for payment processing.
   - Manages subscription plans and user billing.
 
-- **Deployment Environment**
+## Deployment Environment
   - Uses Docker for containerization.
   - Prepared for scalability and cloud deployment.
 
@@ -99,10 +99,6 @@ ZTsync aims to provide seamless integration between Zoho Projects and Todoist, e
 **Payment Processing**
 - Stripe API: For subscription management
 
-**Deployment**
-- Containerization: Docker
-- Cloud Deployment: Prepared for AWS, Heroku, or similar platforms
-
 **Testing**
 - Unit and Integration Testing: Pytest
 
@@ -117,7 +113,7 @@ ZTsync aims to provide seamless integration between Zoho Projects and Todoist, e
 ### Two-Way Synchronization
 **Description**: Synchronizes tasks and subtasks between Zoho Projects and Todoist bidirectionally, ensuring changes in one platform are reflected in the other.
 
-**Key Functionalities**:
+### Key Functionalities
 - Task Synchronization: Create, update, and delete tasks based on detected changes.
 - Subtask Handling: Maintain parent-child relationships for subtasks.
 - Comments Synchronization: Sync comments associated with tasks.
@@ -126,7 +122,7 @@ ZTsync aims to provide seamless integration between Zoho Projects and Todoist, e
 ### Status Mapping
 **Description**: Map Zoho task statuses to Todoist sections or labels for better organization, allowing users to customize status mappings.
 
-**Key Functionalities**:
+### Key Functionalities
 - Default Mappings: Provide default status mappings.
 - Custom Mappings: Users can adjust mappings to fit their workflow.
 - Dynamic Updates: Changes in mappings are reflected in subsequent synchronizations.
@@ -134,29 +130,29 @@ ZTsync aims to provide seamless integration between Zoho Projects and Todoist, e
 ### Hierarchical Sync
 **Description**: Maintain the hierarchy of tasks and subtasks during synchronization, preserving the project structure across platforms.
 
-**Key Functionalities**:
+### Key Functionalities
 - Parent-Child Relationships: Keep linkage between tasks and their subtasks.
 - Nested Tasks Support: Handle multiple levels of task nesting if supported by both platforms.
 
 ### Recurring Task Support
 **Description**: Handle tasks with start and end dates, reflecting recurring tasks accurately in both systems.
 
-**Key Functionalities**:
+### Key Functionalities
 - Date Synchronization: Sync start and end dates of tasks.
 - Recurring Patterns: Recognize and maintain recurring task patterns.
 
 ### User-Friendly Interface
 **Description**: Provide a frontend for user configuration and management, integrating the onboarding process into the dashboard.
 
-**Key Functionalities**:
+### Key Functionalities
 - Integrated Onboarding: Users progress through onboarding steps within the dashboard.
 - Feature Unlocking: Each completed onboarding step unlocks the next feature.
-- Responsive Design: Built with Tailwind CSS for responsiveness and aesthetics.
+- Responsive Design: Ensure the interface works well across devices.
 
 ### Subscription Management
 **Description**: Integrate Stripe for payment processing and subscription handling.
 
-**Key Functionalities**:
+### Key Functionalities
 - Plan Selection: Users can choose from multiple subscription tiers.
 - Payment Processing: Secure handling of payments via Stripe.
 - Subscription Management: Allow upgrades, downgrades, and cancellations.
@@ -176,6 +172,7 @@ The onboarding process is now part of the user dashboard. Each step in the onboa
 
 3. **Step 3: Connect Todoist**
    - Action: User authenticates with Todoist via OAuth2.
+
    - Unlocks: Project selection for synchronization.
 
 4. **Step 4: Select Projects to Sync**
@@ -230,9 +227,8 @@ The onboarding process is now part of the user dashboard. Each step in the onboa
 - **Regular Audits**: Conduct security audits and vulnerability assessments periodically.
 
 ### Compliance Standards
-- **GDPR**: Provide options for data export and deletion upon user request, and obtain explicit consent for data processing.
+- **GDPR**: Provide options for data export and deletion upon user request, and provide disclosures about data collection practices.
 - **CCPA**: Allow users to opt-out of data selling and provide disclosures about data collection practices.
-- **Other Regulations**: Stay updated on international data protection laws and ensure compliance.
 
 ## API Integration Details
 ### Zoho Projects API
@@ -264,54 +260,50 @@ The onboarding process is now part of the user dashboard. Each step in the onboa
 
 ### Integrated Onboarding and Dashboard
 - **Onboarding Steps**: Integrated within the dashboard, with progress indicators.
-- **Feature Unlocking**: Features become available as users complete onboarding steps.
-- **Responsive Design**: Ensure the interface works well across devices.
+- **Feature Availability**: Features become available as users complete onboarding steps.
+- Responsive Design: Ensure the interface works well across devices.
 
 ## Testing and Quality Assurance
 ### Testing Strategies
-- **Unit Tests**: Test individual functions and modules using Pytest.
-- **Integration Tests**: Verify interactions between frontend and backend components.
-- **End-to-End Tests**: Use Selenium or Cypress to simulate user workflows.
+- Unit Tests: Test individual functions and modules using Pytest.
+- Integration Tests: Verify interactions between frontend and backend components.
+- End-to-End Tests: Use Selenium or Cypress to simulate user workflows.
 
 ### Performance Testing
-- **Load Testing**: Simulate multiple users to test scalability.
-- **Stress Testing**: Determine system behavior under extreme conditions.
-
-### Security Testing
-- **Vulnerability Scanning**: Use tools like OWASP ZAP to detect security flaws.
-- **Penetration Testing**: Conduct regular penetration tests to identify and fix vulnerabilities.
+- Load Testing: Simulate multiple users to test scalability.
+- Stress Testing: Determine system behavior under extreme conditions.
 
 ## Deployment and Maintenance
 ### Deployment Strategy
-- **Containerization**: Use Docker for consistency across environments.
-- **CI/CD**: Implement pipelines for automated testing and deployment.
-- **Environments**: Maintain separate development, staging, and production environments.
+- Containerization: Use Docker for consistency across environments.
+- CI/CD: Implement pipelines for automated testing and deployment.
+- Environments: Maintain separate development, staging, and production environments.
 
 ### Monitoring and Logging
-- **Monitoring Tools**: Use services like New Relic or Datadog for real-time monitoring.
-- **Logging**: Implement structured logging using Python's logging module.
+- Monitoring Tools: Use services like New Relic or Datadog for real-time monitoring.
+- Logging: Implement structured logging using Python's logging module.
 
 ### Maintenance Plan
-- **Regular Updates**: Schedule updates for dependencies and libraries, including Tailwind CSS.
-- **Backup Procedures**: Regular backups of the PostgreSQL database.
-- **Disaster Recovery**: Have a plan for data restoration and maintaining service continuity.
+- Regular Updates: Schedule updates for dependencies and libraries, including Tailwind CSS.
+- Backup Procedures: Regular backups of the PostgreSQL database.
+- Disaster Recovery: Have a plan for data restoration and maintaining service continuity.
 
 ## Documentation and Support
 ### User Documentation
-- **User Guides**: Step-by-step instructions with screenshots.
-- **FAQs**: Address frequently asked questions.
-- **Help Resources**: Include help and tooltips within the dashboard.
+- User Guides: Step-by-step instructions with screenshots.
+- FAQs: Address frequently asked questions.
+- Help Resources: Include help and tooltips within the dashboard.
 
 ### Developer Documentation
-- **API Documentation**: Document internal APIs and modules.
-- **Code Comments and Style Guides**: Maintain readable and maintainable code.
+- API Documentation: Document internal APIs and modules.
+- Code Comments and Style Guides: Maintain readable and maintainable code.
 
 ### Support Channels
-- **Email Support**: Provide an email address for user inquiries.
-- **Knowledge Base**: Create a repository of articles and troubleshooting guides.
+- Email Support: Provide an email address for user inquiries.
+- Knowledge Base: Create a repository of articles and troubleshooting guides.
 
 ## Conclusion
-ZTsync offers a streamlined and user-friendly solution for synchronizing tasks between Zoho Projects and Todoist. By simplifying the application architecture, integrating the onboarding process into the dashboard, and focusing on essential features, the application provides an efficient and engaging user experience. The use of Tailwind CSS enhances the visual appeal and responsiveness of the interface. With security, scalability, and compliance in mind, ZTsync is well-positioned to meet the needs of its users and adapt to future requirements.
+1ClickSync offers a streamlined and user-friendly solution for synchronizing tasks between Zoho Projects and Todoist. By simplifying the application architecture, integrating the onboarding process into the dashboard, and focusing on essential features, the application provides an efficient and engaging user experience. The use of Tailwind CSS enhances the visual appeal and responsiveness of the interface. With security, scalability, and compliance in mind, 1ClickSync is well-positioned to meet the needs of its users and adapt to future requirements.
 
 ## Appendices
 ### Appendix A: Data Models
@@ -320,7 +312,7 @@ ZTsync offers a streamlined and user-friendly solution for synchronizing tasks b
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(128), unique=False)
     confirmed = db.Column(db.Boolean, default=False)
     subscription_plan = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -331,7 +323,7 @@ class User(db.Model):
 ```python
 class OAuthToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.ForeignKey('user.id'), nullable=False)
     service = db.Column(db.String(20))  # 'zoho' or 'todoist'
     access_token = db.Column(db.String(256))
     refresh_token = db.Column(db.String(256))
@@ -344,7 +336,7 @@ class OAuthToken(db.Model):
 ```python
 class ProjectMapping(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.ForeignKey('user.id'), nullable=False)
     zoho_project_id = db.Column(db.String(50))
     todoist_project_id = db.Column(db.String(50))
 ```
@@ -353,7 +345,7 @@ class ProjectMapping(db.Model):
 ```python
 class TaskMapping(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.ForeignKey('user.id'), nullable=False)
     zoho_task_id = db.Column(db.String(50))
     todoist_task_id = db.Column(db.String(50))
     parent_task_id = db.Column(db.Integer, db.ForeignKey('taskmapping.id'), nullable=True)
@@ -363,7 +355,7 @@ class TaskMapping(db.Model):
 ```python
 class Subscription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.ForeignKey('user.id'), nullable=False)
     plan = db.Column(db.String(50))
     status = db.Column(db.String(20))  # 'active', 'canceled', etc.
     stripe_subscription_id = db.Column(db.String(100))
@@ -373,39 +365,38 @@ class Subscription(db.Model):
 
 ### Appendix B: API Endpoints
 #### Authentication Routes
-- **GET /register**: User registration page.
-- **POST /register**: Handles user registration data.
-- **GET /login**: User login page.
-- **POST /login**: Handles user login.
-- **GET /confirm/<token>**: Email confirmation link.
+- GET /register: User registration page.
+- POST /register: Handles user login.
+- GET /login: User login page.
+- POST /login: Handles user login.
+- GET /confirm/<token>: Email confirmation link.
 
 #### OAuth Routes
-- **GET /auth/zoho**: Initiates Zoho OAuth flow.
-- **GET /auth/zoho/callback**: Handles Zoho OAuth callback.
-- **GET /auth/todoist**: Initiates Todoist OAuth flow.
-- **GET /auth/todoist/callback**: Handles Todoist OAuth callback.
+- GET /auth/zoho: Initiates Zoho OAuth flow.
+- GET /auth/zoho/callback: Handles Zoho OAuth callback.
+- GET /auth/todoist: Initiates Todoist OAuth flow.
+- GET /auth/todoist/callback: Handles Todoist OAuth callback.
 
 #### Synchronization Routes
-- **POST /sync/manual**: Triggers manual synchronization.
-- **GET /sync/status**: Retrieves synchronization status.
-- **GET /sync/history**: Retrieves synchronization history.
+- POST /sync/manual: Triggers manual synchronization.
+- GET /sync/status: Retrieves synchronization status.
+- GET /sync/history: Retrieves synchronization history.
 
 #### Settings Routes
-- **GET /settings**: User settings page.
-- **POST /settings**: Updates user settings.
+- GET /settings: User settings page.
+- POST /settings: Updates user settings.
 
 #### Subscription Routes
-- **GET /subscribe**: Subscription plan selection.
-- **POST /subscribe**: Handles subscription payment processing.
-- **POST /billing/webhook**: Handles Stripe webhook events.
+- GET /subscribe: Subscription plan selection.
+- POST /subscribe: Handles subscription payment processing.
+- POST /billing/webhook: Handles Stripe webhook events.
 
 ### Appendix C: Glossary of Terms
-- **Tailwind CSS**: A utility-first CSS framework for building custom designs.
-- **OAuth**: Open Authorization protocol for secure API authentication.
-- **API**: Application Programming Interface.
-- **JWT**: JSON Web Token used for securely transmitting information.
-- **ORM**: Object-Relational Mapping.
-- **RBAC**: Role-Based Access Control.
-- **GDPR**: General Data Protection Regulation.
-- **CCPA**: California Consumer Privacy Act.
-
+- Tailwind CSS: A utility-first CSS framework for building custom designs.
+- OAuth: Open Authorization protocol for secure API authentication.
+- API: Application Programming Interface.
+- JWT: JSON Web Token used for securely transmitting information.
+- ORM: Object-Relational Mapping.
+- RBAC: Role-Based Access Control.
+- GDPR: General Data Protection Regulation.
+- CCPA: California Consumer Privacy Act.

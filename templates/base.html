@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ZTsync{% endblock %}</title>
+    <title>{% block title %}1ClickSync{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -28,27 +28,26 @@
 <body class="bg-gray-50 flex flex-col min-h-screen">
     <nav class="bg-primary text-white p-4 shadow-md">
         <div class="container mx-auto flex justify-between items-center">
-            <a href="{{ url_for('main.index') }}" class="text-2xl font-bold flex items-center">
+            <a href="{{ url_for('index') }}" class="text-2xl font-bold flex items-center">
                 <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                 </svg>
-                ZTsync
+                1ClickSync
             </a>
             <div class="hidden md:flex space-x-4">
                 {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('user.dashboard') }}" class="hover:text-blue-200 transition duration-300">Dashboard</a>
-                    <a href="{{ url_for('sync.sync_history') }}" class="hover:text-blue-200 transition duration-300">Sync History</a>
-                    <a href="{{ url_for('user.task_history') }}" class="hover:text-blue-200 transition duration-300">Task History</a>
-                    <a href="{{ url_for('user.settings') }}" class="hover:text-blue-200 transition duration-300">Settings</a>
+                    <a href="{{ url_for('dashboard') }}" class="hover:text-blue-200 transition duration-300">Dashboard</a>
+                    <a href="{{ url_for('sync_history') }}" class="hover:text-blue-200 transition duration-300">Sync History</a>
+                    <a href="{{ url_for('settings') }}" class="hover:text-blue-200 transition duration-300">Settings</a>
                     <a href="{{ url_for('auth.logout') }}" class="bg-accent hover:bg-red-600 text-white px-4 py-2 rounded transition duration-300">Logout</a>
                 {% else %}
-                    <a href="{{ url_for('main.index') }}" class="hover:text-blue-200 transition duration-300">Home</a>
-                    <a href="{{ url_for('main.pricing') }}" class="hover:text-blue-200 transition duration-300">Pricing</a>
+                    <a href="{{ url_for('index') }}" class="hover:text-blue-200 transition duration-300">Home</a>
+                    <a href="{{ url_for('pricing') }}" class="hover:text-blue-200 transition duration-300">Pricing</a>
                     <a href="{{ url_for('auth.login') }}" class="hover:text-blue-200 transition duration-300">Login</a>
                     <a href="{{ url_for('auth.register') }}" class="bg-accent hover:bg-red-600 text-white px-4 py-2 rounded transition duration-300">Register</a>
                 {% endif %}
             </div>
-            <button class="md:hidden text-white focus:outline-none" id="mobile-menu-button">
+            <button class="md:hidden text-white focus:outline-none" id="mobile-menu-button" aria-label="Toggle mobile menu">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                 </svg>
@@ -59,14 +58,13 @@
     <div class="md:hidden" id="mobile-menu">
         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {% if current_user.is_authenticated %}
-                <a href="{{ url_for('user.dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Dashboard</a>
-                <a href="{{ url_for('sync.sync_history') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Sync History</a>
-                <a href="{{ url_for('user.task_history') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Task History</a>
-                <a href="{{ url_for('user.settings') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Settings</a>
+                <a href="{{ url_for('dashboard') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Dashboard</a>
+                <a href="{{ url_for('sync_history') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Sync History</a>
+                <a href="{{ url_for('settings') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Settings</a>
                 <a href="{{ url_for('auth.logout') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-accent hover:bg-red-600">Logout</a>
             {% else %}
-                <a href="{{ url_for('main.index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Home</a>
-                <a href="{{ url_for('main.pricing') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Pricing</a>
+                <a href="{{ url_for('index') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Home</a>
+                <a href="{{ url_for('pricing') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Pricing</a>
                 <a href="{{ url_for('auth.login') }}" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Login</a>
                 <a href="{{ url_for('auth.register') }}" class="block px-3 py-2 rounded-md text-base font-medium text-white bg-accent hover:bg-red-600">Register</a>
             {% endif %}
@@ -81,14 +79,14 @@
         <div class="container mx-auto px-4">
             <div class="flex flex-wrap justify-between">
                 <div class="w-full md:w-1/3 mb-6 md:mb-0">
-                    <h3 class="text-xl font-bold mb-2">ZTsync</h3>
+                    <h3 class="text-xl font-bold mb-2">1ClickSync</h3>
                     <p class="text-sm">Seamlessly synchronize your tasks between Zoho Projects and Todoist.</p>
                 </div>
                 <div class="w-full md:w-1/3 mb-6 md:mb-0">
                     <h3 class="text-xl font-bold mb-2">Quick Links</h3>
                     <ul class="text-sm">
-                        <li><a href="{{ url_for('main.index') }}" class="hover:text-blue-200">Home</a></li>
-                        <li><a href="{{ url_for('main.pricing') }}" class="hover:text-blue-200">Pricing</a></li>
+                        <li><a href="{{ url_for('index') }}" class="hover:text-blue-200">Home</a></li>
+                        <li><a href="{{ url_for('pricing') }}" class="hover:text-blue-200">Pricing</a></li>
                         <li><a href="#" class="hover:text-blue-200">About Us</a></li>
                         <li><a href="#" class="hover:text-blue-200">Contact</a></li>
                     </ul>
@@ -115,7 +113,7 @@
                 </div>
             </div>
             <div class="mt-8 pt-8 border-t border-gray-700 text-center text-sm">
-                <p>&copy; 2024 ZTsync. All rights reserved.</p>
+                <p>&copy; 2024 1ClickSync. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -128,5 +126,19 @@
             mobileMenu.classList.toggle('hidden');
         });
     </script>
+    
+    <button id="zf_button_832304" style="display: none;">Form</button>
+
+<div id="formsLightBox_832304" style="display: none;">
+    <div class="zf_lB_Wrapper_832304">
+        <div id="containerDiv_832304" class="zf_lB_Container_832304">
+            <div id="QLNs-m9FnAlYgJ1N919ozMdtX2bqBPz03YRiLCT63kw_832304" class="zf_main_id_832304">
+                <iframe src="https://forms.zohopublic.com/zmcore/form/z2syncinterested/formperma/QLNs-m9FnAlYgJ1N919ozMdtX2bqBPz03YRiLCT63kw?zf_rszfm=1" style="border:none;min-width:100%;overflow:hidden;"></iframe>
+            </div>
+            <div id="deleteform_832304" class="zf_lb_closeform_832304"></div>
+        </div>
+    </div>
+    <div class="zf_lB_Dimmer_832304" elname="popup_box"></div>
+</div>
 </body>
 </html>

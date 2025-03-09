@@ -4,22 +4,29 @@
 <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
     <div class="container mx-auto px-4 py-20">
         <div class="text-center">
-            <h1 class="text-5xl md:text-6xl font-bold mb-6 animate-fade-in-down">Welcome to ZTsync</h1>
+            <h1 class="text-5xl md:text-6xl font-bold mb-6 animate-fade-in-down">Welcome to 1ClickSync</h1>
             <p class="text-xl md:text-2xl mb-10 animate-fade-in-up">Seamlessly synchronize your Zoho Projects and Todoist tasks</p>
+            <p class="text-2xl font-semibold text-red-500 animate-pulse">Coming Soon!</p>
             <div class="space-x-4">
-                <a href="{{ url_for('auth.register') }}" class="bg-white text-blue-600 hover:bg-blue-100 font-bold py-3 px-8 rounded-full transition duration-300 transform hover:scale-105 inline-block">
+        <a href="{{ url_for('auth.register') }}" class="bg-white text-blue-600 hover:bg-blue-100 font-bold py-3 px-8 rounded-full transition duration-300 transform hover:scale-105 inline-block">
                     Get Started
                 </a>
-                <a href="{{ url_for('main.pricing') }}" class="bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 font-bold py-3 px-8 rounded-full transition duration-300 transform hover:scale-105 inline-block mt-4 md:mt-0">
+                <a href="{{ url_for('pricing') }}" class="bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 font-bold py-3 px-8 rounded-full transition duration-300 transform hover:scale-105 inline-block mt-4 md:mt-0">
                     Learn More
                 </a>
+                <button onclick="showZForm_832304()" class="bg-white text-blue-600 hover:bg-blue-100 font-bold py-3 px-8 rounded-full transition duration-300 transform hover:scale-105 inline-block mt-4 md:mt-0">
+                    Request Early Access
+                </button>
             </div>
         </div>
     </div>
 </div>
 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lightbox.css') }}">
+<script src="{{ url_for('static', filename='js/lightbox.js') }}"></script>
+
 <div class="container mx-auto px-4 py-20">
-    <h2 class="text-4xl font-bold text-center mb-16">Why Choose ZTsync?</h2>
+    <h2 class="text-4xl font-bold text-center mb-16">Why Choose 1ClickSync?</h2>
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-10">
         <div class="bg-white p-8 rounded-lg shadow-lg transition duration-300 hover:shadow-xl">
             <svg class="w-12 h-12 text-blue-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -120,7 +127,7 @@
 <div class="bg-blue-600 text-white py-20">
     <div class="container mx-auto px-4 text-center">
         <h2 class="text-4xl font-bold mb-8">Ready to Streamline Your Task Management?</h2>
-        <p class="text-xl mb-10">Join thousands of satisfied users and experience the power of ZTsync today.</p>
+        <p class="text-xl mb-10">Join thousands of satisfied users and experience the power of 1ClickSync today.</p>
         <a href="{{ url_for('auth.register') }}" class="bg-white text-blue-600 hover:bg-blue-100 font-bold py-3 px-8 rounded-full transition duration-300 transform hover:scale-105 inline-block">
             Get Started Now
         </a>

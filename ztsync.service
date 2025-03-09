@@ -1,5 +1,5 @@
 [Unit]
-Description=ZTsync Flask Application
+Description=1ClickSync Flask Application
 After=network.target postgresql.service redis.service
 
 [Service]

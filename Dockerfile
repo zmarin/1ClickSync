@@ -12,22 +12,9 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     netcat \
     curl \
-    postgresql-client \
     libpq-dev \
     gcc \
     && rm -rf /var/lib/apt/lists/*
-
-# Install LocalXpose
-RUN ARCH=$(uname -m); \
-    if [ "$ARCH" = "x86_64" ]; then \
-        curl -o /usr/local/bin/loclx https://api.localxpose.io/api/v2/downloads/loclx-linux-amd64.bin; \
-    elif [ "$ARCH" = "aarch64" ]; then \
-        curl -o /usr/local/bin/loclx https://api.localxpose.io/api/v2/downloads/loclx-linux-arm64.bin; \
-    else \
-        echo "Unsupported architecture: $ARCH"; \
-        exit 1; \
-    fi && \
-    chmod +x /usr/local/bin/loclx
 
 # Install Python dependencies
 COPY requirements.txt /app/

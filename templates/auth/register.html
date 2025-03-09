@@ -8,7 +8,10 @@
                 Create your account
             </h2>
             <p class="mt-2 text-center text-sm text-gray-600">
-                Join ZTsync and start syncing your tasks effortlessly
+                Join 1ClickSync and start syncing your tasks effortlessly
+            </p>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                <a href="#" onclick="showZForm_832304()" class="font-medium text-indigo-600 hover:text-indigo-500">Join the waitlist for early access!</a>
             </p>
         </div>
         <form class="mt-8 space-y-6" method="POST" action="{{ url_for('auth.register') }}">
@@ -16,19 +19,19 @@
             <div class="rounded-md shadow-sm -space-y-px">
                 <div>
                     {{ form.name.label(class="sr-only") }}
-                    {{ form.name(class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm", placeholder="Name") }}
+                    {{ form.name(class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm", placeholder="Name", autocomplete="name") }}
                 </div>
                 <div>
                     {{ form.email.label(class="sr-only") }}
-                    {{ form.email(class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm", placeholder="Email address") }}
+                    {{ form.email(class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm", placeholder="Email address", autocomplete="email") }}
                 </div>
                 <div>
                     {{ form.password.label(class="sr-only") }}
-                    {{ form.password(class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm", placeholder="Password") }}
+                    {{ form.password(class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm", placeholder="Password", autocomplete="new-password") }}
                 </div>
                 <div>
-                    {{ form.confirm_password.label(class="sr-only") }}
-                    {{ form.confirm_password(class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm", placeholder="Confirm Password") }}
+                    {{ form.password2.label(class="sr-only") }}
+                    {{ form.password2(class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm", placeholder="Confirm Password", autocomplete="new-password") }}
                 </div>
             </div>
 

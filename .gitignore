@@ -1,11 +1,15 @@
 # Python
 __pycache__/
+*/__pycache__/
+*/*/__pycache__/
 *.py[cod]
 *$py.class
 
 # Virtual environment
 venv/
 env/
+new_venv/
+.venv/
 
 # Flask
 instance/
@@ -21,12 +25,14 @@ htmlcov/
 
 # Logs
 *.log
+logs/
 
 # Environment variables
 .env
 
 # Database
 *.db
+*.sqlite
 
 # IDE
 .vscode/
@@ -35,3 +41,9 @@ htmlcov/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Binary files
+loclx-linux-amd64.zip
+
+# Docker
+.dockerignore
