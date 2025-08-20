@@ -21,9 +21,7 @@ class User(UserMixin, db.Model):
     def onboarding_completed(self):
         return (self.confirmed and
                 self.oauth_tokens.filter_by(service='zoho').first() is not None and
-                self.oauth_tokens.filter_by(service='todoist').first() is not None and
-                self.zoho_portal_id is not None and
-                self.sync_settings is not None)
+                self.zoho_portal_id is not None)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -34,7 +32,7 @@ class User(UserMixin, db.Model):
 class OAuthToken(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    service = db.Column(db.String(20))  # 'zoho' or 'todoist'
+    service = db.Column(db.String(20))  # 'zoho' for task management
     access_token = db.Column(db.String(256))
     refresh_token = db.Column(db.String(256))
     expires_in = db.Column(db.Integer)
