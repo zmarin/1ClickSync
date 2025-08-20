@@ -34,9 +34,12 @@ def create_app(config_class=Config):
     def pricing():
         return render_template('pricing.html')
 
-    # Import and register auth blueprint
+    # Import and register blueprints
     from app.auth import auth as auth_blueprint
+    from app.dashboard_routes import dashboard_bp
+    
     app.register_blueprint(auth_blueprint)
+    app.register_blueprint(dashboard_bp)
 
     # OAuth routes
     @app.route('/auth/zoho')

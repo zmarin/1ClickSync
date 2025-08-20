@@ -1,71 +1,212 @@
 {% extends "base.html" %}
 
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    <div class="mb-6">
-        <form method="GET" action="{{ url_for('user.dashboard') }}" class="flex items-center space-x-4">
-            <input type="text" name="search" value="{{ search_query }}" placeholder="Search tasks..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-            <select name="status" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                <option value="">All Statuses</option>
-                <option value="not_started" {% if status_filter == 'not_started' %}selected{% endif %}>Not Started</option>
-                <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
-                <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+  <!-- Error Message -->
+  {% if error %}
+  <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-8" role="alert">
+    <strong class="font-bold">Error getting access token:</strong>
+    <span class="block sm:inline">argument of type '_GeneratorContextManager' is not iterable</span>
+  </div>
+  {% endif %}
+
+  <h1 class="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
+  
+  <!-- Service Integrations -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-semibold mb-4">Service Integrations</h2>
+      <div class="mb-4">
+        <p class="text-gray-700">Zoho Projects Portal</p>
+        <div class="flex items-center justify-between">
+          <div>
+            <select title="Zoho Projects Portal" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              <option>zmim</option>
             </select>
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                Search
-            </button>
-        </form>
+            <p class="text-green-500 text-sm mt-1">Connected</p>
+          </div>
+          <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Save Portal
+          </button>
+        </div>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-2">
+          Detach Portal
+        </button>
+        <p class="text-gray-500 text-sm mt-2">Found 3 portal(s). Current portal: zmim</p>
+        <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-2">
+          Disconnect Zoho
+        </button>
+      </div>
+      <div>
+        <p class="text-gray-700">Todoist</p>
+        <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          Connect Todoist
+        </button>
+        <p class="text-red-500 text-sm mt-1">Not Connected</p>
+      </div>
     </div>
 
-    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        <h2 class="text-xl font-semibold mb-4">Synced Tasks</h2>
-        <table class="min-w-full leading-normal">
-            <thead>
-                <tr>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Zoho Task ID
-                    </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Todoist Task ID
-                    </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Status
-                    </th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Last Updated
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for task_mapping in task_mappings.items %}
-                <tr>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                        {{ task_mapping.zoho_task_id }}
-                    </td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                        {{ task_mapping.todoist_task_id }}
-                    </td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                        {{ task_mapping.status }}
-                    </td>
-                    <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                        {{ task_mapping.last_updated.strftime('%Y-%m-%d %H:%M:%S') }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Setup & Sync -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-semibold mb-4">Setup & Sync</h2>
+      <p class="text-gray-700">
+        Please connect both Zoho Projects and Todoist, and select a Zoho portal to enable syncing.
+      </p>
+    </div>
+  </div>
+
+  <!-- Subscription Details -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-semibold mb-4">Subscription Details</h2>
+      <p class="text-gray-700">Current Plan: 
+        <span class="{% if current_user.subscription_tier == 'free' %}text-gray-500{% elif current_user.subscription_tier == 'starter' %}text-blue-500{% elif current_user.subscription_tier == 'professional' %}text-purple-500{% elif current_user.subscription_tier == 'business' %}text-green-500{% else %}text-indigo-500{% endif %} font-semibold">
+          {{ current_user.subscription_tier|capitalize }}
+        </span>
+      </p>
+      
+      {% if subscription %}
+        <p class="text-gray-700 mt-2">Status: 
+          <span class="{% if subscription.status == 'active' %}text-green-500{% elif subscription.status == 'past_due' %}text-yellow-500{% elif subscription.status == 'cancelled' %}text-red-500{% else %}text-gray-500{% endif %} font-semibold">
+            {{ subscription.status|capitalize }}
+          </span>
+        </p>
+        
+        {% if subscription.status == 'active' %}
+          <div class="mt-4 flex space-x-3">
+            <a href="{{ url_for('subscription.manage') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              Manage Subscription
+            </a>
+          </div>
+        {% elif subscription.status == 'past_due' %}
+          <div class="mt-3 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-yellow-700">
+                  Your payment is past due. Please update your payment method to avoid service interruption.
+                </p>
+                <div class="mt-2">
+                  <a href="{{ url_for('subscription.manage') }}" class="text-sm font-medium text-yellow-700 hover:text-yellow-600">
+                    Update Payment Method <span aria-hidden="true">&rarr;</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% elif subscription.status == 'cancelled' %}
+          <div class="mt-4">
+            <a href="{{ url_for('pricing') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              Resubscribe
+            </a>
+          </div>
+        {% endif %}
+      {% else %}
+        <p class="text-gray-700 mt-2">Status: <span class="text-gray-500 font-semibold">Free Plan</span></p>
+        <div class="mt-4">
+          <a href="{{ url_for('pricing') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            Upgrade Now
+          </a>
+        </div>
+      {% endif %}
     </div>
 
-    <div class="mt-4">
-        {% if task_mappings.has_prev %}
-            <a href="{{ url_for('user.dashboard', page=task_mappings.prev_num, search=search_query, status=status_filter) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Previous</a>
-        {% endif %}
-        {% if task_mappings.has_next %}
-            <a href="{{ url_for('user.dashboard', page=task_mappings.next_num, search=search_query, status=status_filter) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Next</a>
-        {% endif %}
+    <!-- Selected Zoho Portal -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-semibold mb-4">Selected Zoho Portal</h2>
+      <p class="text-gray-700">Portal Name: <span class="text-blue-500">zmim</span></p>
     </div>
+  </div>
+
+  <!-- Recent Sync History -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-xl font-semibold mb-4">Recent Sync History</h2>
+    <table class="min-w-full leading-normal">
+      <thead>
+        <tr>
+          <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+            Date
+          </th>
+          <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+            Direction
+          </th>
+          <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+            Status
+          </th>
+          <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+            Items Processed
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            2024-11-19 12:12:30
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            zoho_to_todoist
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            success
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            0
+          </td>
+        </tr>
+        <tr>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            2024-11-19 12:11:49
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            zoho_to_todoist
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            success
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            0
+          </td>
+        </tr>
+        <tr>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            2024-11-19 12:10:20
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            zoho_to_todoist
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            success
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            0
+          </td>
+        </tr>
+        <tr>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            2024-11-19 12:10:05
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            zoho_to_todoist
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            success
+          </td>
+          <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+            0
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}

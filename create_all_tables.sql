@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     plan TEXT NOT NULL,
     status TEXT NOT NULL,
     stripe_subscription_id TEXT,
+    stripe_customer_id TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -91,6 +92,12 @@ ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 -- Create policies for subscriptions
 CREATE POLICY "Users can view their own subscriptions" ON subscriptions
     FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own subscriptions" ON subscriptions
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own subscriptions" ON subscriptions
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Sync Logs Table
 CREATE TABLE IF NOT EXISTS sync_logs (

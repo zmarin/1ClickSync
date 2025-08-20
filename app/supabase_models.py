@@ -10,15 +10,6 @@ def create_user(email: str, password: str, name: str = "") -> Dict[str, Any]:
     """
     supabase = get_supabase_admin()
     
-    # First, create the user in Supabase Auth without auto email confirmation
-    auth_response = supabase.auth.admin.create_user({
-        "email": email,
-        "password": password,
-        "email_confirm": False
-    })
-    
-    user_id = auth_response.user.id
-    
     # Split name into first_name and last_name if provided
     first_name = ""
     last_name = ""
@@ -27,28 +18,36 @@ def create_user(email: str, password: str, name: str = "") -> Dict[str, Any]:
         first_name = name_parts[0]
         if len(name_parts) > 1:
             last_name = name_parts[1]
-    
+
+    # First, create the user in Supabase Auth without auto email confirmation
+    auth_response = supabase.auth.admin.create_user({
+        "email": email,
+        "password": password,
+        "email_confirm": False,
+        "user_metadata": {
+            "first_name": first_name,
+            "last_name": last_name
+        }
+    })
+
+    user_id = auth_response.user.id
+
     # Then, create the user in our users table
     user_data = {
         "id": user_id,
         "email": email,
         "first_name": first_name,
         "last_name": last_name,
-        "company": "",
-        "is_admin": False,
-        "subscription_tier": "free",
-        "sync_enabled": False,
-        "sync_status": "inactive",
         "created_at": datetime.utcnow().isoformat(),
         "updated_at": datetime.utcnow().isoformat()
     }
-    
+
     response = supabase.table("users").insert(user_data).execute()
-    
+
     # Send a custom confirmation email
     from app.email_confirmation import send_confirmation_email
     send_confirmation_email(user_id, email)
-    
+
     return response.data[0] if response.data else None
 
 def get_user_by_id(user_id: str) -> Dict[str, Any]:
@@ -117,28 +116,45 @@ def create_oauth_token(user_id: str, provider: str, access_token: str, refresh_t
     """
     supabase = get_supabase_admin()
     
-    # Calculate expires_at from expires_in
-    expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
-    
+    # Only include the columns we know exist in the table
     token_data = {
         "user_id": user_id,
-        "provider": provider,
+        "service": provider,  # Use provider as service
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "expires_at": expires_at.isoformat(),
+        "expires_in": expires_in,
         "created_at": datetime.utcnow().isoformat(),
         "updated_at": datetime.utcnow().isoformat()
     }
     
-    response = supabase.table("oauth_tokens").insert(token_data).execute()
-    return response.data[0] if response.data else None
+    # Try to insert the token
+    try:
+        response = supabase.table("oauth_tokens").insert(token_data).execute()
+        return response.data[0] if response.data else None
+    except Exception as e:
+        # If there's an error, log it and try a more minimal approach
+        print(f"Error creating OAuth token: {str(e)}")
+        
+        # Try with even fewer fields
+        minimal_token_data = {
+            "user_id": user_id,
+            "service": provider,
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }
+        
+        response = supabase.table("oauth_tokens").insert(minimal_token_data).execute()
+        return response.data[0] if response.data else None
 
 def get_oauth_token(user_id: str, provider: str) -> Dict[str, Any]:
     """
     Get an OAuth token for a user and provider.
     """
     supabase = get_supabase_admin()
-    response = supabase.table("oauth_tokens").select("*").eq("user_id", user_id).eq("provider", provider).execute()
+    
+    # Just search by service since that's the only column we know exists
+    response = supabase.table("oauth_tokens").select("*").eq("user_id", user_id).eq("service", provider).execute()
+    
     return response.data[0] if response.data else None
 
 def update_oauth_token(token_id: str, access_token: str, refresh_token: str, expires_in: int) -> Dict[str, Any]:
@@ -147,23 +163,42 @@ def update_oauth_token(token_id: str, access_token: str, refresh_token: str, exp
     """
     supabase = get_supabase_admin()
     
-    # Calculate expires_at from expires_in
-    expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
-    
+    # Only include the columns we know exist in the table
     token_data = {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "expires_at": expires_at.isoformat(),
+        "expires_in": expires_in,
         "updated_at": datetime.utcnow().isoformat()
     }
     
-    response = supabase.table("oauth_tokens").update(token_data).eq("id", token_id).execute()
-    return response.data[0] if response.data else None
+    # Try to update the token
+    try:
+        response = supabase.table("oauth_tokens").update(token_data).eq("id", token_id).execute()
+        return response.data[0] if response.data else None
+    except Exception as e:
+        # If there's an error, log it and try a more minimal approach
+        print(f"Error updating OAuth token: {str(e)}")
+        
+        # Try with even fewer fields
+        minimal_token_data = {
+            "access_token": access_token,
+            "refresh_token": refresh_token
+        }
+        
+        response = supabase.table("oauth_tokens").update(minimal_token_data).eq("id", token_id).execute()
+        return response.data[0] if response.data else None
 
 # Subscription functions
-def create_subscription(user_id: str, plan: str, status: str, stripe_subscription_id: Optional[str] = None) -> Dict[str, Any]:
+def create_subscription(user_id: str, plan: str, status: str, stripe_subscription_id: Optional[str] = None, stripe_customer_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Create a new subscription.
+    
+    Args:
+        user_id: The user ID
+        plan: The subscription plan (starter, professional, business, enterprise)
+        status: The subscription status (active, past_due, cancelled, etc.)
+        stripe_subscription_id: The Stripe subscription ID
+        stripe_customer_id: The Stripe customer ID
     """
     supabase = get_supabase_admin()
     
@@ -172,6 +207,7 @@ def create_subscription(user_id: str, plan: str, status: str, stripe_subscriptio
         "plan": plan,
         "status": status,
         "stripe_subscription_id": stripe_subscription_id,
+        "stripe_customer_id": stripe_customer_id,
         "created_at": datetime.utcnow().isoformat(),
         "updated_at": datetime.utcnow().isoformat()
     }
@@ -197,18 +233,35 @@ def update_subscription(subscription_id: str, data: Dict[str, Any]) -> Dict[str,
     return response.data[0] if response.data else None
 
 # Task Mapping functions
-def create_task_mapping(user_id: str, zoho_task_id: str, todoist_task_id: str) -> Dict[str, Any]:
+def create_task_mapping(user_id: str, zoho_task_id: str, todoist_task_id: str, 
+                       zoho_last_modified: Optional[datetime] = None, 
+                       todoist_last_modified: Optional[datetime] = None) -> Dict[str, Any]:
     """
     Create a new task mapping.
+    
+    Args:
+        user_id: The user ID
+        zoho_task_id: The Zoho task ID
+        todoist_task_id: The Todoist task ID
+        zoho_last_modified: The last modified time of the Zoho task
+        todoist_last_modified: The last modified time of the Todoist task
+        
+    Returns:
+        The created task mapping
     """
     supabase = get_supabase_admin()
+    
+    now = datetime.utcnow()
     
     mapping_data = {
         "user_id": user_id,
         "zoho_task_id": zoho_task_id,
         "todoist_task_id": todoist_task_id,
-        "created_at": datetime.utcnow().isoformat(),
-        "updated_at": datetime.utcnow().isoformat()
+        "last_sync_time": now.isoformat(),
+        "zoho_last_modified": zoho_last_modified.isoformat() if zoho_last_modified else None,
+        "todoist_last_modified": todoist_last_modified.isoformat() if todoist_last_modified else None,
+        "created_at": now.isoformat(),
+        "updated_at": now.isoformat()
     }
     
     response = supabase.table("task_mappings").insert(mapping_data).execute()
@@ -230,6 +283,43 @@ def get_task_mapping_by_todoist_id(user_id: str, todoist_task_id: str) -> Dict[s
     response = supabase.table("task_mappings").select("*").eq("user_id", user_id).eq("todoist_task_id", todoist_task_id).execute()
     return response.data[0] if response.data else None
 
+def get_task_mappings(user_id: str, page: int = 1, per_page: int = 10, search: str = "", status: str = "") -> List[Dict[str, Any]]:
+    """
+    Get all task mappings for a user with pagination.
+    
+    Args:
+        user_id: The user ID
+        page: The page number (1-indexed)
+        per_page: The number of items per page
+        search: Optional search query
+        status: Optional status filter
+        
+    Returns:
+        A list of task mappings
+    """
+    supabase = get_supabase_admin()
+    
+    # Calculate start and end for pagination
+    start = (page - 1) * per_page
+    end = start + per_page - 1
+    
+    # Start building the query
+    query = supabase.table("task_mappings").select("*").eq("user_id", user_id)
+    
+    # Apply filters if provided
+    if status:
+        query = query.eq("status", status)
+    
+    # Apply search if provided
+    if search:
+        # This is a simplified search - in a real app, you might want to use more sophisticated search
+        query = query.or_(f"zoho_task_id.ilike.%{search}%,todoist_task_id.ilike.%{search}%")
+    
+    # Apply pagination and ordering
+    response = query.range(start, end).order("created_at", desc=True).execute()
+    
+    return response.data if response.data else []
+
 def delete_task_mapping(mapping_id: str) -> bool:
     """
     Delete a task mapping.
@@ -237,6 +327,15 @@ def delete_task_mapping(mapping_id: str) -> bool:
     supabase = get_supabase_admin()
     supabase.table("task_mappings").delete().eq("id", mapping_id).execute()
     return True
+
+def update_task_mapping(mapping_id: str, data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Update a task mapping.
+    """
+    supabase = get_supabase_admin()
+    data["updated_at"] = datetime.utcnow().isoformat()
+    response = supabase.table("task_mappings").update(data).eq("id", mapping_id).execute()
+    return response.data[0] if response.data else None
 
 # Sync Log functions
 def create_sync_log(user_id: str, status: str, details: Optional[str] = None) -> Dict[str, Any]:

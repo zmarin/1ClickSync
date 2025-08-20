@@ -4,6 +4,9 @@ CREATE TABLE IF NOT EXISTS task_mappings (
     user_id UUID REFERENCES users(id) NOT NULL,
     zoho_task_id TEXT NOT NULL,
     todoist_task_id TEXT NOT NULL,
+    last_sync_time TIMESTAMPTZ,
+    zoho_last_modified TIMESTAMPTZ,
+    todoist_last_modified TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );

@@ -3,9 +3,11 @@ CREATE TABLE IF NOT EXISTS oauth_tokens (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) NOT NULL,
     service TEXT NOT NULL,
+    provider TEXT NOT NULL,
     access_token TEXT NOT NULL,
-    refresh_token TEXT NOT NULL,
+    refresh_token TEXT,
     expires_in INTEGER,
+    expires_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );

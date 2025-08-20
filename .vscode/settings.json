@@ -1,3 +1,4 @@
 {
-    "files.saveConflictResolution": "overwriteFileOnDisk"
+    "files.saveConflictResolution": "overwriteFileOnDisk",
+    "do.manager.api.token": "dop_v1_8372e6ffb1d1a360783354ec0e1f4c949e4ea04068e3b38a12aef91d4fa96330"
 }

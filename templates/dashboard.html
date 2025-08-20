@@ -57,8 +57,25 @@
 
     {% if current_user.onboarding_completed %}
     <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        <h2 class="text-2xl font-semibold mb-4">Synchronization Status</h2>
-        <!-- Add synchronization status and controls here -->
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-semibold">Synchronization Status</h2>
+            <div class="flex items-center space-x-4">
+                <button id="manualSyncButton" 
+                    class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg flex items-center"
+                    onclick="triggerManualSync()">
+                    <svg id="syncIcon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span>Sync Now</span                </button>
+                <div id="syncStatus" class="flex items-center text-gray-600">
+                    <svg id="statusIcon" class="w-5 h-5 mr-2 hidden" viewBox="0 0 24 24">
+                        <circle id="statusSpinner" class="opacity-0" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                        <path id="statusCheck" class="opacity-0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span id="statusText">Last sync: {{ last_sync_time|default('Never', true) }}</span>
+                </div>
+            </div>
+        </div>
     </div>
     {% endif %}
 </div>
