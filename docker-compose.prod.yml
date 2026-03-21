@@ -1,8 +1,5 @@
-# Production Docker Compose — use with:
-#   docker compose -f docker-compose.prod.yml up -d
-#
-# Requires .env.production with all secrets set.
-# DB and Redis are NOT exposed to host network.
+# Production Docker Compose for Dokploy deployment
+# PostgreSQL and Redis are managed as separate Dokploy database services
 
 services:
   app:
@@ -15,8 +12,8 @@ services:
       - "${PORT:-3000}:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://oneclicksync:${DB_PASSWORD}@postgres:5432/oneclicksync
-      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
       - ZOHO_CLIENT_ID=${ZOHO_CLIENT_ID}
       - ZOHO_CLIENT_SECRET=${ZOHO_CLIENT_SECRET}
       - ZOHO_REDIRECT_URI=${ZOHO_REDIRECT_URI}
@@ -28,11 +25,6 @@ services:
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
       - SMTP_URL=${SMTP_URL:-}
       - EMAIL_FROM=${EMAIL_FROM:-}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     restart: always
     deploy:
       resources:
@@ -57,8 +49,8 @@ services:
       disable: true
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://oneclicksync:${DB_PASSWORD}@postgres:5432/oneclicksync
-      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
       - ZOHO_CLIENT_ID=${ZOHO_CLIENT_ID}
       - ZOHO_CLIENT_SECRET=${ZOHO_CLIENT_SECRET}
       - ZOHO_REDIRECT_URI=${ZOHO_REDIRECT_URI}
@@ -66,11 +58,6 @@ services:
       - SESSION_SECRET=${SESSION_SECRET}
       - JWT_SECRET=${JWT_SECRET}
       - APP_URL=${APP_URL}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     restart: always
     deploy:
       resources:
@@ -83,45 +70,3 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: oneclicksync
-      POSTGRES_USER: oneclicksync
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-    # No ports exposed — only accessible from internal network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U oneclicksync"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-
-  redis:
-    image: redis:7-alpine
-    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
-    # No ports exposed — only accessible from internal network
-    volumes:
-      - redisdata:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-
-volumes:
-  pgdata:
-  redisdata:
