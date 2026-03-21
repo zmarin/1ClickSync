@@ -1,19 +1,28 @@
+# Production Docker Compose — use with:
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Requires .env.production with all secrets set.
+# DB and Redis are NOT exposed to host network.
+
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        INSTALL_DEV: "false"
     ports:
       - "${PORT:-3000}:3000"
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - DATABASE_URL=postgresql://oneclicksync:${DB_PASSWORD:-changeme}@postgres:5432/oneclicksync
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://oneclicksync:${DB_PASSWORD}@postgres:5432/oneclicksync
       - REDIS_URL=redis://redis:6379
       - ZOHO_CLIENT_ID=${ZOHO_CLIENT_ID}
       - ZOHO_CLIENT_SECRET=${ZOHO_CLIENT_SECRET}
       - ZOHO_REDIRECT_URI=${ZOHO_REDIRECT_URI}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - SESSION_SECRET=${SESSION_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
       - APP_URL=${APP_URL}
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
@@ -24,62 +33,94 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    restart: unless-stopped
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   worker:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        INSTALL_DEV: "false"
     command: ["node", "dist/worker.js"]
     healthcheck:
       disable: true
     environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - DATABASE_URL=postgresql://oneclicksync:${DB_PASSWORD:-changeme}@postgres:5432/oneclicksync
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://oneclicksync:${DB_PASSWORD}@postgres:5432/oneclicksync
       - REDIS_URL=redis://redis:6379
       - ZOHO_CLIENT_ID=${ZOHO_CLIENT_ID}
       - ZOHO_CLIENT_SECRET=${ZOHO_CLIENT_SECRET}
       - ZOHO_REDIRECT_URI=${ZOHO_REDIRECT_URI}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - SESSION_SECRET=${SESSION_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
       - APP_URL=${APP_URL}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    restart: unless-stopped
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   postgres:
     image: postgres:16-alpine
     environment:
       POSTGRES_DB: oneclicksync
       POSTGRES_USER: oneclicksync
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
+    # No ports exposed — only accessible from internal network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U oneclicksync"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+    # No ports exposed — only accessible from internal network
     volumes:
       - redisdata:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
 volumes:
   pgdata:

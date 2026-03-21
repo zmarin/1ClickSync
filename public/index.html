@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1ClickSync — Automated Zoho One Setup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #16161f;
+            --bg-tertiary: #1e1e2e;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1a8;
+            --border: #2a2a3a;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            color: var(--accent-hover);
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-name {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Main content */
+        main {
+            padding: 40px 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Auth forms */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 100px);
+        }
+
+        .auth-box {
+            width: 100%;
+            max-width: 420px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px;
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .auth-header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .auth-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .form-submit {
+            width: 100%;
+            margin-top: 24px;
+        }
+
+        .toggle-form {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .toggle-form button {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-weight: 500;
+            padding: 0;
+            font-family: inherit;
+        }
+
+        .toggle-form button:hover {
+            color: var(--accent-hover);
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        .welcome-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 40px;
+        }
+
+        .welcome-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .welcome-header h1 {
+            font-size: 28px;
+        }
+
+        .plan-badge {
+            background: var(--accent);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .welcome-description {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        /* Section headers */
+        .section-header {
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        /* Templates grid */
+        .templates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .template-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .template-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.1);
+        }
+
+        .template-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .template-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .template-steps {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .template-steps-count {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .template-card button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .template-card button:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Status section */
+        .status-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 40px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-info h3 {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .status-info p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--error);
+        }
+
+        .status-dot.connected {
+            background: var(--success);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+            padding: 24px 0;
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.error {
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .toast.success {
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .toast.error::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--error);
+            flex-shrink: 0;
+        }
+
+        .toast.success::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--success);
+            flex-shrink: 0;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Loading state */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .auth-box {
+                padding: 24px;
+            }
+
+            .welcome-section {
+                padding: 20px;
+            }
+
+            .welcome-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .welcome-header h1 {
+                font-size: 22px;
+                margin-bottom: 12px;
+            }
+
+            .templates-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-right {
+                gap: 8px;
+            }
+
+            .user-name {
+                display: none;
+            }
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state p {
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav id="navbar" style="display: none;">
+        <div class="container">
+            <div class="nav-content">
+                <div class="nav-brand">1ClickSync</div>
+                <div class="nav-right">
+                    <span class="user-name" id="navUserName"></span>
+                    <button class="btn btn-danger" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="container">
+        <!-- Auth view -->
+        <div id="authView" class="auth-container">
+            <div class="auth-box">
+                <div class="auth-header">
+                    <h1>1ClickSync</h1>
+                    <p id="authSubtitle">Sign in to your account</p>
+                </div>
+
+                <!-- Login form -->
+                <form id="loginForm" style="display: block;">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" required placeholder="you@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary form-submit" id="loginSubmit">Sign in</button>
+                    <div class="toggle-form">
+                        Don't have an account? <button type="button" id="switchToRegister">Create one</button>
+                    </div>
+                </form>
+
+                <!-- Register form -->
+                <form id="registerForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="registerName">Full Name</label>
+                        <input type="text" id="registerName" required placeholder="Jane Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">Email</label>
+                        <input type="email" id="registerEmail" required placeholder="you@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">Password</label>
+                        <input type="password" id="registerPassword" required placeholder="••••••••">
+                    </div>
+                    <div class="form-group">
+                        <label for="registerCompany">Company Name</label>
+                        <input type="text" id="registerCompany" required placeholder="Acme Inc.">
+                    </div>
+                    <button type="submit" class="btn btn-primary form-submit" id="registerSubmit">Create account</button>
+                    <div class="toggle-form">
+                        Already have an account? <button type="button" id="switchToLogin">Sign in</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard view -->
+        <div id="dashboardView" class="dashboard">
+            <!-- Welcome section -->
+            <div class="welcome-section">
+                <div class="welcome-header">
+                    <div>
+                        <h1>Welcome back, <span id="dashboardUserName"></span></h1>
+                        <p class="welcome-description" id="welcomeDescription"></p>
+                    </div>
+                    <div class="plan-badge" id="planBadge">Free Plan</div>
+                </div>
+            </div>
+
+            <!-- Available Templates section -->
+            <div class="section-header">
+                <h2>Available Templates</h2>
+            </div>
+            <div class="templates-grid" id="templatesGrid">
+                <div class="empty-state">
+                    <p>Loading templates...</p>
+                </div>
+            </div>
+
+            <!-- Zoho Connection section -->
+            <div class="section-header">
+                <h2>Zoho Connection</h2>
+            </div>
+            <div class="status-section">
+                <div class="status-item">
+                    <div class="status-info">
+                        <h3>Connection Status</h3>
+                        <p id="zohoStatus">Configure your Zoho One account to begin automation</p>
+                    </div>
+                    <div class="status-badge">
+                        <span class="status-dot"></span>
+                        <span id="zohoStatusText">Not Connected</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" style="margin-top: 16px;">Connect Zoho Account</button>
+            </div>
+
+            <!-- Web Forms section -->
+            <div class="section-header" style="margin-top: 40px;">
+                <h2>Web Forms</h2>
+            </div>
+            <div class="status-section" id="formsSection">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <p style="color: var(--text-secondary); margin: 0;">Embeddable forms that push leads directly to your Zoho CRM</p>
+                    <button class="btn btn-primary" id="createFormBtn" style="white-space: nowrap;">+ New Form</button>
+                </div>
+                <div id="formsList"></div>
+            </div>
+
+            <!-- Form Builder Modal -->
+            <div id="formBuilderModal" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center;">
+                <div style="background:var(--bg-secondary); border-radius:12px; padding:32px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; border:1px solid var(--border);">
+                    <h3 style="margin:0 0 20px 0;">Create Web Form</h3>
+                    <form id="formBuilderForm">
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label>Form Name</label>
+                            <input type="text" id="fbName" value="Contact Form" class="form-input" style="width:100%;" />
+                        </div>
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label>Target Module</label>
+                            <select id="fbModule" class="form-input" style="width:100%;">
+                                <option value="Leads">Leads</option>
+                                <option value="Contacts">Contacts</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label>Primary Color</label>
+                            <input type="color" id="fbColor" value="#3b82f6" style="height:40px;width:80px;border:none;cursor:pointer;" />
+                        </div>
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label>Button Text</label>
+                            <input type="text" id="fbButtonText" value="Submit" class="form-input" style="width:100%;" />
+                        </div>
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label>Success Message</label>
+                            <input type="text" id="fbSuccessMsg" value="Thank you! We will be in touch." class="form-input" style="width:100%;" />
+                        </div>
+                        <div style="display:flex; gap:12px; margin-top:24px;">
+                            <button type="submit" class="btn btn-primary" style="flex:1;">Create Form</button>
+                            <button type="button" class="btn" id="fbCancel" style="flex:1; background:var(--bg-tertiary); color:var(--text-primary); border:1px solid var(--border);">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Embed Code Modal -->
+            <div id="embedModal" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); align-items:center; justify-content:center;">
+                <div style="background:var(--bg-secondary); border-radius:12px; padding:32px; max-width:700px; width:90%; max-height:80vh; overflow-y:auto; border:1px solid var(--border);">
+                    <h3 style="margin:0 0 8px 0;">Embed Code</h3>
+                    <p style="color:var(--text-secondary); margin:0 0 16px 0;">Paste this HTML into your website. Edit the CSS variables to change styling.</p>
+                    <textarea id="embedCodeArea" readonly style="width:100%; height:300px; background:var(--bg-primary); color:#a5f3fc; border:1px solid var(--border); border-radius:8px; padding:12px; font-family:'Courier New',monospace; font-size:0.8rem; resize:vertical;"></textarea>
+                    <div style="display:flex; gap:12px; margin-top:16px;">
+                        <button class="btn btn-primary" id="copyEmbedBtn" style="flex:1;">Copy to Clipboard</button>
+                        <button class="btn" id="closeEmbedBtn" style="flex:1; background:var(--bg-tertiary); color:var(--text-primary); border:1px solid var(--border);">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>1ClickSync — Automated Zoho One Setup</p>
+    </footer>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // State management
+        const state = {
+            token: localStorage.getItem('token'),
+            user: null,
+            isLoading: false
+        };
+
+        // DOM elements
+        const authView = document.getElementById('authView');
+        const dashboardView = document.getElementById('dashboardView');
+        const navbar = document.getElementById('navbar');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const toastContainer = document.getElementById('toastContainer');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            if (state.token) {
+                fetchCurrentUser();
+            } else {
+                showAuthView();
+            }
+        });
+
+        // Event listeners
+        function setupEventListeners() {
+            loginForm.addEventListener('submit', handleLogin);
+            registerForm.addEventListener('submit', handleRegister);
+            document.getElementById('switchToRegister').addEventListener('click', (e) => {
+                e.preventDefault();
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                document.getElementById('authSubtitle').textContent = 'Create your account';
+            });
+            document.getElementById('switchToLogin').addEventListener('click', (e) => {
+                e.preventDefault();
+                registerForm.style.display = 'none';
+                loginForm.style.display = 'block';
+                document.getElementById('authSubtitle').textContent = 'Sign in to your account';
+            });
+            logoutBtn.addEventListener('click', handleLogout);
+        }
+
+        // Auth handlers
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                setLoading(true);
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.error || 'Login failed');
+                }
+
+                const data = await response.json();
+                state.token = data.token;
+                localStorage.setItem('token', data.token);
+                showToast('Successfully signed in', 'success');
+                await fetchCurrentUser();
+            } catch (error) {
+                showToast(error.message || 'Login failed', 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const company = document.getElementById('registerCompany').value;
+
+            try {
+                setLoading(true);
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password, company })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.error || 'Registration failed');
+                }
+
+                const data = await response.json();
+                state.token = data.token;
+                localStorage.setItem('token', data.token);
+                showToast('Account created successfully', 'success');
+                await fetchCurrentUser();
+            } catch (error) {
+                showToast(error.message || 'Registration failed', 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function fetchCurrentUser() {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        clearAuth();
+                        return;
+                    }
+                    throw new Error('Failed to fetch user');
+                }
+
+                const userData = await response.json();
+                state.user = userData.user;
+                showDashboard();
+                await fetchTemplates();
+                await fetchForms();
+            } catch (error) {
+                showToast(error.message, 'error');
+                clearAuth();
+            }
+        }
+
+        async function fetchTemplates() {
+            try {
+                const response = await fetch('/api/templates', {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                if (!response.ok) throw new Error('Failed to fetch templates');
+
+                const templates = await response.json();
+                renderTemplates(templates);
+            } catch (error) {
+                showToast(error.message, 'error');
+                document.getElementById('templatesGrid').innerHTML = '<div class="empty-state"><p>Failed to load templates</p></div>';
+            }
+        }
+
+        // UI updates
+        function showDashboard() {
+            authView.style.display = 'none';
+            dashboardView.classList.add('active');
+            navbar.style.display = 'block';
+
+            const userName = state.user.name || 'User';
+            document.getElementById('dashboardUserName').textContent = userName;
+            document.getElementById('navUserName').textContent = userName;
+            document.getElementById('welcomeDescription').textContent = `Managing automation for ${state.user.company || 'your organization'}`;
+            const plan = (state.user.plan || 'free').toUpperCase();
+            document.getElementById('planBadge').textContent = `${plan} PLAN`;
+        }
+
+        function showAuthView() {
+            authView.style.display = 'flex';
+            dashboardView.classList.remove('active');
+            navbar.style.display = 'none';
+        }
+
+        function renderTemplates(templates) {
+            const grid = document.getElementById('templatesGrid');
+
+            if (!templates || templates.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><p>No templates available yet</p></div>';
+                return;
+            }
+
+            grid.innerHTML = templates.map(template => `
+                <div class="template-card">
+                    <div class="template-name">${escapeHtml(template.name)}</div>
+                    <div class="template-description">${escapeHtml(template.description)}</div>
+                    <div class="template-steps">
+                        <span class="template-steps-count">${template.step_count || 0} steps</span>
+                        <button type="button" onclick="alert('Launch template: ${template.name}')">Launch</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function handleLogout() {
+            clearAuth();
+            showAuthView();
+            showToast('Logged out successfully', 'success');
+        }
+
+        // ── Web Forms ───────────────────────────────
+        async function fetchForms() {
+            try {
+                const response = await fetch('/api/forms', {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                if (!response.ok) return;
+                const forms = await response.json();
+                renderForms(forms);
+            } catch (e) { /* silent */ }
+        }
+
+        function renderForms(forms) {
+            const el = document.getElementById('formsList');
+            if (!forms || forms.length === 0) {
+                el.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:16px;">No forms yet. Create one to start capturing leads.</p>';
+                return;
+            }
+            el.innerHTML = forms.map(f => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-tertiary);border-radius:8px;margin-bottom:8px;border:1px solid var(--border);">
+                    <div>
+                        <strong>${escapeHtml(f.name)}</strong>
+                        <span style="color:var(--text-secondary);margin-left:8px;font-size:0.85rem;">${f.target_module}</span>
+                        <span style="color:var(--text-secondary);margin-left:8px;font-size:0.85rem;">${f.submissions_count} submissions</span>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                        <button class="btn" onclick="showEmbedCode('${f.id}')" style="font-size:0.85rem;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Get Code</button>
+                        <span style="padding:6px 10px;border-radius:6px;font-size:0.8rem;background:${f.is_active ? '#065f46' : '#7f1d1d'};color:#fff;">${f.is_active ? 'Active' : 'Inactive'}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function showEmbedCode(formId) {
+            try {
+                const response = await fetch('/api/forms/' + formId, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                if (!response.ok) throw new Error('Failed to load form');
+                const data = await response.json();
+                document.getElementById('embedCodeArea').value = data.embed_code;
+                const modal = document.getElementById('embedModal');
+                modal.style.display = 'flex';
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        // Modal event listeners
+        document.getElementById('createFormBtn')?.addEventListener('click', () => {
+            document.getElementById('formBuilderModal').style.display = 'flex';
+        });
+        document.getElementById('fbCancel')?.addEventListener('click', () => {
+            document.getElementById('formBuilderModal').style.display = 'none';
+        });
+        document.getElementById('closeEmbedBtn')?.addEventListener('click', () => {
+            document.getElementById('embedModal').style.display = 'none';
+        });
+        document.getElementById('copyEmbedBtn')?.addEventListener('click', () => {
+            const area = document.getElementById('embedCodeArea');
+            area.select();
+            navigator.clipboard.writeText(area.value).then(() => showToast('Copied!', 'success'));
+        });
+
+        document.getElementById('formBuilderForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // For now we need a customer_id — use a placeholder or first customer
+            // In production this would come from the dashboard state
+            const body = {
+                customer_id: state.customerId || null,
+                name: document.getElementById('fbName').value,
+                target_module: document.getElementById('fbModule').value,
+                fields: [
+                    { name: 'first_name', label: 'First Name', type: 'text', required: false, zoho_field: 'First_Name' },
+                    { name: 'last_name', label: 'Last Name', type: 'text', required: true, zoho_field: 'Last_Name' },
+                    { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'Email' },
+                    { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'Phone' },
+                    { name: 'company', label: 'Company', type: 'text', required: false, zoho_field: 'Company' },
+                    { name: 'message', label: 'Message', type: 'textarea', required: false, zoho_field: 'Description' },
+                ],
+                style: {
+                    primaryColor: document.getElementById('fbColor').value,
+                    buttonText: document.getElementById('fbButtonText').value,
+                    successMessage: document.getElementById('fbSuccessMsg').value,
+                },
+            };
+
+            if (!body.customer_id) {
+                showToast('Connect a Zoho account first to create forms', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/forms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.token}`,
+                    },
+                    body: JSON.stringify(body),
+                });
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.error || 'Failed to create form');
+                }
+                const data = await response.json();
+                document.getElementById('formBuilderModal').style.display = 'none';
+                showToast('Form created!', 'success');
+                // Show embed code immediately
+                document.getElementById('embedCodeArea').value = data.embed_code;
+                document.getElementById('embedModal').style.display = 'flex';
+                fetchForms();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        });
+
+        function clearAuth() {
+            state.token = null;
+            state.user = null;
+            localStorage.removeItem('token');
+        }
+
+        // Utilities
+        function showToast(message, type = 'error') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function setLoading(isLoading) {
+            state.isLoading = isLoading;
+            const submitBtns = document.querySelectorAll('.form-submit');
+            submitBtns.forEach(btn => {
+                btn.disabled = isLoading;
+                btn.textContent = isLoading ? 'Loading...' : (btn.id === 'loginSubmit' ? 'Sign in' : 'Create account');
+            });
+        }
+    </script>
+</body>
+</html>

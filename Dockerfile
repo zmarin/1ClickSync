@@ -1,33 +1,45 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim-buster
-
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-# Set work directory
+# ---- Build stage ----
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    netcat \
-    curl \
-    libpq-dev \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+COPY package*.json ./
+RUN npm ci
 
-# Install Python dependencies
-COPY requirements.txt /app/
-RUN pip install --upgrade pip && pip install -r requirements.txt
+COPY tsconfig.json ./
+COPY src/ ./src/
+RUN npm run build
 
-# Copy project
-COPY . /app/
+# ---- Production stage ----
+FROM node:20-alpine
 
-# Make start script executable
-RUN chmod +x /app/start-app.sh
+# Security: don't run as root
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Expose port 8085
-EXPOSE 8085
+WORKDIR /app
 
-# Run the application
-CMD ["/app/start-app.sh"]
+# Install deps — use build arg to control dev vs prod
+ARG INSTALL_DEV=true
+COPY package*.json ./
+RUN if [ "$INSTALL_DEV" = "false" ]; then \
+      npm ci --omit=dev && npm cache clean --force; \
+    else \
+      npm ci && npm cache clean --force; \
+    fi
+
+# Copy built artifacts
+COPY --from=builder /app/dist ./dist
+COPY src/templates/*.json ./dist/templates/
+COPY src/db/migrations/*.sql ./dist/db/migrations/
+COPY public/ ./public/
+COPY scripts/start.sh ./start.sh
+
+# Own files by non-root user
+RUN chmod +x start.sh && chown -R appuser:appgroup /app
+USER appuser
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
+
+CMD ["./start.sh"]

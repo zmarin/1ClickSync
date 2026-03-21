@@ -1,0 +1,288 @@
+{
+  "id": "saas-crm-quickstart",
+  "name": "SaaS CRM Quickstart",
+  "description": "Production-ready CRM setup for SaaS businesses. Configures deal stages, custom fields, lead sources, and workflow automations tailored for subscription software.",
+  "business_type": "saas",
+  "version": "1.0",
+  "steps": [
+    {
+      "id": "verify-connection",
+      "order": 1,
+      "action": "verify_connection",
+      "target_app": "crm",
+      "config": {},
+      "description": "Verify Zoho CRM connection is working"
+    },
+    {
+      "id": "lead-source-update",
+      "order": 2,
+      "action": "update_picklist",
+      "target_app": "crm",
+      "depends_on": ["verify-connection"],
+      "config": {
+        "module": "Leads",
+        "field": "Lead_Source",
+        "append_values": [
+          "{{customer.site_name}}",
+          "{{customer.site_name}} - Organic",
+          "{{customer.site_name}} - Paid",
+          "{{customer.site_name}} - Referral",
+          "Product Hunt",
+          "Indie Hackers",
+          "API Integration"
+        ]
+      },
+      "description": "Add app-specific lead sources to CRM"
+    },
+    {
+      "id": "deal-stages",
+      "order": 3,
+      "action": "update_picklist",
+      "target_app": "crm",
+      "depends_on": ["verify-connection"],
+      "config": {
+        "module": "Deals",
+        "field": "Stage",
+        "values": [
+          "Trial Signup",
+          "Trial Active",
+          "Onboarding",
+          "Active - Monthly",
+          "Active - Annual",
+          "Upgrade Opportunity",
+          "At Risk",
+          "Churned",
+          "Reactivated",
+          "Closed Lost"
+        ]
+      },
+      "description": "Replace default deal stages with SaaS-specific pipeline"
+    },
+    {
+      "id": "field-mrr",
+      "order": 4,
+      "action": "create_field",
+      "target_app": "crm",
+      "depends_on": ["verify-connection"],
+      "config": {
+        "module": "Deals",
+        "field_label": "MRR",
+        "data_type": "currency",
+        "api_name": "MRR"
+      },
+      "description": "Monthly Recurring Revenue field on Deals"
+    },
+    {
+      "id": "field-arr",
+      "order": 5,
+      "action": "create_field",
+      "target_app": "crm",
+      "depends_on": ["field-mrr"],
+      "config": {
+        "module": "Deals",
+        "field_label": "ARR",
+        "data_type": "currency",
+        "api_name": "ARR"
+      },
+      "description": "Annual Recurring Revenue field on Deals"
+    },
+    {
+      "id": "field-plan-type",
+      "order": 6,
+      "action": "create_field",
+      "target_app": "crm",
+      "depends_on": ["verify-connection"],
+      "config": {
+        "module": "Deals",
+        "field_label": "Plan Type",
+        "data_type": "picklist",
+        "api_name": "Plan_Type",
+        "values": ["Free", "Starter", "Professional", "Enterprise", "Custom"]
+      },
+      "description": "Subscription plan type picklist on Deals"
+    },
+    {
+      "id": "field-billing-cycle",
+      "order": 7,
+      "action": "create_field",
+      "target_app": "crm",
+      "depends_on": ["verify-connection"],
+      "config": {
+        "module": "Deals",
+        "field_label": "Billing Cycle",
+        "data_type": "picklist",
+        "api_name": "Billing_Cycle",
+        "values": ["Monthly", "Quarterly", "Annual", "Lifetime"]
+      },
+      "description": "Billing cycle field on Deals"
+    },
+    {
+      "id": "field-signup-source",
+      "order": 8,
+      "action": "create_field",
+      "target_app": "crm",
+      "depends_on": ["verify-connection"],
+      "config": {
+        "module": "Contacts",
+        "field_label": "Signup Source",
+        "data_type": "picklist",
+        "api_name": "Signup_Source",
+        "values": [
+          "Website",
+          "Product Hunt",
+          "Referral",
+          "Google Ads",
+          "Content Marketing",
+          "Social Media",
+          "API",
+          "Other"
+        ]
+      },
+      "description": "Track how contacts found your product"
+    },
+    {
+      "id": "field-trial-start",
+      "order": 9,
+      "action": "create_field",
+      "target_app": "crm",
+      "depends_on": ["verify-connection"],
+      "config": {
+        "module": "Deals",
+        "field_label": "Trial Start Date",
+        "data_type": "date",
+        "api_name": "Trial_Start_Date"
+      },
+      "description": "When the trial started"
+    },
+    {
+      "id": "field-trial-end",
+      "order": 10,
+      "action": "create_field",
+      "target_app": "crm",
+      "depends_on": ["field-trial-start"],
+      "config": {
+        "module": "Deals",
+        "field_label": "Trial End Date",
+        "data_type": "date",
+        "api_name": "Trial_End_Date"
+      },
+      "description": "When the trial expires"
+    },
+    {
+      "id": "field-churn-reason",
+      "order": 11,
+      "action": "create_field",
+      "target_app": "crm",
+      "depends_on": ["verify-connection"],
+      "config": {
+        "module": "Deals",
+        "field_label": "Churn Reason",
+        "data_type": "picklist",
+        "api_name": "Churn_Reason",
+        "values": [
+          "Too Expensive",
+          "Missing Features",
+          "Switched to Competitor",
+          "No Longer Needed",
+          "Poor Support",
+          "Technical Issues",
+          "Other"
+        ]
+      },
+      "description": "Track why customers churn"
+    },
+    {
+      "id": "field-nps-score",
+      "order": 12,
+      "action": "create_field",
+      "target_app": "crm",
+      "depends_on": ["verify-connection"],
+      "config": {
+        "module": "Contacts",
+        "field_label": "NPS Score",
+        "data_type": "integer",
+        "api_name": "NPS_Score"
+      },
+      "description": "Net Promoter Score from surveys"
+    },
+    {
+      "id": "workflow-new-lead-notify",
+      "order": 13,
+      "action": "create_workflow",
+      "target_app": "crm",
+      "depends_on": ["lead-source-update"],
+      "config": {
+        "module": "Leads",
+        "name": "[Quickstart] New Lead Notification",
+        "trigger": "create",
+        "condition": {
+          "field": "Lead_Source",
+          "contains": "{{customer.site_name}}"
+        },
+        "actions": [
+          {
+            "type": "email_notification",
+            "to": "{{customer.email}}",
+            "subject": "New lead from {{customer.site_name}}: ${Lead.Full_Name}",
+            "template": "new_lead_notification"
+          }
+        ]
+      },
+      "description": "Email notification when a new lead comes from your site"
+    },
+    {
+      "id": "workflow-trial-expiry-alert",
+      "order": 14,
+      "action": "create_workflow",
+      "target_app": "crm",
+      "depends_on": ["field-trial-end", "deal-stages"],
+      "config": {
+        "module": "Deals",
+        "name": "[Quickstart] Trial Expiring Soon",
+        "trigger": "date_field",
+        "trigger_config": {
+          "field": "Trial_End_Date",
+          "days_before": 3
+        },
+        "condition": {
+          "field": "Stage",
+          "equals": "Trial Active"
+        },
+        "actions": [
+          {
+            "type": "email_notification",
+            "to": "{{customer.email}}",
+            "subject": "Trial expiring in 3 days: ${Deal.Deal_Name}",
+            "template": "trial_expiry_alert"
+          }
+        ]
+      },
+      "description": "Alert 3 days before a trial expires"
+    },
+    {
+      "id": "workflow-churn-alert",
+      "order": 15,
+      "action": "create_workflow",
+      "target_app": "crm",
+      "depends_on": ["deal-stages", "field-churn-reason"],
+      "config": {
+        "module": "Deals",
+        "name": "[Quickstart] Customer Churned Alert",
+        "trigger": "field_update",
+        "trigger_config": {
+          "field": "Stage",
+          "new_value": "Churned"
+        },
+        "actions": [
+          {
+            "type": "email_notification",
+            "to": "{{customer.email}}",
+            "subject": "Customer churned: ${Deal.Deal_Name}",
+            "template": "churn_alert"
+          }
+        ]
+      },
+      "description": "Alert when a deal moves to Churned stage"
+    }
+  ]
+}

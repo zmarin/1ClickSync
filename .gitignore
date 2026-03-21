@@ -1,49 +1,11 @@
-# Python
-__pycache__/
-*/__pycache__/
-*/*/__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environment
-venv/
-env/
-new_venv/
-.venv/
-
-# Flask
-instance/
-.webassets-cache
-
-# Pytest
-.pytest_cache/
-
-# Coverage
-htmlcov/
-.coverage
-.coverage.*
-
-# Logs
-*.log
-logs/
-
-# Environment variables
+node_modules/
+dist/
 .env
-
-# Database
-*.db
-*.sqlite
-
-# IDE
-.vscode/
-.idea/
-
-# OS generated files
+*.log
 .DS_Store
-Thumbs.db
 
-# Binary files
-loclx-linux-amd64.zip
-
-# Docker
-.dockerignore
+# Python leftovers (safe to keep ignoring)
+__pycache__/
+*.pyc
+venv/
+*.egg-info/
