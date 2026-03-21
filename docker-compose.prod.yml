@@ -9,6 +9,8 @@ services:
       dockerfile: Dockerfile
       args:
         INSTALL_DEV: "false"
+    networks:
+      - dokploy-network
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
@@ -46,6 +48,8 @@ services:
     command: ["node", "dist/worker.js"]
     healthcheck:
       disable: true
+    networks:
+      - dokploy-network
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
@@ -69,3 +73,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+networks:
+  dokploy-network:
+    external: true
