@@ -1,5 +1,6 @@
 # Production Docker Compose for Dokploy deployment
 # PostgreSQL and Redis are managed as separate Dokploy database services
+# Traefik handles routing - no host port mapping needed
 
 services:
   app:
@@ -8,8 +9,6 @@ services:
       dockerfile: Dockerfile
       args:
         INSTALL_DEV: "false"
-    ports:
-      - "${PORT:-3000}:3000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
