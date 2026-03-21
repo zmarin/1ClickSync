@@ -611,7 +611,7 @@
                         <span id="zohoStatusText">Not Connected</span>
                     </div>
                 </div>
-                <button class="btn btn-primary" style="margin-top: 16px;">Connect Zoho Account</button>
+                <button class="btn btn-primary" id="connectZohoBtn" style="margin-top: 16px;">Connect Zoho Account</button>
             </div>
 
             <!-- Web Forms section -->
@@ -813,6 +813,8 @@
                 showDashboard();
                 await fetchTemplates();
                 await fetchForms();
+                // Try to load existing customer and check Zoho connection
+                try { await ensureCustomer(); await checkZohoConnection(); } catch(e) { /* ok - will create on connect */ }
             } catch (error) {
                 showToast(error.message, 'error');
                 clearAuth();
@@ -878,6 +880,96 @@
             clearAuth();
             showAuthView();
             showToast('Logged out successfully', 'success');
+        }
+
+        // ── Zoho Connection ─────────────────────────
+        async function ensureCustomer() {
+            // Check if we already have a customer for this user
+            if (state.customerId) return state.customerId;
+
+            try {
+                // Create or get existing customer from the user's profile
+                const response = await fetch('/api/customers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.token}`,
+                    },
+                    body: JSON.stringify({
+                        email: state.user.email,
+                        site_name: state.user.company || state.user.name || 'My Business',
+                        business_type: 'saas',
+                    }),
+                });
+
+                const customer = await response.json();
+                if (customer && customer.id) {
+                    state.customerId = customer.id;
+                    return customer.id;
+                }
+
+                throw new Error(customer.error || 'Failed to create customer profile');
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        async function handleConnectZoho() {
+            if (!state.token || !state.user) {
+                showToast('Please sign in first', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('connectZohoBtn');
+            btn.disabled = true;
+            btn.textContent = 'Connecting...';
+
+            try {
+                const customerId = await ensureCustomer();
+                // Redirect to Zoho OAuth — dc is auto-detected from token response
+                window.location.href = `/api/auth/zoho?customer_id=${customerId}&dc=com`;
+            } catch (error) {
+                showToast(error.message || 'Failed to start Zoho connection', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Connect Zoho Account';
+            }
+        }
+
+        async function checkZohoConnection() {
+            if (!state.customerId || !state.token) return;
+
+            try {
+                const response = await fetch(`/api/connection/${state.customerId}`, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                if (!response.ok) return;
+
+                const data = await response.json();
+                const statusDot = document.querySelector('.status-dot');
+                const statusText = document.getElementById('zohoStatusText');
+                const statusDesc = document.getElementById('zohoStatus');
+                const connectBtn = document.getElementById('connectZohoBtn');
+
+                if (data.connected) {
+                    statusDot.classList.add('connected');
+                    statusText.textContent = 'Connected';
+                    statusDesc.textContent = `Connected to ${data.org_id || 'Zoho'} (${data.dc || 'com'})`;
+                    connectBtn.textContent = 'Reconnect Zoho Account';
+                }
+            } catch (e) { /* silent */ }
+        }
+
+        // Wire up the Connect Zoho button
+        document.getElementById('connectZohoBtn')?.addEventListener('click', handleConnectZoho);
+
+        // Check for ?connected=true in URL after OAuth callback
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('connected') === 'true') {
+            showToast('Zoho account connected successfully!', 'success');
+            window.history.replaceState({}, '', '/');
+        } else if (urlParams.get('error')) {
+            showToast(`Connection failed: ${urlParams.get('error')}`, 'error');
+            window.history.replaceState({}, '', '/');
         }
 
         // ── Web Forms ───────────────────────────────
