@@ -170,6 +170,7 @@ export const crmApi = {
 
 /**
  * Desk-specific convenience methods
+ * API: https://desk.zoho.com/DeskAPIDocument
  */
 export const deskApi = {
   async createTicket(appId: string, ticketData: Record<string, any>, stepId?: string) {
@@ -198,10 +199,18 @@ export const deskApi = {
       path: '/api/v1/departments',
     });
   },
+
+  async getContacts(appId: string, email?: string) {
+    const path = email
+      ? `/api/v1/contacts/search?email=${encodeURIComponent(email)}`
+      : '/api/v1/contacts';
+    return zohoApi({ appId, app: 'desk', path });
+  },
 };
 
 /**
  * Bookings-specific convenience methods
+ * API: https://www.zoho.com/bookings/help/api/v1/book-appointment.html
  */
 export const bookingsApi = {
   async getServices(appId: string) {
@@ -212,6 +221,14 @@ export const bookingsApi = {
     });
   },
 
+  async fetchAvailability(appId: string, serviceId: string, staffId: string, date: string) {
+    return zohoApi({
+      appId,
+      app: 'bookings',
+      path: `/bookings/v1/json/availableslots?service_id=${serviceId}&staff_id=${staffId}&selected_date=${date}`,
+    });
+  },
+
   async createAppointment(appId: string, appointmentData: Record<string, any>, stepId?: string) {
     return zohoApi({
       appId,
@@ -219,6 +236,71 @@ export const bookingsApi = {
       path: '/bookings/v1/json/appointment',
       method: 'POST',
       body: appointmentData,
+      stepId,
+    });
+  },
+};
+
+/**
+ * Books-specific convenience methods
+ * API: https://www.zoho.com/books/api/v3/
+ */
+export const booksApi = {
+  async createContact(appId: string, contactData: Record<string, any>, stepId?: string) {
+    return zohoApi({
+      appId,
+      app: 'books',
+      path: '/books/v3/contacts',
+      method: 'POST',
+      body: contactData,
+      stepId,
+    });
+  },
+
+  async createInvoice(appId: string, invoiceData: Record<string, any>, stepId?: string) {
+    return zohoApi({
+      appId,
+      app: 'books',
+      path: '/books/v3/invoices',
+      method: 'POST',
+      body: invoiceData,
+      stepId,
+    });
+  },
+
+  async getContacts(appId: string) {
+    return zohoApi({ appId, app: 'books', path: '/books/v3/contacts' });
+  },
+};
+
+/**
+ * Projects-specific convenience methods
+ * API: https://www.zoho.com/projects/help/rest-api/tasks-api.html
+ */
+export const projectsApi = {
+  async getPortals(appId: string) {
+    return zohoApi({
+      appId,
+      app: 'projects',
+      path: '/restapi/portals/',
+    });
+  },
+
+  async getProjects(appId: string, portalId: string) {
+    return zohoApi({
+      appId,
+      app: 'projects',
+      path: `/restapi/portal/${portalId}/projects/`,
+    });
+  },
+
+  async createTask(appId: string, portalId: string, projectId: string, taskData: Record<string, any>, stepId?: string) {
+    return zohoApi({
+      appId,
+      app: 'projects',
+      path: `/restapi/portal/${portalId}/projects/${projectId}/tasks/`,
+      method: 'POST',
+      body: taskData,
       stepId,
     });
   },

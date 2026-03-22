@@ -3,20 +3,21 @@ import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { query, queryOne } from '../db';
 import { authenticate } from '../auth';
-import { crmApi, ZohoApiError } from '../zoho/client';
+import { crmApi, deskApi, bookingsApi, booksApi, projectsApi, ZohoApiError } from '../zoho/client';
 import { env } from '../config';
 
 // ── Schemas ─────────────────────────────────────────
 const createFormSchema = z.object({
   app_id: z.string().uuid().optional(),
   customer_id: z.string().uuid().optional(),  // backward compat
+  route_type: z.enum(['crm', 'desk', 'bookings', 'books', 'projects']).default('crm'),
   name: z.string().min(1).max(255).default('Contact Form'),
-  target_module: z.enum(['Leads', 'Contacts', 'Deals']).default('Leads'),
-  lead_source: z.string().min(1).max(255),
+  target_module: z.string().min(1).max(100).default('Leads'),
+  lead_source: z.string().max(255).optional(),
   fields: z.array(z.object({
     name: z.string(),
     label: z.string(),
-    type: z.enum(['text', 'email', 'tel', 'textarea', 'select']),
+    type: z.enum(['text', 'email', 'tel', 'textarea', 'select', 'date', 'time', 'number']),
     required: z.boolean().default(false),
     zoho_field: z.string(),
     options: z.array(z.string()).optional(),
@@ -34,15 +35,58 @@ const createFormSchema = z.object({
 
 const submitFormSchema = z.object({}).catchall(z.string());
 
-// ── Default field presets ───────────────────────────
-const LEAD_FORM_DEFAULTS = [
-  { name: 'first_name', label: 'First Name', type: 'text' as const, required: false, zoho_field: 'First_Name' },
-  { name: 'last_name', label: 'Last Name', type: 'text' as const, required: true, zoho_field: 'Last_Name' },
-  { name: 'email', label: 'Email', type: 'email' as const, required: true, zoho_field: 'Email' },
-  { name: 'phone', label: 'Phone', type: 'tel' as const, required: false, zoho_field: 'Phone' },
-  { name: 'company', label: 'Company', type: 'text' as const, required: false, zoho_field: 'Company' },
-  { name: 'message', label: 'Message', type: 'textarea' as const, required: false, zoho_field: 'Description' },
-];
+// ── Default field presets per route type ─────────────
+const FIELD_PRESETS: Record<string, Array<{ name: string; label: string; type: string; required: boolean; zoho_field: string }>> = {
+  crm: [
+    { name: 'first_name', label: 'First Name', type: 'text', required: false, zoho_field: 'First_Name' },
+    { name: 'last_name', label: 'Last Name', type: 'text', required: true, zoho_field: 'Last_Name' },
+    { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'Email' },
+    { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'Phone' },
+    { name: 'company', label: 'Company', type: 'text', required: false, zoho_field: 'Company' },
+    { name: 'message', label: 'Message', type: 'textarea', required: false, zoho_field: 'Description' },
+  ],
+  desk: [
+    { name: 'subject', label: 'Subject', type: 'text', required: true, zoho_field: 'subject' },
+    { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'email' },
+    { name: 'name', label: 'Name', type: 'text', required: false, zoho_field: 'contactName' },
+    { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'phone' },
+    { name: 'description', label: 'Description', type: 'textarea', required: true, zoho_field: 'description' },
+    { name: 'priority', label: 'Priority', type: 'select', required: false, zoho_field: 'priority' },
+  ],
+  bookings: [
+    { name: 'name', label: 'Full Name', type: 'text', required: true, zoho_field: 'customer_name' },
+    { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'customer_email' },
+    { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'customer_phone' },
+    { name: 'preferred_date', label: 'Preferred Date', type: 'date', required: true, zoho_field: 'from_time' },
+    { name: 'preferred_time', label: 'Preferred Time', type: 'time', required: true, zoho_field: 'time_slot' },
+    { name: 'notes', label: 'Notes', type: 'textarea', required: false, zoho_field: 'additional_fields' },
+  ],
+  books: [
+    { name: 'contact_name', label: 'Contact Name', type: 'text', required: true, zoho_field: 'contact_name' },
+    { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'email' },
+    { name: 'company', label: 'Company', type: 'text', required: false, zoho_field: 'company_name' },
+    { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'phone' },
+    { name: 'notes', label: 'Notes', type: 'textarea', required: false, zoho_field: 'notes' },
+  ],
+  projects: [
+    { name: 'task_name', label: 'Task Name', type: 'text', required: true, zoho_field: 'name' },
+    { name: 'description', label: 'Description', type: 'textarea', required: false, zoho_field: 'description' },
+    { name: 'priority', label: 'Priority', type: 'select', required: false, zoho_field: 'priority' },
+    { name: 'due_date', label: 'Due Date', type: 'date', required: false, zoho_field: 'end_date' },
+  ],
+};
+
+// Backward compat alias
+const LEAD_FORM_DEFAULTS = FIELD_PRESETS.crm;
+
+// ── Module options per route type ───────────────────
+const MODULE_OPTIONS: Record<string, string[]> = {
+  crm: ['Leads', 'Contacts', 'Deals'],
+  desk: ['Tickets'],
+  bookings: ['Appointments'],
+  books: ['Contacts', 'Invoices'],
+  projects: ['Tasks'],
+};
 
 export async function formsPlugin(app: FastifyInstance) {
 
@@ -80,14 +124,15 @@ export async function formsPlugin(app: FastifyInstance) {
     const [form] = await query(
       `INSERT INTO form_configs
          (app_id, customer_id, user_id, form_key, name, target_module,
-          field_mapping, style_config, lead_source)
-       VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8)
+          route_type, field_mapping, style_config, lead_source)
+       VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         appId, userId, formKey, body.name,
-        body.target_module, JSON.stringify(fieldMapping),
+        body.target_module, body.route_type,
+        JSON.stringify(fieldMapping),
         JSON.stringify({ ...body.style, fields: body.fields }),
-        leadSource,
+        body.lead_source || null,
       ]
     );
 
@@ -107,7 +152,7 @@ export async function formsPlugin(app: FastifyInstance) {
 
     if (app_id) {
       const forms = await query(
-        `SELECT id, form_key, name, target_module, lead_source, is_active, submissions_count, created_at, app_id
+        `SELECT id, form_key, name, target_module, route_type, lead_source, is_active, submissions_count, created_at, app_id
          FROM form_configs WHERE user_id = $1 AND (app_id = $2 OR customer_id = $2) ORDER BY created_at DESC`,
         [userId, app_id]
       );
@@ -115,7 +160,7 @@ export async function formsPlugin(app: FastifyInstance) {
     }
 
     const forms = await query(
-      `SELECT f.id, f.form_key, f.name, f.target_module, f.lead_source, f.is_active, f.submissions_count, f.created_at,
+      `SELECT f.id, f.form_key, f.name, f.target_module, f.route_type, f.lead_source, f.is_active, f.submissions_count, f.created_at,
               f.app_id, a.name as app_name
        FROM form_configs f
        LEFT JOIN apps a ON a.id = f.app_id
@@ -218,21 +263,26 @@ export async function formsPlugin(app: FastifyInstance) {
   // ── Get form defaults/presets (authenticated) ─────
   app.get('/api/forms/presets/:module', { preHandler: [authenticate] }, async (request: FastifyRequest) => {
     const { module } = request.params as { module: string };
+    const { route_type = 'crm' } = request.query as { route_type?: string };
+    const presets = FIELD_PRESETS[route_type] || FIELD_PRESETS.crm;
+    const modules = MODULE_OPTIONS[route_type] || MODULE_OPTIONS.crm;
     return {
       module,
-      fields: module === 'Contacts' ? LEAD_FORM_DEFAULTS : LEAD_FORM_DEFAULTS,
+      route_type,
+      fields: presets,
+      modules,
       style: createFormSchema.shape.style._def.defaultValue(),
     };
   });
 
   // ══════════════════════════════════════════════════
   // PUBLIC: Form submission endpoint (NO auth needed)
-  // This is what the embedded form POSTs to
+  // Dispatches to CRM, Desk, Bookings, Books, or Projects
+  // based on form.route_type
   // ══════════════════════════════════════════════════
   app.post('/api/f/:formKey', async (request: FastifyRequest, reply: FastifyReply) => {
     const { formKey } = request.params as { formKey: string };
 
-    // Look up the form config
     const form = await queryOne(
       'SELECT * FROM form_configs WHERE form_key = $1 AND is_active = TRUE',
       [formKey]
@@ -242,29 +292,27 @@ export async function formsPlugin(app: FastifyInstance) {
       return reply.status(404).send({ error: 'Form not found or inactive' });
     }
 
-    // Parse submitted fields
     const submittedData = submitFormSchema.parse(request.body);
-
-    // Check that Zoho is connected for this app
     const appId = form.app_id || form.customer_id;
+    const routeType = form.route_type || 'crm';
+
     const tokens = await queryOne(
       'SELECT id FROM zoho_tokens WHERE (app_id = $1 OR customer_id = $1) AND is_valid = TRUE',
       [appId]
     );
 
-    // Map form fields → Zoho CRM fields
+    // Map form fields → Zoho fields using field_mapping
     const fieldMapping = form.field_mapping as Record<string, string>;
-    const crmRecord: Record<string, any> = {};
-
+    const mappedData: Record<string, any> = {};
     for (const [formField, zohoField] of Object.entries(fieldMapping)) {
       if (submittedData[formField] !== undefined) {
-        crmRecord[zohoField] = submittedData[formField];
+        mappedData[zohoField] = submittedData[formField];
       }
     }
 
-    // Add Lead Source attribution: "1ClickSync:<userId>"
-    if (form.lead_source) {
-      crmRecord['Lead_Source'] = form.lead_source;
+    // CRM-specific: add Lead Source
+    if (routeType === 'crm' && form.lead_source) {
+      mappedData['Lead_Source'] = form.lead_source;
     }
 
     // Log submission
@@ -274,31 +322,25 @@ export async function formsPlugin(app: FastifyInstance) {
       [form.id, appId, JSON.stringify(submittedData), request.ip, tokens ? 'processing' : 'queued']
     );
 
-    // Increment submissions counter
     await query(
       'UPDATE form_configs SET submissions_count = submissions_count + 1, updated_at = NOW() WHERE id = $1',
       [form.id]
     );
 
-    // If Zoho is connected, push to CRM immediately
+    // If Zoho is connected, dispatch to the appropriate tool
     if (tokens) {
       try {
-        const result = await crmApi.createRecord(
-          appId,
-          form.target_module,
-          crmRecord
-        );
-
-        const recordId = result.data?.[0]?.details?.id || result.data?.[0]?.id || null;
+        const result = await dispatchToZoho(routeType, appId, form, mappedData, submittedData);
+        const recordId = result.data?.[0]?.details?.id || result.data?.[0]?.id
+          || result.data?.id || result.appointment?.booking_id || null;
 
         await query(
           `UPDATE form_submissions
            SET status = 'synced', zoho_record_id = $1, zoho_module = $2
            WHERE id = $3`,
-          [recordId, form.target_module, submission.id]
+          [String(recordId || ''), `${routeType}.${form.target_module}`, submission.id]
         );
 
-        // CORS: allow any origin (this is an embed)
         reply.header('Access-Control-Allow-Origin', '*');
         return {
           success: true,
@@ -306,25 +348,23 @@ export async function formsPlugin(app: FastifyInstance) {
           record_id: recordId,
         };
       } catch (err: any) {
-        const errMsg = err instanceof ZohoApiError ? err.message : 'CRM sync failed';
+        const errMsg = err instanceof ZohoApiError ? err.message : `${routeType} sync failed`;
         await query(
           `UPDATE form_submissions SET status = 'failed', error = $1 WHERE id = $2`,
           [errMsg, submission.id]
         );
 
-        request.log.error({ err: errMsg, formKey }, 'Form submission CRM sync failed');
+        request.log.error({ err: errMsg, formKey, routeType }, 'Form submission sync failed');
 
-        // Still return success to the user — data is saved, will retry
         reply.header('Access-Control-Allow-Origin', '*');
         return {
           success: true,
           message: (form.style_config as any).successMessage || 'Thank you! We will be in touch.',
-          note: 'Submission saved, CRM sync pending.',
+          note: 'Submission saved, sync pending.',
         };
       }
     }
 
-    // No Zoho connection — save submission for later sync
     reply.header('Access-Control-Allow-Origin', '*');
     return {
       success: true,
@@ -398,6 +438,77 @@ export async function formsPlugin(app: FastifyInstance) {
       .header('Access-Control-Allow-Headers', 'Content-Type')
       .send();
   });
+}
+
+
+// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// Route dispatcher — sends data to the correct Zoho tool
+// ══════════════════════════════════════════════════════
+async function dispatchToZoho(
+  routeType: string,
+  appId: string,
+  form: any,
+  mappedData: Record<string, any>,
+  rawData: Record<string, any>,
+): Promise<any> {
+  switch (routeType) {
+    case 'crm':
+      return crmApi.createRecord(appId, form.target_module, mappedData);
+
+    case 'desk':
+      return deskApi.createTicket(appId, {
+        subject: mappedData.subject || rawData.subject || 'Support Request',
+        email: mappedData.email || rawData.email,
+        phone: mappedData.phone || rawData.phone,
+        description: mappedData.description || rawData.description || rawData.message || '',
+        contactName: mappedData.contactName || rawData.name || '',
+        priority: mappedData.priority || rawData.priority || undefined,
+        channel: 'Web',
+      });
+
+    case 'bookings':
+      return bookingsApi.createAppointment(appId, {
+        service_id: mappedData.service_id || form.style_config?.service_id,
+        staff_id: mappedData.staff_id || form.style_config?.staff_id,
+        from_time: mappedData.from_time || rawData.preferred_date,
+        time_slot: mappedData.time_slot || rawData.preferred_time,
+        timezone: mappedData.timezone || rawData.timezone || 'UTC',
+        customer_details: {
+          name: mappedData.customer_name || rawData.name || '',
+          email: mappedData.customer_email || rawData.email || '',
+          phone_number: mappedData.customer_phone || rawData.phone || '',
+        },
+        additional_fields: mappedData.additional_fields || rawData.notes ? { notes: rawData.notes } : undefined,
+      });
+
+    case 'books':
+      return booksApi.createContact(appId, {
+        contact_name: mappedData.contact_name || rawData.contact_name || rawData.name || '',
+        email: mappedData.email || rawData.email || '',
+        company_name: mappedData.company_name || rawData.company || '',
+        phone: mappedData.phone || rawData.phone || '',
+        notes: mappedData.notes || rawData.notes || '',
+        contact_type: 'customer',
+      });
+
+    case 'projects': {
+      const portalId = form.style_config?.portalId || '';
+      const projectId = form.style_config?.projectId || '';
+      if (!portalId || !projectId) {
+        throw new Error('Portal ID and Project ID are required for Projects routes');
+      }
+      return projectsApi.createTask(appId, portalId, projectId, {
+        name: mappedData.name || rawData.task_name || 'New Task',
+        description: mappedData.description || rawData.description || '',
+        priority: mappedData.priority || rawData.priority || 'None',
+        end_date: mappedData.end_date || rawData.due_date || undefined,
+      });
+    }
+
+    default:
+      throw new Error(`Unsupported route type: ${routeType}`);
+  }
 }
 
 

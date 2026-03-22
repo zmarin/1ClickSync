@@ -1057,21 +1057,31 @@
             <!-- Form Builder Modal -->
             <div id="formBuilderModal" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center;">
                 <div style="background:var(--bg-secondary); border-radius:12px; padding:32px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; border:1px solid var(--border);">
-                    <h3 style="margin:0 0 20px 0;">Create Web Form</h3>
+                    <h3 style="margin:0 0 20px 0;" id="fbModalTitle">Create Web Form</h3>
                     <form id="formBuilderForm">
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label>Zoho Tool</label>
+                            <select id="fbRouteType" class="form-input" style="width:100%;" onchange="onRouteTypeChange(this.value)">
+                                <option value="crm">CRM — Lead/Contact/Deal capture</option>
+                                <option value="desk">Desk — Support tickets</option>
+                                <option value="bookings">Bookings — Appointments</option>
+                                <option value="books">Books — Contact/Invoice</option>
+                                <option value="projects">Projects — Tasks</option>
+                            </select>
+                        </div>
                         <div class="form-group" style="margin-bottom:16px;">
                             <label>Form Name</label>
                             <input type="text" id="fbName" value="Contact Form" class="form-input" style="width:100%;" />
                         </div>
                         <div class="form-group" style="margin-bottom:16px;">
                             <label>Target Module</label>
-                            <select id="fbModule" class="form-input" style="width:100%;" onchange="fetchLeadSources(this.value)">
+                            <select id="fbModule" class="form-input" style="width:100%;" onchange="if(document.getElementById('fbRouteType').value==='crm') fetchLeadSources(this.value)">
                                 <option value="Leads">Leads</option>
                                 <option value="Contacts">Contacts</option>
                                 <option value="Deals">Deals</option>
                             </select>
                         </div>
-                        <div class="form-group" style="margin-bottom:16px;">
+                        <div class="form-group" style="margin-bottom:16px;" id="fbLeadSourceGroup">
                             <label>Lead Source <span style="color:var(--text-secondary);font-weight:400;font-size:0.85rem;">(tracks which site/form the lead came from)</span></label>
                             <div style="display:flex;gap:8px;">
                                 <select id="fbLeadSource" class="form-input" style="flex:1;">
@@ -1167,9 +1177,9 @@
                     'Route to departments automatically',
                     'Attach customer context from CRM',
                 ],
-                action: { label: 'Coming Soon', handler: null },
-                setupHint: 'Support ticket routes are in development.',
-                ready: false,
+                action: { label: '+ Support Route', handler: 'openRouteBuilder_desk' },
+                setupHint: 'Create a support form that creates Desk tickets automatically.',
+                ready: true,
             },
             bookings: {
                 name: 'Bookings',
@@ -1181,9 +1191,9 @@
                     'Sync with Zoho Bookings calendar',
                     'Auto-create CRM deals from bookings',
                 ],
-                action: { label: 'Coming Soon', handler: null },
-                setupHint: 'Booking routes are in development.',
-                ready: false,
+                action: { label: '+ Booking Route', handler: 'openRouteBuilder_bookings' },
+                setupHint: 'Create a booking form that schedules appointments automatically.',
+                ready: true,
             },
             salesiq: {
                 name: 'SalesIQ',
@@ -1195,8 +1205,8 @@
                     'Track visitors in real-time',
                     'Route chats to CRM contacts',
                 ],
-                action: { label: 'Coming Soon', handler: null },
-                setupHint: 'SalesIQ embed snippets are in development.',
+                action: { label: 'Embed Only', handler: null },
+                setupHint: 'SalesIQ is a JavaScript embed widget — paste your widget code in app settings.',
                 ready: false,
             },
             books: {
@@ -1205,13 +1215,13 @@
                 description: 'Invoicing, accounting, payments',
                 modules: ['Invoices', 'Contacts', 'Items'],
                 capabilities: [
-                    'Generate invoices from form submissions',
-                    'Sync contacts with Zoho Books',
+                    'Capture contacts from web forms into Zoho Books',
+                    'Sync customer details for invoicing',
                     'Track payments and billing',
                 ],
-                action: { label: 'Coming Soon', handler: null },
-                setupHint: 'Invoice routes are in development.',
-                ready: false,
+                action: { label: '+ Contact Route', handler: 'openRouteBuilder_books' },
+                setupHint: 'Create a form that adds contacts to Zoho Books.',
+                ready: true,
             },
             projects: {
                 name: 'Projects',
@@ -1223,9 +1233,9 @@
                     'Track milestones and progress',
                     'Sync with CRM deals',
                 ],
-                action: { label: 'Coming Soon', handler: null },
-                setupHint: 'Project routes are in development.',
-                ready: false,
+                action: { label: '+ Task Route', handler: 'openRouteBuilder_projects' },
+                setupHint: 'Create a form that adds tasks to Zoho Projects.',
+                ready: true,
             },
         };
 
@@ -1806,7 +1816,8 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-tertiary);border-radius:8px;margin-bottom:8px;border:1px solid var(--border);">
                     <div>
                         <strong>${escapeHtml(f.name)}</strong>
-                        <span style="color:var(--text-secondary);margin-left:8px;font-size:0.85rem;">${f.target_module}</span>
+                        <span style="color:var(--text-secondary);margin-left:8px;font-size:0.85rem;">${(f.route_type || 'crm').toUpperCase()}</span>
+                        <span style="color:var(--text-secondary);margin-left:4px;font-size:0.85rem;">→ ${f.target_module}</span>
                         <span style="color:var(--text-secondary);margin-left:8px;font-size:0.85rem;">${f.submissions_count} submissions</span>
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;">
@@ -1916,21 +1927,71 @@
             }
         }
 
-        // Open form builder from integrations panel CRM action button
-        function openFormBuilder() {
-            document.getElementById('createFormBtn')?.click();
+        // Module options per route type
+        const ROUTE_TYPE_MODULES = {
+            crm: [['Leads', 'Leads'], ['Contacts', 'Contacts'], ['Deals', 'Deals']],
+            desk: [['Tickets', 'Tickets']],
+            bookings: [['Appointments', 'Appointments']],
+            books: [['Contacts', 'Contacts'], ['Invoices', 'Invoices']],
+            projects: [['Tasks', 'Tasks']],
+        };
+
+        const ROUTE_TYPE_DEFAULTS = {
+            crm: { name: 'Contact Form', module: 'Leads', button: 'Submit' },
+            desk: { name: 'Support Form', module: 'Tickets', button: 'Submit Ticket' },
+            bookings: { name: 'Booking Form', module: 'Appointments', button: 'Book Now' },
+            books: { name: 'Contact Form', module: 'Contacts', button: 'Submit' },
+            projects: { name: 'Task Form', module: 'Tasks', button: 'Create Task' },
+        };
+
+        function onRouteTypeChange(routeType) {
+            const modules = ROUTE_TYPE_MODULES[routeType] || ROUTE_TYPE_MODULES.crm;
+            const defaults = ROUTE_TYPE_DEFAULTS[routeType] || ROUTE_TYPE_DEFAULTS.crm;
+            const moduleSelect = document.getElementById('fbModule');
+            const leadSourceGroup = document.getElementById('fbLeadSourceGroup');
+
+            // Update module options
+            moduleSelect.innerHTML = modules.map(([val, label]) => `<option value="${val}">${label}</option>`).join('');
+            moduleSelect.value = defaults.module;
+
+            // Update defaults
+            document.getElementById('fbName').value = defaults.name;
+            document.getElementById('fbButtonText').value = defaults.button;
+
+            // Lead source only relevant for CRM
+            if (leadSourceGroup) {
+                leadSourceGroup.style.display = routeType === 'crm' ? 'block' : 'none';
+            }
+
+            // Fetch lead sources only for CRM
+            if (routeType === 'crm') fetchLeadSources();
+        }
+
+        // Open form builder for a specific route type
+        function openFormBuilder() { openRouteBuilder('crm'); }
+        function openRouteBuilder_desk() { openRouteBuilder('desk'); }
+        function openRouteBuilder_bookings() { openRouteBuilder('bookings'); }
+        function openRouteBuilder_books() { openRouteBuilder('books'); }
+        function openRouteBuilder_projects() { openRouteBuilder('projects'); }
+
+        function openRouteBuilder(routeType) {
+            editingFormId = null;
+            document.getElementById('fbRouteType').value = routeType;
+            onRouteTypeChange(routeType);
+            document.getElementById('fbColor').value = '#3b82f6';
+            document.getElementById('fbSuccessMsg').value = 'Thank you! We will be in touch.';
+            document.getElementById('fbModalTitle').textContent =
+                routeType === 'crm' ? 'Create Web Form' :
+                routeType === 'desk' ? 'Create Support Route' :
+                routeType === 'bookings' ? 'Create Booking Route' :
+                routeType === 'books' ? 'Create Books Route' :
+                routeType === 'projects' ? 'Create Projects Route' : 'Create Route';
+            document.getElementById('formBuilderModal').style.display = 'flex';
         }
 
         // Modal event listeners
         document.getElementById('createFormBtn')?.addEventListener('click', () => {
-            editingFormId = null;
-            document.getElementById('fbName').value = 'Contact Form';
-            document.getElementById('fbModule').value = 'Leads';
-            document.getElementById('fbColor').value = '#3b82f6';
-            document.getElementById('fbButtonText').value = 'Submit';
-            document.getElementById('fbSuccessMsg').value = 'Thank you! We will be in touch.';
-            document.getElementById('formBuilderModal').style.display = 'flex';
-            fetchLeadSources();
+            openRouteBuilder('crm');
         });
         document.getElementById('fbCancel')?.addEventListener('click', () => {
             editingFormId = null;
@@ -1981,18 +2042,18 @@
 
         document.getElementById('formBuilderForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const routeType = document.getElementById('fbRouteType').value;
             const leadSource = document.getElementById('fbLeadSource').value;
-            if (!leadSource) {
+
+            // Lead source only required for CRM routes
+            if (routeType === 'crm' && !leadSource) {
                 showToast('Select a Lead Source to track where leads come from', 'error');
                 return;
             }
 
-            const body = {
-                app_id: state.currentAppId || null,
-                name: document.getElementById('fbName').value,
-                target_module: document.getElementById('fbModule').value,
-                lead_source: leadSource,
-                fields: [
+            // Get field presets based on route type
+            const FIELD_PRESETS_JS = {
+                crm: [
                     { name: 'first_name', label: 'First Name', type: 'text', required: false, zoho_field: 'First_Name' },
                     { name: 'last_name', label: 'Last Name', type: 'text', required: true, zoho_field: 'Last_Name' },
                     { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'Email' },
@@ -2000,6 +2061,41 @@
                     { name: 'company', label: 'Company', type: 'text', required: false, zoho_field: 'Company' },
                     { name: 'message', label: 'Message', type: 'textarea', required: false, zoho_field: 'Description' },
                 ],
+                desk: [
+                    { name: 'subject', label: 'Subject', type: 'text', required: true, zoho_field: 'subject' },
+                    { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'email' },
+                    { name: 'name', label: 'Name', type: 'text', required: false, zoho_field: 'contactName' },
+                    { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'phone' },
+                    { name: 'description', label: 'Description', type: 'textarea', required: true, zoho_field: 'description' },
+                ],
+                bookings: [
+                    { name: 'name', label: 'Full Name', type: 'text', required: true, zoho_field: 'customer_name' },
+                    { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'customer_email' },
+                    { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'customer_phone' },
+                    { name: 'preferred_date', label: 'Preferred Date', type: 'text', required: true, zoho_field: 'from_time' },
+                    { name: 'preferred_time', label: 'Preferred Time', type: 'text', required: true, zoho_field: 'time_slot' },
+                    { name: 'notes', label: 'Notes', type: 'textarea', required: false, zoho_field: 'additional_fields' },
+                ],
+                books: [
+                    { name: 'contact_name', label: 'Contact Name', type: 'text', required: true, zoho_field: 'contact_name' },
+                    { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'email' },
+                    { name: 'company', label: 'Company', type: 'text', required: false, zoho_field: 'company_name' },
+                    { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'phone' },
+                ],
+                projects: [
+                    { name: 'task_name', label: 'Task Name', type: 'text', required: true, zoho_field: 'name' },
+                    { name: 'description', label: 'Description', type: 'textarea', required: false, zoho_field: 'description' },
+                    { name: 'due_date', label: 'Due Date', type: 'text', required: false, zoho_field: 'end_date' },
+                ],
+            };
+
+            const body = {
+                app_id: state.currentAppId || null,
+                route_type: routeType,
+                name: document.getElementById('fbName').value,
+                target_module: document.getElementById('fbModule').value,
+                lead_source: routeType === 'crm' ? leadSource : undefined,
+                fields: FIELD_PRESETS_JS[routeType] || FIELD_PRESETS_JS.crm,
                 style: {
                     primaryColor: document.getElementById('fbColor').value,
                     buttonText: document.getElementById('fbButtonText').value,

@@ -192,7 +192,7 @@ export async function appRoutesPlugin(app: FastifyInstance) {
         key: route.form_key,
         endpoint: `${env.APP_URL}/api/f/${route.form_key}`,
         method: 'POST',
-        target: `crm.${route.target_module}`,
+        target: `${route.route_type || 'crm'}.${route.target_module}`,
         lead_source: route.lead_source,
         fields: fields.map((f: any) => ({
           name: f.name,
@@ -322,7 +322,8 @@ function generateLLMPrompt(appRecord: any, routes: any[]): string {
 
     prompt += `### ${route.name}\n\n`;
     prompt += `\`POST ${submitUrl}\`\n\n`;
-    prompt += `**Target:** Zoho CRM → ${route.target_module}\n`;
+    const toolName = (route.route_type || 'crm').toUpperCase();
+    prompt += `**Target:** Zoho ${toolName} → ${route.target_module}\n`;
     if (route.lead_source) {
       prompt += `**Lead Source:** ${route.lead_source}\n`;
     }
