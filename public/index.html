@@ -926,8 +926,17 @@
 
             try {
                 const customerId = await ensureCustomer();
-                // Redirect to Zoho OAuth — dc is auto-detected from token response
-                window.location.href = `/api/auth/zoho?customer_id=${customerId}&dc=com`;
+                // Fetch the Zoho auth URL via authenticated API call
+                const resp = await fetch(`/api/auth/zoho?customer_id=${customerId}&dc=com`, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.error || 'Failed to get Zoho auth URL');
+                }
+                const { url } = await resp.json();
+                // Redirect browser to Zoho consent screen
+                window.location.href = url;
             } catch (error) {
                 showToast(error.message || 'Failed to start Zoho connection', 'error');
                 btn.disabled = false;

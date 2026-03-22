@@ -46,7 +46,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     })).toString('base64url');
 
     const authUrl = getAuthorizationUrl(state, (dc as any) || 'com');
-    return reply.redirect(authUrl);
+    return reply.send({ url: authUrl });
   });
 
   // ── OAuth: Callback from Zoho (public — redirect) ─
