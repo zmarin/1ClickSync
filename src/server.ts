@@ -61,13 +61,21 @@ async function main() {
     });
   });
 
+  // ── Explicit /app route → dashboard SPA ──────────
+  app.get('/app', (_request, reply) => {
+    return reply.sendFile('index.html');
+  });
+
   // ── Not found handler ─────────────────────────────
   app.setNotFoundHandler((request, reply) => {
-    // Let the SPA handle client-side routes
     if (request.url.startsWith('/api/')) {
       return reply.status(404).send({ error: 'Not found' });
     }
-    return reply.sendFile('index.html');
+    // /app routes → dashboard SPA, everything else → landing page
+    if (request.url.startsWith('/app')) {
+      return reply.sendFile('index.html');
+    }
+    return reply.sendFile('landing.html');
   });
 
   // ── Core plugins ──────────────────────────────────
