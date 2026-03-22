@@ -60,21 +60,22 @@ CREATE INDEX IF NOT EXISTS idx_customers_user ON customers(user_id);
 
 CREATE TABLE IF NOT EXISTS zoho_tokens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  customer_id UUID NOT NULL UNIQUE REFERENCES customers(id) ON DELETE CASCADE,
   access_token_enc TEXT NOT NULL,
   refresh_token_enc TEXT NOT NULL,
-  dc VARCHAR(10) NOT NULL DEFAULT 'com',
-  org_id VARCHAR(50),
+  zoho_dc VARCHAR(10) NOT NULL DEFAULT 'com',
+  zoho_org_id VARCHAR(50),
   scopes TEXT,
-  expires_at TIMESTAMPTZ NOT NULL,
+  token_expires_at TIMESTAMPTZ NOT NULL,
   is_valid BOOLEAN DEFAULT TRUE,
-  consecutive_failures INT DEFAULT 0,
+  refresh_failures INT DEFAULT 0,
+  connected_at TIMESTAMPTZ DEFAULT NOW(),
   last_refreshed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_tokens_customer ON zoho_tokens(customer_id);
-CREATE INDEX IF NOT EXISTS idx_tokens_expiry ON zoho_tokens(expires_at) WHERE is_valid = TRUE;
+CREATE INDEX IF NOT EXISTS idx_tokens_expiry ON zoho_tokens(token_expires_at) WHERE is_valid = TRUE;
 
 -- ============================================
 -- SETUP JOBS & STEPS (template execution)
