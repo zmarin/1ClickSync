@@ -10,7 +10,7 @@ import { env } from '../config';
 const createFormSchema = z.object({
   customer_id: z.string().uuid(),
   name: z.string().min(1).max(255).default('Contact Form'),
-  target_module: z.enum(['Leads', 'Contacts']).default('Leads'),
+  target_module: z.enum(['Leads', 'Contacts', 'Deals']).default('Leads'),
   lead_source: z.string().min(1).max(255),
   fields: z.array(z.object({
     name: z.string(),
@@ -248,16 +248,18 @@ export async function formsPlugin(app: FastifyInstance) {
   // ══════════════════════════════════════════════════
 
   // Get available Lead_Source picklist values from Zoho CRM
+  // Get Lead_Source picklist values from any module (Leads, Contacts, Deals)
   app.get('/api/lead-sources/:customerId', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { customerId } = request.params as { customerId: string };
+    const { module = 'Leads' } = request.query as { module?: string };
 
     try {
-      const result = await crmApi.getFields(customerId, 'Leads');
+      const result = await crmApi.getFields(customerId, module);
       const fields = result.fields || [];
       const leadSourceField = fields.find((f: any) => f.api_name === 'Lead_Source');
 
       if (!leadSourceField) {
-        return reply.status(404).send({ error: 'Lead_Source field not found in Leads module' });
+        return reply.status(404).send({ error: `Lead_Source field not found in ${module} module` });
       }
 
       const values = (leadSourceField.pick_list_values || [])
@@ -268,31 +270,33 @@ export async function formsPlugin(app: FastifyInstance) {
           id: v.id,
         }));
 
-      return { field_id: leadSourceField.id, values };
+      return { field_id: leadSourceField.id, module, values };
     } catch (err: any) {
-      request.log.error({ err: err.message }, 'Failed to fetch lead sources');
-      return reply.status(500).send({ error: 'Failed to fetch lead sources from Zoho CRM' });
+      request.log.error({ err: err.message, module }, 'Failed to fetch lead sources');
+      return reply.status(500).send({ error: `Failed to fetch lead sources from ${module}` });
     }
   });
 
-  // Add a new Lead_Source picklist value to Zoho CRM
+  // Add a new Lead_Source picklist value to any module
   app.post('/api/lead-sources/:customerId', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { customerId } = request.params as { customerId: string };
-    const { field_id, display_value } = request.body as { field_id: string; display_value: string };
+    const { field_id, display_value, module = 'Leads' } = request.body as {
+      field_id: string; display_value: string; module?: string;
+    };
 
     if (!field_id || !display_value) {
       return reply.status(400).send({ error: 'field_id and display_value are required' });
     }
 
     try {
-      await crmApi.updateField(customerId, 'Leads', field_id, {
+      await crmApi.updateField(customerId, module, field_id, {
         pick_list_values: [{ display_value }],
       });
 
-      return { success: true, display_value };
+      return { success: true, display_value, module };
     } catch (err: any) {
-      request.log.error({ err: err.message }, 'Failed to add lead source');
-      return reply.status(500).send({ error: 'Failed to add lead source to Zoho CRM' });
+      request.log.error({ err: err.message, module }, 'Failed to add lead source');
+      return reply.status(500).send({ error: `Failed to add lead source to ${module}` });
     }
   });
 

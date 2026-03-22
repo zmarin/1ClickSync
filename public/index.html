@@ -820,9 +820,10 @@
                         </div>
                         <div class="form-group" style="margin-bottom:16px;">
                             <label>Target Module</label>
-                            <select id="fbModule" class="form-input" style="width:100%;">
+                            <select id="fbModule" class="form-input" style="width:100%;" onchange="fetchLeadSources(this.value)">
                                 <option value="Leads">Leads</option>
                                 <option value="Contacts">Contacts</option>
+                                <option value="Deals">Deals</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom:16px;">
@@ -1230,12 +1231,13 @@
         // ── Lead Source state ─────────────────────────
         let leadSourceFieldId = null;
 
-        async function fetchLeadSources() {
+        async function fetchLeadSources(module) {
+            module = module || document.getElementById('fbModule').value || 'Leads';
             if (!state.customerId || !state.token) return;
             const select = document.getElementById('fbLeadSource');
             select.innerHTML = '<option value="">Loading...</option>';
             try {
-                const resp = await fetch(`/api/lead-sources/${state.customerId}`, {
+                const resp = await fetch(`/api/lead-sources/${state.customerId}?module=${module}`, {
                     headers: { 'Authorization': `Bearer ${state.token}` }
                 });
                 if (!resp.ok) throw new Error('Failed to fetch');
@@ -1285,7 +1287,7 @@
                 const resp = await fetch(`/api/lead-sources/${state.customerId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
-                    body: JSON.stringify({ field_id: leadSourceFieldId, display_value: name }),
+                    body: JSON.stringify({ field_id: leadSourceFieldId, display_value: name, module: document.getElementById('fbModule').value }),
                 });
                 if (!resp.ok) throw new Error('Failed to add');
                 showToast('Lead source added to Zoho CRM!', 'success');
