@@ -127,6 +127,73 @@ export async function formsPlugin(app: FastifyInstance) {
     };
   });
 
+  // ── Update form config (authenticated) ──────────
+  app.patch('/api/forms/:formId', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { formId } = request.params as { formId: string };
+    const userId = (request as any).userId;
+    const body = request.body as Record<string, any>;
+
+    const form = await queryOne(
+      'SELECT * FROM form_configs WHERE id = $1 AND user_id = $2',
+      [formId, userId]
+    );
+    if (!form) return reply.status(404).send({ error: 'Form not found' });
+
+    // Build SET clause from allowed fields
+    const allowed = ['name', 'lead_source', 'target_module', 'is_active'];
+    const sets: string[] = ['updated_at = NOW()'];
+    const values: any[] = [];
+    let idx = 1;
+
+    for (const key of allowed) {
+      if (body[key] !== undefined) {
+        sets.push(`${key} = $${idx}`);
+        values.push(body[key]);
+        idx++;
+      }
+    }
+    if (body.style) {
+      // Merge style into existing style_config
+      const existingStyle = form.style_config as any;
+      sets.push(`style_config = $${idx}`);
+      values.push(JSON.stringify({ ...existingStyle, ...body.style }));
+      idx++;
+    }
+
+    values.push(formId);
+    const [updated] = await query(
+      `UPDATE form_configs SET ${sets.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+
+    // Return updated form with fresh embed code
+    const styleConfig = updated.style_config as any;
+    const fields = styleConfig.fields || LEAD_FORM_DEFAULTS;
+    const style = { ...styleConfig };
+    delete style.fields;
+
+    return {
+      ...updated,
+      submit_url: `${env.APP_URL}/api/f/${updated.form_key}`,
+      embed_code: generateEmbedCode(updated.form_key, updated.name, fields, style, `${env.APP_URL}/api/f/${updated.form_key}`),
+    };
+  });
+
+  // ── Delete form (authenticated) ────────────────
+  app.delete('/api/forms/:formId', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { formId } = request.params as { formId: string };
+    const userId = (request as any).userId;
+
+    const form = await queryOne(
+      'SELECT id FROM form_configs WHERE id = $1 AND user_id = $2',
+      [formId, userId]
+    );
+    if (!form) return reply.status(404).send({ error: 'Form not found' });
+
+    await query('DELETE FROM form_configs WHERE id = $1', [formId]);
+    return { success: true };
+  });
+
   // ── Get form defaults/presets (authenticated) ─────
   app.get('/api/forms/presets/:module', { preHandler: [authenticate] }, async (request: FastifyRequest) => {
     const { module } = request.params as { module: string };

@@ -1205,9 +1205,11 @@
                         <span style="color:var(--text-secondary);margin-left:8px;font-size:0.85rem;">${f.target_module}</span>
                         <span style="color:var(--text-secondary);margin-left:8px;font-size:0.85rem;">${f.submissions_count} submissions</span>
                     </div>
-                    <div style="display:flex;gap:8px;">
+                    <div style="display:flex;gap:8px;align-items:center;">
                         <button class="btn" onclick="showEmbedCode('${f.id}')" style="font-size:0.85rem;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Get Code</button>
-                        <span style="padding:6px 10px;border-radius:6px;font-size:0.8rem;background:${f.is_active ? '#065f46' : '#7f1d1d'};color:#fff;">${f.is_active ? 'Active' : 'Inactive'}</span>
+                        <button class="btn" onclick="editForm('${f.id}')" style="font-size:0.85rem;padding:6px 12px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;cursor:pointer;">Edit</button>
+                        <button class="btn" onclick="toggleFormActive('${f.id}', ${!f.is_active})" style="font-size:0.85rem;padding:6px 10px;border-radius:6px;background:${f.is_active ? '#065f46' : '#7f1d1d'};color:#fff;border:none;cursor:pointer;">${f.is_active ? 'Active' : 'Inactive'}</button>
+                        <button class="btn" onclick="deleteForm('${f.id}', '${escapeHtml(f.name)}')" style="font-size:0.85rem;padding:6px 10px;background:transparent;color:var(--error);border:1px solid var(--error);border-radius:6px;cursor:pointer;">Delete</button>
                     </div>
                 </div>
             `).join('');
@@ -1223,6 +1225,66 @@
                 document.getElementById('embedCodeArea').value = data.embed_code;
                 const modal = document.getElementById('embedModal');
                 modal.style.display = 'flex';
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        // ── Edit form ────────────────────────────────
+        let editingFormId = null;
+
+        async function editForm(formId) {
+            try {
+                const resp = await fetch('/api/forms/' + formId, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                if (!resp.ok) throw new Error('Failed to load form');
+                const form = resp.ok ? await resp.json() : null;
+                if (!form) return;
+
+                editingFormId = formId;
+                document.getElementById('fbName').value = form.name || '';
+                document.getElementById('fbModule').value = form.target_module || 'Leads';
+                const style = form.style_config || {};
+                document.getElementById('fbColor').value = style.primaryColor || '#3b82f6';
+                document.getElementById('fbButtonText').value = style.buttonText || 'Submit';
+                document.getElementById('fbSuccessMsg').value = style.successMessage || 'Thank you! We will be in touch.';
+
+                // Load lead sources for the module, then select the current one
+                await fetchLeadSources(form.target_module);
+                document.getElementById('fbLeadSource').value = form.lead_source || '';
+
+                document.getElementById('formBuilderModal').style.display = 'flex';
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function deleteForm(formId, formName) {
+            if (!confirm(`Delete form "${formName}"? This cannot be undone.`)) return;
+            try {
+                const resp = await fetch('/api/forms/' + formId, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                if (!resp.ok) throw new Error('Failed to delete');
+                showToast('Form deleted', 'success');
+                fetchForms();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function toggleFormActive(formId, newState) {
+            try {
+                const resp = await fetch('/api/forms/' + formId, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
+                    body: JSON.stringify({ is_active: newState })
+                });
+                if (!resp.ok) throw new Error('Failed to update');
+                showToast(newState ? 'Form activated' : 'Form deactivated', 'success');
+                fetchForms();
             } catch (e) {
                 showToast(e.message, 'error');
             }
@@ -1252,10 +1314,17 @@
 
         // Modal event listeners
         document.getElementById('createFormBtn')?.addEventListener('click', () => {
+            editingFormId = null;
+            document.getElementById('fbName').value = 'Contact Form';
+            document.getElementById('fbModule').value = 'Leads';
+            document.getElementById('fbColor').value = '#3b82f6';
+            document.getElementById('fbButtonText').value = 'Submit';
+            document.getElementById('fbSuccessMsg').value = 'Thank you! We will be in touch.';
             document.getElementById('formBuilderModal').style.display = 'flex';
             fetchLeadSources();
         });
         document.getElementById('fbCancel')?.addEventListener('click', () => {
+            editingFormId = null;
             document.getElementById('formBuilderModal').style.display = 'none';
             document.getElementById('fbNewLeadSourceInput').style.display = 'none';
         });
@@ -1335,8 +1404,12 @@
             }
 
             try {
-                const response = await fetch('/api/forms', {
-                    method: 'POST',
+                const isEdit = !!editingFormId;
+                const url = isEdit ? '/api/forms/' + editingFormId : '/api/forms';
+                const method = isEdit ? 'PATCH' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${state.token}`,
@@ -1345,11 +1418,12 @@
                 });
                 if (!response.ok) {
                     const err = await response.json().catch(() => ({}));
-                    throw new Error(err.error || 'Failed to create form');
+                    throw new Error(err.error || `Failed to ${isEdit ? 'update' : 'create'} form`);
                 }
                 const data = await response.json();
                 document.getElementById('formBuilderModal').style.display = 'none';
-                showToast('Form created!', 'success');
+                showToast(isEdit ? 'Form updated!' : 'Form created!', 'success');
+                editingFormId = null;
                 // Show embed code immediately
                 document.getElementById('embedCodeArea').value = data.embed_code;
                 document.getElementById('embedModal').style.display = 'flex';
