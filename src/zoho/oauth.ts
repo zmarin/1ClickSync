@@ -12,7 +12,8 @@ interface TokenResponse {
 }
 
 interface StoredTokens {
-  customer_id: string;
+  app_id: string;
+  customer_id: string;  // kept for backward compat
   zoho_dc: ZohoDC;
   zoho_org_id: string;
   access_token_enc: string;
@@ -23,8 +24,8 @@ interface StoredTokens {
 
 /**
  * Generate the Zoho OAuth authorization URL.
- * Zoho detects the user's DC automatically, but we default to .com
- * and detect the actual DC from the token response's api_domain.
+ * Requests ALL tool scopes in one go — Zoho will show
+ * consent for whichever tools the org has active.
  */
 export function getAuthorizationUrl(state: string, dc: ZohoDC = 'com'): string {
   const base = ZOHO_DC[dc].accounts;
@@ -37,7 +38,7 @@ export function getAuthorizationUrl(state: string, dc: ZohoDC = 'com'): string {
     access_type: 'offline',
     redirect_uri: env.ZOHO_REDIRECT_URI,
     state,
-    prompt: 'consent', // always show consent screen so we get refresh_token
+    prompt: 'consent',
   });
 
   return `${base}/oauth/v2/auth?${params.toString()}`;
@@ -45,7 +46,6 @@ export function getAuthorizationUrl(state: string, dc: ZohoDC = 'com'): string {
 
 /**
  * Detect which Zoho datacenter from the api_domain in token response.
- * api_domain looks like "https://www.zohoapis.eu" or "https://www.zohoapis.com"
  */
 function detectDC(apiDomain: string): ZohoDC {
   if (apiDomain.includes('.eu')) return 'eu';
@@ -57,7 +57,6 @@ function detectDC(apiDomain: string): ZohoDC {
 
 /**
  * Exchange authorization code for access + refresh tokens.
- * Called from the OAuth callback route.
  */
 export async function exchangeCodeForTokens(
   code: string,
@@ -94,10 +93,11 @@ export async function exchangeCodeForTokens(
 }
 
 /**
- * Store tokens for a customer. Encrypts before saving.
+ * Store tokens for an app. Encrypts before saving.
+ * Uses app_id as the primary key, also sets customer_id for backward compat.
  */
 export async function storeTokens(
-  customerId: string,
+  appId: string,
   accessToken: string,
   refreshToken: string,
   dc: ZohoDC,
@@ -106,11 +106,11 @@ export async function storeTokens(
   scopes: string[]
 ): Promise<void> {
   await query(
-    `INSERT INTO zoho_tokens 
-       (customer_id, zoho_dc, zoho_org_id, access_token_enc, refresh_token_enc, 
+    `INSERT INTO zoho_tokens
+       (app_id, customer_id, zoho_dc, zoho_org_id, access_token_enc, refresh_token_enc,
         token_expires_at, scopes)
-     VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '1 second' * $6, $7)
-     ON CONFLICT (customer_id) DO UPDATE SET
+     VALUES ($1, $1, $2, $3, $4, $5, NOW() + INTERVAL '1 second' * $6, $7)
+     ON CONFLICT (app_id) DO UPDATE SET
        zoho_dc = $2,
        zoho_org_id = $3,
        access_token_enc = $4,
@@ -121,26 +121,26 @@ export async function storeTokens(
        last_refreshed_at = NOW(),
        refresh_failures = 0,
        is_valid = TRUE`,
-    [customerId, dc, orgId, encrypt(accessToken), encrypt(refreshToken), expiresIn, scopes]
+    [appId, dc, orgId, encrypt(accessToken), encrypt(refreshToken), expiresIn, scopes]
   );
 }
 
 /**
- * Get a valid access token for a customer.
+ * Get a valid access token for an app.
  * Returns decrypted token if still valid, or refreshes first.
  */
-export async function getAccessToken(customerId: string): Promise<{
+export async function getAccessToken(appId: string): Promise<{
   token: string;
   dc: ZohoDC;
   orgId: string;
 }> {
   const stored = await queryOne<StoredTokens>(
-    'SELECT * FROM zoho_tokens WHERE customer_id = $1 AND is_valid = TRUE',
-    [customerId]
+    'SELECT * FROM zoho_tokens WHERE app_id = $1 AND is_valid = TRUE',
+    [appId]
   );
 
   if (!stored) {
-    throw new Error(`No valid Zoho connection for customer ${customerId}`);
+    throw new Error(`No valid Zoho connection for app ${appId}`);
   }
 
   // If token expires in less than 5 minutes, refresh it
@@ -169,6 +169,8 @@ async function refreshAndReturn(stored: StoredTokens): Promise<{
   const endpoint = `${ZOHO_DC[stored.zoho_dc].accounts}/oauth/v2/token`;
   const refreshToken = decrypt(stored.refresh_token_enc);
 
+  const id = stored.app_id || stored.customer_id;
+
   try {
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -187,15 +189,15 @@ async function refreshAndReturn(stored: StoredTokens): Promise<{
       throw new Error(`Refresh failed: ${data.error}`);
     }
 
-    // Update stored token
+    // Update stored token — use app_id if available, fall back to customer_id
     await query(
-      `UPDATE zoho_tokens SET 
-         access_token_enc = $1, 
+      `UPDATE zoho_tokens SET
+         access_token_enc = $1,
          token_expires_at = NOW() + INTERVAL '1 second' * $2,
          last_refreshed_at = NOW(),
          refresh_failures = 0
-       WHERE customer_id = $3`,
-      [encrypt(data.access_token), data.expires_in, stored.customer_id]
+       WHERE COALESCE(app_id, customer_id) = $3`,
+      [encrypt(data.access_token), data.expires_in, id]
     );
 
     return {
@@ -204,13 +206,12 @@ async function refreshAndReturn(stored: StoredTokens): Promise<{
       orgId: stored.zoho_org_id,
     };
   } catch (err) {
-    // Track failures — after 5 consecutive, mark as invalid
     await query(
-      `UPDATE zoho_tokens SET 
+      `UPDATE zoho_tokens SET
          refresh_failures = refresh_failures + 1,
          is_valid = CASE WHEN refresh_failures >= 4 THEN FALSE ELSE TRUE END
-       WHERE customer_id = $1`,
-      [stored.customer_id]
+       WHERE COALESCE(app_id, customer_id) = $1`,
+      [id]
     );
     throw err;
   }
@@ -218,12 +219,11 @@ async function refreshAndReturn(stored: StoredTokens): Promise<{
 
 /**
  * Background job: refresh tokens expiring soon.
- * Run this every 45 minutes via a BullMQ repeatable job.
  */
 export async function refreshExpiringTokens(): Promise<number> {
   const expiring = await query<StoredTokens>(
-    `SELECT * FROM zoho_tokens 
-     WHERE is_valid = TRUE 
+    `SELECT * FROM zoho_tokens
+     WHERE is_valid = TRUE
        AND token_expires_at < NOW() + INTERVAL '20 minutes'`
   );
 
@@ -233,7 +233,8 @@ export async function refreshExpiringTokens(): Promise<number> {
       await refreshAndReturn(tokens);
       refreshed++;
     } catch (err: any) {
-      console.error(`[Token Refresh] Failed for ${tokens.customer_id}:`, err.message);
+      const id = tokens.app_id || tokens.customer_id;
+      console.error(`[Token Refresh] Failed for ${id}:`, err.message);
     }
   }
 

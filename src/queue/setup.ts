@@ -40,7 +40,7 @@ export const flowProducer = new FlowProducer({
  */
 export async function enqueueSetupJob(
   jobId: string,
-  customerId: string,
+  appId: string,
   steps: Array<{
     stepId: string;
     action: string;
@@ -59,7 +59,7 @@ export async function enqueueSetupJob(
         `setup-step:${step.stepId}`,
         {
           jobId,
-          customerId,
+          customerId: appId,  // backward compat field name for processor
           step,
         },
         {

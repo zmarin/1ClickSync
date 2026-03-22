@@ -11,15 +11,8 @@ import { ZOHO_SCOPES } from '../config';
 
 // ── Validation schemas ──────────────────────────────
 const setupStartSchema = z.object({
-  customer_id: z.string().uuid(),
+  app_id: z.string().uuid(),
   template_id: z.string().min(1).max(255),
-});
-
-const customerCreateSchema = z.object({
-  email: z.string().email(),
-  site_name: z.string().min(1).max(255),
-  site_url: z.string().url().optional(),
-  business_type: z.string().max(100).optional(),
 });
 
 export async function registerRoutes(app: FastifyInstance): Promise<void> {
@@ -32,15 +25,20 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   }));
 
   // ── OAuth: Start connection (authenticated) ───────
+  // Now accepts app_id instead of customer_id
   app.get('/api/auth/zoho', { preHandler: [authenticate] }, async (request, reply) => {
-    const { customer_id, dc } = request.query as { customer_id: string; dc?: string };
+    const { app_id, dc } = request.query as { app_id?: string; customer_id?: string; dc?: string };
 
-    if (!customer_id) {
-      return reply.status(400).send({ error: 'customer_id required' });
+    // Support both app_id and customer_id for backward compat
+    const appId = app_id || (request.query as any).customer_id;
+
+    if (!appId) {
+      return reply.status(400).send({ error: 'app_id required' });
     }
 
     const state = Buffer.from(JSON.stringify({
-      customer_id,
+      app_id: appId,
+      customer_id: appId,  // backward compat
       user_id: (request as any).userId,
       ts: Date.now(),
     })).toString('base64url');
@@ -57,19 +55,26 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
     if (error) {
       request.log.error({ error }, 'OAuth authorization denied');
-      return reply.redirect(`${env.APP_URL}/?error=auth_denied`);
+      return reply.redirect(`${env.APP_URL}/app?error=auth_denied`);
     }
 
     if (!code || !state) {
-      return reply.redirect(`${env.APP_URL}/?error=invalid_callback`);
+      return reply.redirect(`${env.APP_URL}/app?error=invalid_callback`);
     }
 
     try {
-      const { customer_id } = JSON.parse(Buffer.from(state, 'base64url').toString());
+      const stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
+      // Support both app_id and customer_id from state
+      const appId = stateData.app_id || stateData.customer_id;
 
-      const customer = await queryOne('SELECT * FROM customers WHERE id = $1', [customer_id]);
-      if (!customer) {
-        return reply.redirect(`${env.APP_URL}/?error=invalid_customer`);
+      // Verify the app exists
+      const appRecord = await queryOne('SELECT * FROM apps WHERE id = $1', [appId]);
+      if (!appRecord) {
+        // Fall back to customers table for backward compat
+        const customer = await queryOne('SELECT * FROM customers WHERE id = $1', [appId]);
+        if (!customer) {
+          return reply.redirect(`${env.APP_URL}/app?error=invalid_app`);
+        }
       }
 
       const tokens = await exchangeCodeForTokens(code);
@@ -82,7 +87,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
       const orgId = orgData.org?.[0]?.id || orgData.data?.[0]?.id || 'unknown';
 
       await storeTokens(
-        customer_id,
+        appId,
         tokens.accessToken,
         tokens.refreshToken,
         tokens.dc,
@@ -91,10 +96,10 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
         [...ZOHO_SCOPES]
       );
 
-      return reply.redirect(`${env.APP_URL}/?connected=true`);
+      return reply.redirect(`${env.APP_URL}/app?connected=true`);
     } catch (err: any) {
       request.log.error({ err: err.message }, 'Token exchange failed');
-      return reply.redirect(`${env.APP_URL}/?error=token_exchange_failed`);
+      return reply.redirect(`${env.APP_URL}/app?error=token_exchange_failed`);
     }
   });
 
@@ -112,42 +117,53 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
   // ── Setup: Trigger a setup job (authenticated) ────
   app.post('/api/setup/start', { preHandler: [authenticate] }, async (request, reply) => {
-    const { customer_id, template_id } = setupStartSchema.parse(request.body);
+    const body = request.body as any;
+    // Support both app_id and customer_id
+    const appId = body.app_id || body.customer_id;
+    const templateId = body.template_id;
+
+    if (!appId || !templateId) {
+      return reply.status(400).send({ error: 'app_id and template_id are required' });
+    }
 
     const tokens = await queryOne(
-      'SELECT * FROM zoho_tokens WHERE customer_id = $1 AND is_valid = TRUE',
-      [customer_id]
+      'SELECT * FROM zoho_tokens WHERE (app_id = $1 OR customer_id = $1) AND is_valid = TRUE',
+      [appId]
     );
     if (!tokens) {
       return reply.status(400).send({ error: 'No valid Zoho connection. Please connect first.' });
     }
 
-    const template = getTemplate(template_id);
+    const template = getTemplate(templateId);
     if (!template) {
-      return reply.status(404).send({ error: `Template ${template_id} not found` });
+      return reply.status(404).send({ error: `Template ${templateId} not found` });
     }
 
-    const customer = await queryOne('SELECT * FROM customers WHERE id = $1', [customer_id]);
-    if (!customer) {
-      return reply.status(404).send({ error: 'Customer not found' });
+    // Try apps table first, fall back to customers
+    let appData = await queryOne('SELECT * FROM apps WHERE id = $1', [appId]);
+    if (!appData) {
+      appData = await queryOne('SELECT * FROM customers WHERE id = $1', [appId]);
+    }
+    if (!appData) {
+      return reply.status(404).send({ error: 'App not found' });
     }
 
     const resolved = resolveTemplate(template, {
-      site_name: customer.site_name || 'My App',
-      site_url: customer.site_url,
-      email: customer.email,
-      business_type: customer.business_type || 'saas',
+      site_name: appData.name || appData.site_name || 'My App',
+      site_url: appData.domain || appData.site_url,
+      email: appData.email || '',
+      business_type: appData.business_type || 'saas',
     });
 
-    const stepsWithKeys = generateIdempotencyKeys(resolved, customer_id);
+    const stepsWithKeys = generateIdempotencyKeys(resolved, appId);
 
     const jobId = await withTransaction(async (client) => {
       const jobId = randomUUID();
 
       await client.query(
-        `INSERT INTO setup_jobs (id, customer_id, template_id, total_steps, status)
-         VALUES ($1, $2, $3, $4, 'pending')`,
-        [jobId, customer_id, template_id, stepsWithKeys.length]
+        `INSERT INTO setup_jobs (id, app_id, customer_id, template_id, total_steps, status)
+         VALUES ($1, $2, $2, $3, $4, 'pending')`,
+        [jobId, appId, templateId, stepsWithKeys.length]
       );
 
       for (const step of stepsWithKeys) {
@@ -158,7 +174,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
            ON CONFLICT (idempotency_key) DO NOTHING`,
           [
-            jobId, customer_id, step.id, step.order, step.action,
+            jobId, appId, step.id, step.order, step.action,
             step.target_app, JSON.stringify(step.config), step.idempotencyKey,
             step.depends_on || null,
           ]
@@ -168,7 +184,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     });
 
     await enqueueSetupJob(
-      jobId, customer_id,
+      jobId, appId,
       stepsWithKeys.map(s => ({
         stepId: s.id, action: s.action, targetApp: s.target_app,
         config: s.config, dependsOn: s.depends_on, idempotencyKey: s.idempotencyKey,
@@ -211,31 +227,49 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     };
   });
 
-  // ── Customer: Create (authenticated) ──────────────
+  // ── Backward compat: Customer create → now creates an App ──
   app.post('/api/customers', { preHandler: [authenticate] }, async (request, reply) => {
-    const body = customerCreateSchema.parse(request.body);
+    const body = request.body as any;
 
-    const existing = await queryOne('SELECT * FROM customers WHERE email = $1', [body.email]);
-    if (existing) {
-      return existing;
-    }
+    // Create app from customer data
+    const slug = (body.site_name || 'app')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 60) + '-' + Math.random().toString(36).slice(2, 8);
 
-    const [customer] = await query(
-      `INSERT INTO customers (email, site_name, site_url, business_type, user_id)
+    const userId = (request as any).userId;
+
+    const [appRecord] = await query(
+      `INSERT INTO apps (user_id, name, slug, domain, business_type)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [body.email, body.site_name, body.site_url || null, body.business_type || 'saas', (request as any).userId]
+      [userId, body.site_name, slug, body.site_url || null, body.business_type || 'saas']
     );
 
-    return reply.status(201).send(customer);
+    // Also insert into customers for backward compat
+    await query(
+      `INSERT INTO customers (id, email, site_name, site_url, business_type, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (id) DO NOTHING`,
+      [appRecord.id, body.email || null, body.site_name, body.site_url || null, body.business_type || 'saas', userId]
+    );
+
+    // Return in legacy format with id for backward compat
+    return reply.status(201).send({
+      ...appRecord,
+      site_name: appRecord.name,
+      email: body.email,
+    });
   });
 
   // ── Connection: Check Zoho status (authenticated) ─
+  // Supports both /api/connection/:appId and legacy :customerId
   app.get('/api/connection/:customerId', { preHandler: [authenticate] }, async (request, reply) => {
     const { customerId } = request.params as { customerId: string };
 
     const tokens = await queryOne(
       `SELECT zoho_dc, zoho_org_id, connected_at, last_refreshed_at, is_valid, scopes
-       FROM zoho_tokens WHERE customer_id = $1`,
+       FROM zoho_tokens WHERE app_id = $1 OR customer_id = $1`,
       [customerId]
     );
 

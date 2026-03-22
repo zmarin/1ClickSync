@@ -586,6 +586,9 @@
                 </div>
             </div>
 
+            <!-- App Selector -->
+            <div id="appSelectorContainer" class="container" style="margin-bottom:0;"></div>
+
             <!-- Available Templates section -->
             <div class="section-header">
                 <h2>Available Templates</h2>
@@ -889,7 +892,10 @@
         const state = {
             token: localStorage.getItem('token'),
             user: null,
-            isLoading: false
+            isLoading: false,
+            apps: [],
+            currentAppId: localStorage.getItem('currentAppId') || null,
+            customerId: null  // backward compat alias
         };
 
         // DOM elements
@@ -1010,10 +1016,10 @@
                 const userData = await response.json();
                 state.user = userData.user;
                 showDashboard();
+                await fetchApps();
                 await fetchTemplates();
                 await fetchForms();
-                // Try to load existing customer and check Zoho connection
-                try { await ensureCustomer(); await checkZohoConnection(); } catch(e) { /* ok - will create on connect */ }
+                try { await checkZohoConnection(); } catch(e) { /* ok - will connect later */ }
             } catch (error) {
                 showToast(error.message, 'error');
                 clearAuth();
@@ -1081,14 +1087,56 @@
             showToast('Logged out successfully', 'success');
         }
 
-        // ── Zoho Connection ─────────────────────────
-        async function ensureCustomer() {
-            // Check if we already have a customer for this user
-            if (state.customerId) return state.customerId;
-
+        // ── Apps Management ────────────────────────
+        async function fetchApps() {
             try {
-                // Create or get existing customer from the user's profile
-                const response = await fetch('/api/customers', {
+                const response = await fetch('/api/apps', {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                if (!response.ok) return;
+                state.apps = await response.json();
+
+                // If no apps exist, create a default one
+                if (state.apps.length === 0) {
+                    await createDefaultApp();
+                    return;
+                }
+
+                // Restore last selected app or pick first
+                if (state.currentAppId && state.apps.find(a => a.id === state.currentAppId)) {
+                    // keep current
+                } else {
+                    state.currentAppId = state.apps[0].id;
+                    localStorage.setItem('currentAppId', state.currentAppId);
+                }
+                state.currentAppId = state.currentAppId; // backward compat
+
+                renderAppSelector();
+            } catch (e) { console.error('fetchApps:', e); }
+        }
+
+        async function createDefaultApp() {
+            try {
+                const response = await fetch('/api/apps', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.token}`,
+                    },
+                    body: JSON.stringify({
+                        name: state.user.company || state.user.name || 'My App',
+                        business_type: 'saas',
+                        zoho_tools: ['crm'],
+                    }),
+                });
+                const app = await response.json();
+                state.apps = [app];
+                state.currentAppId = app.id;
+                state.currentAppId = app.id;
+                localStorage.setItem('currentAppId', app.id);
+
+                // Also create backward-compat customer record
+                await fetch('/api/customers', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1096,21 +1144,108 @@
                     },
                     body: JSON.stringify({
                         email: state.user.email,
-                        site_name: state.user.company || state.user.name || 'My Business',
+                        site_name: state.user.company || state.user.name || 'My App',
                         business_type: 'saas',
                     }),
-                });
+                }).catch(() => {});
 
-                const customer = await response.json();
-                if (customer && customer.id) {
-                    state.customerId = customer.id;
-                    return customer.id;
-                }
-
-                throw new Error(customer.error || 'Failed to create customer profile');
-            } catch (error) {
-                throw error;
+                renderAppSelector();
+            } catch (e) {
+                showToast('Failed to create default app', 'error');
             }
+        }
+
+        function renderAppSelector() {
+            const container = document.getElementById('appSelectorContainer');
+            if (!container) return;
+
+            const currentApp = state.apps.find(a => a.id === state.currentAppId);
+
+            container.innerHTML = `
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;">
+                    <label style="font-size:0.85rem;color:var(--text-secondary);white-space:nowrap;">Current App:</label>
+                    <select id="appSelector" style="flex:1;padding:8px 12px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;">
+                        ${state.apps.map(a => `<option value="${a.id}" ${a.id === state.currentAppId ? 'selected' : ''}>${escapeHtml(a.name)}${a.zoho_connected ? ' ✓' : ''}</option>`).join('')}
+                    </select>
+                    <button class="btn btn-secondary" onclick="showCreateAppModal()" style="font-size:0.85rem;padding:6px 12px;white-space:nowrap;">+ New App</button>
+                    <button class="btn btn-secondary" onclick="showManifest()" style="font-size:0.85rem;padding:6px 12px;white-space:nowrap;">Manifest</button>
+                    <button class="btn btn-secondary" onclick="showPrompt()" style="font-size:0.85rem;padding:6px 12px;white-space:nowrap;">LLM Prompt</button>
+                </div>
+            `;
+
+            document.getElementById('appSelector').addEventListener('change', (e) => {
+                state.currentAppId = e.target.value;
+                state.currentAppId = state.currentAppId;
+                localStorage.setItem('currentAppId', state.currentAppId);
+                // Refresh dashboard for new app
+                checkZohoConnection();
+                fetchForms();
+            });
+        }
+
+        async function showCreateAppModal() {
+            const name = prompt('App name (e.g. "Acme SaaS", "Client Portfolio"):');
+            if (!name) return;
+
+            try {
+                const response = await fetch('/api/apps', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.token}`,
+                    },
+                    body: JSON.stringify({ name, business_type: 'saas', zoho_tools: ['crm'] }),
+                });
+                if (!response.ok) throw new Error('Failed to create app');
+
+                const app = await response.json();
+                showToast(`App "${app.name}" created`, 'success');
+                await fetchApps();
+                // Switch to new app
+                state.currentAppId = app.id;
+                state.currentAppId = app.id;
+                localStorage.setItem('currentAppId', app.id);
+                renderAppSelector();
+                checkZohoConnection();
+                fetchForms();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function showManifest() {
+            if (!state.currentAppId) return showToast('Select an app first', 'error');
+            try {
+                const resp = await fetch(`/api/apps/${state.currentAppId}/manifest`, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                const manifest = await resp.json();
+                const json = JSON.stringify(manifest, null, 2);
+
+                // Show in embed modal
+                document.getElementById('embedCodeArea').value = json;
+                document.getElementById('embedModal').style.display = 'flex';
+            } catch (e) { showToast('Failed to load manifest', 'error'); }
+        }
+
+        async function showPrompt() {
+            if (!state.currentAppId) return showToast('Select an app first', 'error');
+            try {
+                const resp = await fetch(`/api/apps/${state.currentAppId}/prompt`, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                const prompt = await resp.text();
+
+                document.getElementById('embedCodeArea').value = prompt;
+                document.getElementById('embedModal').style.display = 'flex';
+            } catch (e) { showToast('Failed to load prompt', 'error'); }
+        }
+
+        // Backward compat: ensureCustomer now returns currentAppId
+        async function ensureCustomer() {
+            if (state.currentAppId) return state.currentAppId;
+            await fetchApps();
+            return state.currentAppId;
         }
 
         async function handleConnectZoho() {
@@ -1124,9 +1259,9 @@
             btn.textContent = 'Connecting...';
 
             try {
-                const customerId = await ensureCustomer();
+                const appId = await ensureCustomer();
                 // Fetch the Zoho auth URL via authenticated API call
-                const resp = await fetch(`/api/auth/zoho?customer_id=${customerId}&dc=com`, {
+                const resp = await fetch(`/api/auth/zoho?app_id=${appId}&dc=com`, {
                     headers: { 'Authorization': `Bearer ${state.token}` }
                 });
                 if (!resp.ok) {
@@ -1144,10 +1279,10 @@
         }
 
         async function checkZohoConnection() {
-            if (!state.customerId || !state.token) return;
+            if (!state.currentAppId || !state.token) return;
 
             try {
-                const response = await fetch(`/api/connection/${state.customerId}`, {
+                const response = await fetch(`/api/connection/${state.currentAppId}`, {
                     headers: { 'Authorization': `Bearer ${state.token}` }
                 });
                 if (!response.ok) return;
@@ -1174,10 +1309,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('connected') === 'true') {
             showToast('Zoho account connected successfully!', 'success');
-            window.history.replaceState({}, '', '/');
+            window.history.replaceState({}, '', '/app');
         } else if (urlParams.get('error')) {
             showToast(`Connection failed: ${urlParams.get('error')}`, 'error');
-            window.history.replaceState({}, '', '/');
+            window.history.replaceState({}, '', '/app');
         }
 
         // ── Web Forms ───────────────────────────────
@@ -1295,11 +1430,11 @@
 
         async function fetchLeadSources(module) {
             module = module || document.getElementById('fbModule').value || 'Leads';
-            if (!state.customerId || !state.token) return;
+            if (!state.currentAppId || !state.token) return;
             const select = document.getElementById('fbLeadSource');
             select.innerHTML = '<option value="">Loading...</option>';
             try {
-                const resp = await fetch(`/api/lead-sources/${state.customerId}?module=${module}`, {
+                const resp = await fetch(`/api/lead-sources/${state.currentAppId}?module=${module}`, {
                     headers: { 'Authorization': `Bearer ${state.token}` }
                 });
                 if (!resp.ok) throw new Error('Failed to fetch');
@@ -1353,7 +1488,7 @@
             if (!leadSourceFieldId) { showToast('Lead source field not loaded', 'error'); return; }
 
             try {
-                const resp = await fetch(`/api/lead-sources/${state.customerId}`, {
+                const resp = await fetch(`/api/lead-sources/${state.currentAppId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
                     body: JSON.stringify({ field_id: leadSourceFieldId, display_value: name, module: document.getElementById('fbModule').value }),
@@ -1379,7 +1514,7 @@
             }
 
             const body = {
-                customer_id: state.customerId || null,
+                app_id: state.currentAppId || null,
                 name: document.getElementById('fbName').value,
                 target_module: document.getElementById('fbModule').value,
                 lead_source: leadSource,
@@ -1398,8 +1533,8 @@
                 },
             };
 
-            if (!body.customer_id) {
-                showToast('Connect a Zoho account first to create forms', 'error');
+            if (!body.app_id) {
+                showToast('Create an app first to manage forms', 'error');
                 return;
             }
 

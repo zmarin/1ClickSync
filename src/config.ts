@@ -44,44 +44,66 @@ export const env = parsedEnv;
 // JWT secret: use dedicated JWT_SECRET or fall back to SESSION_SECRET
 export const jwtSecret = env.JWT_SECRET || env.SESSION_SECRET;
 
-// Zoho datacenter endpoints
+// Zoho datacenter endpoints — all supported tools
 export const ZOHO_DC = {
   com: {
     accounts: 'https://accounts.zoho.com',
     crm: 'https://www.zohoapis.com',
-    forms: 'https://forms.zoho.com',
+    desk: 'https://desk.zoho.com',
+    bookings: 'https://www.zohoapis.com',
     salesiq: 'https://salesiq.zoho.com',
+    books: 'https://www.zohoapis.com',
+    projects: 'https://projectsapi.zoho.com',
+    forms: 'https://forms.zoho.com',
   },
   eu: {
     accounts: 'https://accounts.zoho.eu',
     crm: 'https://www.zohoapis.eu',
-    forms: 'https://forms.zoho.eu',
+    desk: 'https://desk.zoho.eu',
+    bookings: 'https://www.zohoapis.eu',
     salesiq: 'https://salesiq.zoho.eu',
+    books: 'https://www.zohoapis.eu',
+    projects: 'https://projectsapi.zoho.eu',
+    forms: 'https://forms.zoho.eu',
   },
   in: {
     accounts: 'https://accounts.zoho.in',
     crm: 'https://www.zohoapis.in',
-    forms: 'https://forms.zoho.in',
+    desk: 'https://desk.zoho.in',
+    bookings: 'https://www.zohoapis.in',
     salesiq: 'https://salesiq.zoho.in',
+    books: 'https://www.zohoapis.in',
+    projects: 'https://projectsapi.zoho.in',
+    forms: 'https://forms.zoho.in',
   },
   'com.au': {
     accounts: 'https://accounts.zoho.com.au',
     crm: 'https://www.zohoapis.com.au',
-    forms: 'https://forms.zoho.com.au',
+    desk: 'https://desk.zoho.com.au',
+    bookings: 'https://www.zohoapis.com.au',
     salesiq: 'https://salesiq.zoho.com.au',
+    books: 'https://www.zohoapis.com.au',
+    projects: 'https://projectsapi.zoho.com.au',
+    forms: 'https://forms.zoho.com.au',
   },
   jp: {
     accounts: 'https://accounts.zoho.jp',
     crm: 'https://www.zohoapis.jp',
-    forms: 'https://forms.zoho.jp',
+    desk: 'https://desk.zoho.jp',
+    bookings: 'https://www.zohoapis.jp',
     salesiq: 'https://salesiq.zoho.jp',
+    books: 'https://www.zohoapis.jp',
+    projects: 'https://projectsapi.zoho.jp',
+    forms: 'https://forms.zoho.jp',
   },
 } as const;
 
 export type ZohoDC = keyof typeof ZOHO_DC;
+export type ZohoApp = 'crm' | 'desk' | 'bookings' | 'salesiq' | 'books' | 'projects' | 'forms';
 
-// Scopes we need per Zoho app
+// All scopes requested in a single OAuth flow — covers all Zoho tools
 export const ZOHO_SCOPES = [
+  // CRM
   'ZohoCRM.modules.ALL',
   'ZohoCRM.settings.ALL',
   'ZohoCRM.settings.fields.ALL',
@@ -89,4 +111,23 @@ export const ZOHO_SCOPES = [
   'ZohoCRM.settings.pipeline.ALL',
   'ZohoCRM.org.READ',
   'ZohoCRM.notifications.ALL',
+  // Desk
+  'Desk.tickets.ALL',
+  'Desk.contacts.ALL',
+  'Desk.basic.ALL',
+  'Desk.settings.ALL',
+  // Bookings
+  'ZohoBookings.data.ALL',
+  // SalesIQ
+  'SalesIQ.portals.ALL',
+  'SalesIQ.visitors.ALL',
+  'SalesIQ.conversations.ALL',
+  // Books
+  'ZohoBooks.invoices.ALL',
+  'ZohoBooks.contacts.ALL',
+  'ZohoBooks.settings.ALL',
+  // Projects
+  'ZohoProjects.projects.ALL',
+  'ZohoProjects.tasks.ALL',
+  'ZohoProjects.portals.ALL',
 ] as const;

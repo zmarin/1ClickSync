@@ -5,7 +5,8 @@ import cookie from '@fastify/cookie';
 import jwt from '@fastify/jwt';
 import fastifyStatic from '@fastify/static';
 import { env, jwtSecret } from './config';
-import { registerRoutes } from './api/routes';
+import { registerRoutes } from './api/core-routes';
+import { appRoutesPlugin } from './api/app-routes';
 import { loadTemplates } from './templates/loader';
 import { scheduleMaintenanceJobs } from './queue/setup';
 import { authPlugin } from './auth';
@@ -107,6 +108,10 @@ async function main() {
 
   // ── Forms (webform generator) ──────────────────────
   await app.register(formsPlugin);
+
+  // ── Apps (multi-app cockpit) ──────────────────────
+  await app.register(appRoutesPlugin);
+  app.log.info('App routes (manifest + prompt) enabled');
 
   // ── Zoho setup ────────────────────────────────────
   loadTemplates();

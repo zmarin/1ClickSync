@@ -8,7 +8,8 @@ import { env } from '../config';
 
 // ── Schemas ─────────────────────────────────────────
 const createFormSchema = z.object({
-  customer_id: z.string().uuid(),
+  app_id: z.string().uuid().optional(),
+  customer_id: z.string().uuid().optional(),  // backward compat
   name: z.string().min(1).max(255).default('Contact Form'),
   target_module: z.enum(['Leads', 'Contacts', 'Deals']).default('Leads'),
   lead_source: z.string().min(1).max(255),
@@ -49,14 +50,19 @@ export async function formsPlugin(app: FastifyInstance) {
   app.post('/api/forms', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const body = createFormSchema.parse(request.body);
     const userId = (request as any).userId;
+    const appId = body.app_id || body.customer_id;
 
-    // Verify customer belongs to this user
-    const customer = await queryOne(
-      'SELECT id FROM customers WHERE id = $1 AND user_id = $2',
-      [body.customer_id, userId]
-    );
-    if (!customer) {
-      return reply.status(404).send({ error: 'Customer not found' });
+    if (!appId) {
+      return reply.status(400).send({ error: 'app_id is required' });
+    }
+
+    // Verify app belongs to this user (try apps table first, fall back to customers)
+    let owner = await queryOne('SELECT id FROM apps WHERE id = $1 AND user_id = $2', [appId, userId]);
+    if (!owner) {
+      owner = await queryOne('SELECT id FROM customers WHERE id = $1 AND user_id = $2', [appId, userId]);
+    }
+    if (!owner) {
+      return reply.status(404).send({ error: 'App not found' });
     }
 
     // Generate unique form key
@@ -73,12 +79,12 @@ export async function formsPlugin(app: FastifyInstance) {
 
     const [form] = await query(
       `INSERT INTO form_configs
-         (customer_id, user_id, form_key, name, target_module,
+         (app_id, customer_id, user_id, form_key, name, target_module,
           field_mapping, style_config, lead_source)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
-        body.customer_id, userId, formKey, body.name,
+        appId, userId, formKey, body.name,
         body.target_module, JSON.stringify(fieldMapping),
         JSON.stringify({ ...body.style, fields: body.fields }),
         leadSource,
@@ -94,11 +100,26 @@ export async function formsPlugin(app: FastifyInstance) {
   });
 
   // ── List forms (authenticated) ────────────────────
+  // Optional: filter by app_id query param
   app.get('/api/forms', { preHandler: [authenticate] }, async (request: FastifyRequest) => {
     const userId = (request as any).userId;
+    const { app_id } = request.query as { app_id?: string };
+
+    if (app_id) {
+      const forms = await query(
+        `SELECT id, form_key, name, target_module, lead_source, is_active, submissions_count, created_at, app_id
+         FROM form_configs WHERE user_id = $1 AND (app_id = $2 OR customer_id = $2) ORDER BY created_at DESC`,
+        [userId, app_id]
+      );
+      return forms;
+    }
+
     const forms = await query(
-      `SELECT id, form_key, name, target_module, is_active, submissions_count, created_at
-       FROM form_configs WHERE user_id = $1 ORDER BY created_at DESC`,
+      `SELECT f.id, f.form_key, f.name, f.target_module, f.lead_source, f.is_active, f.submissions_count, f.created_at,
+              f.app_id, a.name as app_name
+       FROM form_configs f
+       LEFT JOIN apps a ON a.id = f.app_id
+       WHERE f.user_id = $1 ORDER BY f.created_at DESC`,
       [userId]
     );
     return forms;
@@ -224,10 +245,11 @@ export async function formsPlugin(app: FastifyInstance) {
     // Parse submitted fields
     const submittedData = submitFormSchema.parse(request.body);
 
-    // Check that Zoho is connected for this customer
+    // Check that Zoho is connected for this app
+    const appId = form.app_id || form.customer_id;
     const tokens = await queryOne(
-      'SELECT id FROM zoho_tokens WHERE customer_id = $1 AND is_valid = TRUE',
-      [form.customer_id]
+      'SELECT id FROM zoho_tokens WHERE (app_id = $1 OR customer_id = $1) AND is_valid = TRUE',
+      [appId]
     );
 
     // Map form fields → Zoho CRM fields
@@ -247,9 +269,9 @@ export async function formsPlugin(app: FastifyInstance) {
 
     // Log submission
     const [submission] = await query(
-      `INSERT INTO form_submissions (form_id, customer_id, payload, ip_address, status)
-       VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [form.id, form.customer_id, JSON.stringify(submittedData), request.ip, tokens ? 'processing' : 'queued']
+      `INSERT INTO form_submissions (form_id, app_id, customer_id, payload, ip_address, status)
+       VALUES ($1, $2, $2, $3, $4, $5) RETURNING id`,
+      [form.id, appId, JSON.stringify(submittedData), request.ip, tokens ? 'processing' : 'queued']
     );
 
     // Increment submissions counter
@@ -262,7 +284,7 @@ export async function formsPlugin(app: FastifyInstance) {
     if (tokens) {
       try {
         const result = await crmApi.createRecord(
-          form.customer_id,
+          appId,
           form.target_module,
           crmRecord
         );
@@ -316,12 +338,13 @@ export async function formsPlugin(app: FastifyInstance) {
 
   // Get available Lead_Source picklist values from Zoho CRM
   // Get Lead_Source picklist values from any module (Leads, Contacts, Deals)
-  app.get('/api/lead-sources/:customerId', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { customerId } = request.params as { customerId: string };
+  // Accepts appId or customerId for backward compat
+  app.get('/api/lead-sources/:appId', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { appId } = request.params as { appId: string };
     const { module = 'Leads' } = request.query as { module?: string };
 
     try {
-      const result = await crmApi.getFields(customerId, module);
+      const result = await crmApi.getFields(appId, module);
       const fields = result.fields || [];
       const leadSourceField = fields.find((f: any) => f.api_name === 'Lead_Source');
 
@@ -345,8 +368,8 @@ export async function formsPlugin(app: FastifyInstance) {
   });
 
   // Add a new Lead_Source picklist value to any module
-  app.post('/api/lead-sources/:customerId', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
-    const { customerId } = request.params as { customerId: string };
+  app.post('/api/lead-sources/:appId', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { appId } = request.params as { appId: string };
     const { field_id, display_value, module = 'Leads' } = request.body as {
       field_id: string; display_value: string; module?: string;
     };
@@ -356,7 +379,7 @@ export async function formsPlugin(app: FastifyInstance) {
     }
 
     try {
-      await crmApi.updateField(customerId, module, field_id, {
+      await crmApi.updateField(appId, module, field_id, {
         pick_list_values: [{ display_value }],
       });
 

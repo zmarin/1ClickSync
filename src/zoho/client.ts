@@ -1,8 +1,6 @@
-import { ZOHO_DC, type ZohoDC } from '../config';
+import { ZOHO_DC, type ZohoDC, type ZohoApp } from '../config';
 import { getAccessToken } from './oauth';
 import { query } from '../db';
-
-type ZohoApp = 'crm' | 'forms' | 'salesiq';
 
 interface ZohoApiResponse<T = any> {
   data?: T[];
@@ -15,7 +13,7 @@ interface ZohoApiResponse<T = any> {
 }
 
 interface ApiCallOptions {
-  customerId: string;
+  appId: string;
   app: ZohoApp;
   path: string;             // e.g. '/crm/v6/settings/fields'
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -28,11 +26,11 @@ interface ApiCallOptions {
  * Handles token retrieval, DC-aware URL construction, and audit logging.
  */
 export async function zohoApi<T = any>(options: ApiCallOptions): Promise<ZohoApiResponse<T>> {
-  const { customerId, app, path, method = 'GET', body, stepId } = options;
+  const { appId, app, path, method = 'GET', body, stepId } = options;
   const startTime = Date.now();
 
   // Get fresh token + DC info
-  const { token, dc, orgId } = await getAccessToken(customerId);
+  const { token, dc, orgId } = await getAccessToken(appId);
 
   // Build the full URL based on app and datacenter
   const baseUrl = ZOHO_DC[dc][app];
@@ -68,7 +66,7 @@ export async function zohoApi<T = any>(options: ApiCallOptions): Promise<ZohoApi
   }
 
   // Audit log (async, don't block on it)
-  logApiCall(customerId, stepId, app, path, method, body, response.status, responseBody, duration)
+  logApiCall(appId, stepId, app, path, method, body, response.status, responseBody, duration)
     .catch(err => console.error('[Audit] Log failed:', err.message));
 
   // Handle Zoho-specific errors
@@ -85,19 +83,17 @@ export async function zohoApi<T = any>(options: ApiCallOptions): Promise<ZohoApi
  * CRM-specific convenience methods
  */
 export const crmApi = {
-  // Get all fields for a module
-  async getFields(customerId: string, module: string) {
+  async getFields(appId: string, module: string) {
     return zohoApi({
-      customerId,
+      appId,
       app: 'crm',
       path: `/crm/v6/settings/fields?module=${module}`,
     });
   },
 
-  // Create a custom field
-  async createField(customerId: string, module: string, fieldConfig: any, stepId?: string) {
+  async createField(appId: string, module: string, fieldConfig: any, stepId?: string) {
     return zohoApi({
-      customerId,
+      appId,
       app: 'crm',
       path: `/crm/v6/settings/fields?module=${module}`,
       method: 'POST',
@@ -106,10 +102,9 @@ export const crmApi = {
     });
   },
 
-  // Update a field (e.g. add picklist values)
-  async updateField(customerId: string, module: string, fieldId: string, fieldConfig: any, stepId?: string) {
+  async updateField(appId: string, module: string, fieldId: string, fieldConfig: any, stepId?: string) {
     return zohoApi({
-      customerId,
+      appId,
       app: 'crm',
       path: `/crm/v6/settings/fields/${fieldId}?module=${module}`,
       method: 'PATCH',
@@ -118,28 +113,25 @@ export const crmApi = {
     });
   },
 
-  // Get pipeline/stages for a module
-  async getPipeline(customerId: string, module: string) {
+  async getPipeline(appId: string, module: string) {
     return zohoApi({
-      customerId,
+      appId,
       app: 'crm',
       path: `/crm/v6/settings/pipeline?module=${module}`,
     });
   },
 
-  // Get layouts for a module
-  async getLayouts(customerId: string, module: string) {
+  async getLayouts(appId: string, module: string) {
     return zohoApi({
-      customerId,
+      appId,
       app: 'crm',
       path: `/crm/v6/settings/layouts?module=${module}`,
     });
   },
 
-  // Create a record in any module (Leads, Contacts, etc.)
-  async createRecord(customerId: string, module: string, recordData: Record<string, any>, stepId?: string) {
+  async createRecord(appId: string, module: string, recordData: Record<string, any>, stepId?: string) {
     return zohoApi({
-      customerId,
+      appId,
       app: 'crm',
       path: `/crm/v6/${module}`,
       method: 'POST',
@@ -148,32 +140,85 @@ export const crmApi = {
     });
   },
 
-  // Get org info (to verify connection)
-  async getOrg(customerId: string) {
+  async getOrg(appId: string) {
     return zohoApi({
-      customerId,
+      appId,
       app: 'crm',
       path: '/crm/v6/org',
     });
   },
 
-  // Get workflow rules
-  async getWorkflowRules(customerId: string, module: string) {
+  async getWorkflowRules(appId: string, module: string) {
     return zohoApi({
-      customerId,
+      appId,
       app: 'crm',
       path: `/crm/v6/settings/workflow_rules?module=${module}`,
     });
   },
 
-  // Create workflow rule
-  async createWorkflowRule(customerId: string, ruleConfig: any, stepId?: string) {
+  async createWorkflowRule(appId: string, ruleConfig: any, stepId?: string) {
     return zohoApi({
-      customerId,
+      appId,
       app: 'crm',
       path: '/crm/v6/settings/workflow_rules',
       method: 'POST',
       body: { workflow_rules: [ruleConfig] },
+      stepId,
+    });
+  },
+};
+
+/**
+ * Desk-specific convenience methods
+ */
+export const deskApi = {
+  async createTicket(appId: string, ticketData: Record<string, any>, stepId?: string) {
+    return zohoApi({
+      appId,
+      app: 'desk',
+      path: '/api/v1/tickets',
+      method: 'POST',
+      body: ticketData,
+      stepId,
+    });
+  },
+
+  async getTicketFields(appId: string) {
+    return zohoApi({
+      appId,
+      app: 'desk',
+      path: '/api/v1/ticketFields',
+    });
+  },
+
+  async getDepartments(appId: string) {
+    return zohoApi({
+      appId,
+      app: 'desk',
+      path: '/api/v1/departments',
+    });
+  },
+};
+
+/**
+ * Bookings-specific convenience methods
+ */
+export const bookingsApi = {
+  async getServices(appId: string) {
+    return zohoApi({
+      appId,
+      app: 'bookings',
+      path: '/bookings/v1/json/availableslots',
+    });
+  },
+
+  async createAppointment(appId: string, appointmentData: Record<string, any>, stepId?: string) {
+    return zohoApi({
+      appId,
+      app: 'bookings',
+      path: '/bookings/v1/json/appointment',
+      method: 'POST',
+      body: appointmentData,
       stepId,
     });
   },
@@ -193,17 +238,14 @@ export class ZohoApiError extends Error {
     this.name = 'ZohoApiError';
   }
 
-  /** True if the error is due to rate limiting */
   get isRateLimited(): boolean {
     return this.httpStatus === 429 || this.code === 'RATE_LIMIT_EXCEEDED';
   }
 
-  /** True if retrying might help */
   get isRetryable(): boolean {
     return this.isRateLimited || this.httpStatus >= 500 || this.code === 'INTERNAL_ERROR';
   }
 
-  /** True if the resource already exists (for idempotency) */
   get isDuplicate(): boolean {
     return this.code === 'DUPLICATE_DATA' || this.code === 'ALREADY_EXISTS';
   }
@@ -213,7 +255,7 @@ export class ZohoApiError extends Error {
  * Log API call to audit table
  */
 async function logApiCall(
-  customerId: string,
+  appId: string,
   stepId: string | undefined,
   app: string,
   endpoint: string,
@@ -224,12 +266,12 @@ async function logApiCall(
   durationMs: number
 ): Promise<void> {
   await query(
-    `INSERT INTO api_audit_log 
-       (customer_id, step_id, zoho_app, endpoint, method, request_body, 
+    `INSERT INTO api_audit_log
+       (app_id, customer_id, step_id, zoho_app, endpoint, method, request_body,
         response_status, response_body, duration_ms)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+     VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9)`,
     [
-      customerId,
+      appId,
       stepId || null,
       app,
       endpoint,
