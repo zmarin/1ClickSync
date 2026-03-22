@@ -18,6 +18,12 @@
             --success: #10b981;
             --error: #ef4444;
             --warning: #f59e0b;
+            /* Zoho tool accent colors */
+            --tool-sales: #226DB4;
+            --tool-support: #089949;
+            --tool-scheduling: #F9B21D;
+            --tool-finance: #E42527;
+            --tool-projects: #8b5cf6;
         }
 
         * {
@@ -495,6 +501,176 @@
             }
         }
 
+        /* ── Integrations Panel ────────────────────── */
+        .integrations-panel { margin-bottom: 40px; }
+
+        .integrations-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .integrations-header h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
+
+        .connection-badge {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 12px; font-weight: 500;
+        }
+
+        .integrations-connect-prompt {
+            background: var(--bg-secondary);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            padding: 32px; text-align: center;
+            margin-bottom: 20px;
+        }
+        .integrations-connect-prompt p { color: var(--text-secondary); margin-bottom: 16px; font-size: 14px; }
+
+        .integrations-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .tool-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            transition: all 0.25s ease;
+            border-left: 3px solid var(--border);
+            overflow: hidden;
+        }
+        .tool-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            opacity: 0; transition: opacity 0.25s;
+            pointer-events: none; border-radius: 12px;
+        }
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        /* Per-tool accent colors via data attribute */
+        .tool-card[data-tool="crm"]      { --tool-accent: var(--tool-sales); }
+        .tool-card[data-tool="salesiq"]   { --tool-accent: var(--tool-sales); }
+        .tool-card[data-tool="desk"]      { --tool-accent: var(--tool-support); }
+        .tool-card[data-tool="bookings"]  { --tool-accent: var(--tool-scheduling); }
+        .tool-card[data-tool="books"]     { --tool-accent: var(--tool-finance); }
+        .tool-card[data-tool="projects"]  { --tool-accent: var(--tool-projects); }
+
+        .tool-card.active {
+            border-left-color: var(--tool-accent, var(--success));
+        }
+        .tool-card.active::before {
+            background: radial-gradient(ellipse at top left, rgba(255,255,255,0.03), transparent 70%);
+            opacity: 1;
+        }
+        .tool-card.available { border-left-color: #3a3a4a; }
+
+        .tool-card-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .tool-card-title { display: flex; align-items: center; gap: 10px; }
+        .tool-card-icon { font-size: 22px; line-height: 1; }
+        .tool-card-name { font-size: 14px; font-weight: 600; }
+
+        .tool-card-status {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 10px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            padding: 3px 8px; border-radius: 10px;
+            background: var(--bg-tertiary);
+            white-space: nowrap;
+        }
+
+        .tool-status-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%; flex-shrink: 0;
+        }
+        .tool-status-dot.active {
+            background: var(--success);
+            box-shadow: 0 0 6px rgba(16,185,129,0.6);
+        }
+        .tool-status-dot.available {
+            background: var(--warning);
+            box-shadow: 0 0 6px rgba(245,158,11,0.4);
+        }
+        .tool-status-dot.disconnected { background: #4a4a5a; }
+
+        .tool-card-desc {
+            color: var(--text-secondary);
+            font-size: 12.5px; line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .tool-card-modules { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+
+        .module-chip {
+            padding: 2px 9px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 10.5px; font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .tool-card.active .module-chip {
+            color: var(--text-primary);
+            border-color: #3a3a4a;
+        }
+
+        .tool-card-footer {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .tool-route-count { font-size: 11px; color: var(--text-secondary); }
+
+        .tool-card-impl {
+            font-size: 9px; color: var(--text-secondary);
+            padding: 2px 7px; background: var(--bg-tertiary);
+            border-radius: 6px; text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .tool-card-impl.full { color: var(--success); }
+
+        /* Toggle switch */
+        .tool-toggle { position: relative; width: 36px; height: 20px; cursor: pointer; display: inline-block; }
+        .tool-toggle input { opacity: 0; width: 0; height: 0; }
+        .tool-toggle-slider {
+            position: absolute; inset: 0;
+            background: var(--bg-tertiary); border: 1px solid var(--border);
+            border-radius: 10px; transition: all 0.25s;
+        }
+        .tool-toggle-slider::before {
+            content: ''; position: absolute;
+            width: 14px; height: 14px; left: 2px; top: 2px;
+            background: var(--text-secondary);
+            border-radius: 50%; transition: all 0.25s;
+        }
+        .tool-toggle input:checked + .tool-toggle-slider {
+            background: var(--success); border-color: var(--success);
+        }
+        .tool-toggle input:checked + .tool-toggle-slider::before {
+            transform: translateX(16px); background: #fff;
+        }
+        .tool-toggle input:disabled + .tool-toggle-slider { opacity: 0.35; cursor: not-allowed; }
+
+        @media (max-width: 1024px) {
+            .integrations-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 640px) {
+            .integrations-grid { grid-template-columns: 1fr; }
+            .integrations-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+        }
+
         /* Empty state */
         .empty-state {
             text-align: center;
@@ -599,22 +775,22 @@
                 </div>
             </div>
 
-            <!-- Zoho Connection section -->
-            <div class="section-header">
-                <h2>Zoho Connection</h2>
-            </div>
-            <div class="status-section">
-                <div class="status-item">
-                    <div class="status-info">
-                        <h3>Connection Status</h3>
-                        <p id="zohoStatus">Configure your Zoho One account to begin automation</p>
-                    </div>
-                    <div class="status-badge">
-                        <span class="status-dot"></span>
-                        <span id="zohoStatusText">Not Connected</span>
+            <!-- Zoho Integrations Panel -->
+            <div class="integrations-panel" id="integrationsPanel">
+                <div class="integrations-header">
+                    <h2>Zoho Integrations</h2>
+                    <div class="connection-badge" id="integrationConnectionBadge">
+                        <span class="tool-status-dot disconnected" id="integrationStatusDot"></span>
+                        <span id="integrationStatusLabel">Not Connected</span>
                     </div>
                 </div>
-                <button class="btn btn-primary" id="connectZohoBtn" style="margin-top: 16px;">Connect Zoho Account</button>
+                <div id="integrationsConnectPrompt" class="integrations-connect-prompt" style="display:none;">
+                    <p>Connect your Zoho account to enable integrations for this app.</p>
+                    <button class="btn btn-primary" id="connectZohoBtn">Connect Zoho Account</button>
+                </div>
+                <div class="integrations-grid" id="integrationsGrid">
+                    <!-- Tool cards rendered by renderIntegrations() -->
+                </div>
             </div>
 
             <!-- Web Forms section -->
@@ -896,6 +1072,52 @@
             apps: [],
             currentAppId: localStorage.getItem('currentAppId') || null,
             customerId: null  // backward compat alias
+        };
+
+        // Zoho tools configuration
+        const ZOHO_TOOLS_CONFIG = {
+            crm: {
+                name: 'CRM',
+                icon: '\u{1F4CA}',
+                description: 'Lead capture, sales pipeline, contact management',
+                modules: ['Leads', 'Contacts', 'Deals', 'Accounts', 'Tasks', 'Events'],
+                implStatus: 'Full',
+            },
+            desk: {
+                name: 'Desk',
+                icon: '\u{1F4AC}',
+                description: 'Support tickets, helpdesk, customer service',
+                modules: ['Tickets', 'Contacts', 'Accounts'],
+                implStatus: 'Partial',
+            },
+            bookings: {
+                name: 'Bookings',
+                icon: '\u{1F4C5}',
+                description: 'Appointment scheduling, service bookings',
+                modules: ['Appointments', 'Services', 'Staff'],
+                implStatus: 'Partial',
+            },
+            salesiq: {
+                name: 'SalesIQ',
+                icon: '\u{1F514}',
+                description: 'Live chat widget, visitor tracking',
+                modules: ['Visitors', 'Chats'],
+                implStatus: 'Planned',
+            },
+            books: {
+                name: 'Books',
+                icon: '\u{1F4B0}',
+                description: 'Invoicing, accounting, payments',
+                modules: ['Invoices', 'Contacts', 'Items'],
+                implStatus: 'Planned',
+            },
+            projects: {
+                name: 'Projects',
+                icon: '\u{1F4C1}',
+                description: 'Project management, task tracking',
+                modules: ['Projects', 'Tasks', 'Milestones'],
+                implStatus: 'Planned',
+            },
         };
 
         // DOM elements
@@ -1279,31 +1501,136 @@
         }
 
         async function checkZohoConnection() {
-            if (!state.currentAppId || !state.token) return;
-
-            try {
-                const response = await fetch(`/api/connection/${state.currentAppId}`, {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                if (!response.ok) return;
-
-                const data = await response.json();
-                const statusDot = document.querySelector('.status-dot');
-                const statusText = document.getElementById('zohoStatusText');
-                const statusDesc = document.getElementById('zohoStatus');
-                const connectBtn = document.getElementById('connectZohoBtn');
-
-                if (data.connected) {
-                    statusDot.classList.add('connected');
-                    statusText.textContent = 'Connected';
-                    statusDesc.textContent = `Connected to ${data.org_id || 'Zoho'} (${data.dc || 'com'})`;
-                    connectBtn.textContent = 'Reconnect Zoho Account';
-                }
-            } catch (e) { /* silent */ }
+            await renderIntegrations();
         }
 
-        // Wire up the Connect Zoho button
-        document.getElementById('connectZohoBtn')?.addEventListener('click', handleConnectZoho);
+        async function fetchAppDetail() {
+            if (!state.currentAppId || !state.token) return null;
+            try {
+                const resp = await fetch(`/api/apps/${state.currentAppId}`, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                return resp.ok ? await resp.json() : null;
+            } catch (e) { return null; }
+        }
+
+        async function renderIntegrations() {
+            const grid = document.getElementById('integrationsGrid');
+            const prompt = document.getElementById('integrationsConnectPrompt');
+            const statusDot = document.getElementById('integrationStatusDot');
+            const statusLabel = document.getElementById('integrationStatusLabel');
+            if (!grid || !state.currentAppId) return;
+
+            // Parallel fetch connection + app detail
+            const [connData, appDetail] = await Promise.all([
+                fetch(`/api/connection/${state.currentAppId}`, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                }).then(r => r.ok ? r.json() : { connected: false }).catch(() => ({ connected: false })),
+                fetchAppDetail()
+            ]);
+
+            const isConnected = connData.connected;
+            const enabledTools = Array.isArray(appDetail?.zoho_tools) ? appDetail.zoho_tools : ['crm'];
+            const routes = appDetail?.routes || [];
+
+            // Update connection badge
+            statusDot.className = 'tool-status-dot ' + (isConnected ? 'active' : 'disconnected');
+            statusLabel.textContent = isConnected
+                ? `Connected (${(connData.dc || 'com').toUpperCase()})`
+                : 'Not Connected';
+
+            // Show connect prompt if not connected
+            if (prompt) prompt.style.display = isConnected ? 'none' : 'block';
+
+            // Count routes per tool (all current routes are CRM)
+            const routesByTool = {};
+            for (const r of routes) { routesByTool['crm'] = (routesByTool['crm'] || 0) + 1; }
+
+            // Render tool cards
+            grid.innerHTML = Object.entries(ZOHO_TOOLS_CONFIG).map(([key, tool]) => {
+                const isEnabled = enabledTools.includes(key);
+                const isActive = isConnected && isEnabled;
+                const cardClass = isActive ? 'active' : (isConnected ? 'available' : '');
+                const dotClass = isActive ? 'active' : (isConnected ? 'available' : 'disconnected');
+                const statusText = isActive ? 'Active' : (isConnected ? 'Available' : 'Connect');
+                const rc = routesByTool[key] || 0;
+                const implClass = tool.implStatus === 'Full' ? ' full' : '';
+
+                return `
+                    <div class="tool-card ${cardClass}" data-tool="${key}">
+                        <div class="tool-card-header">
+                            <div class="tool-card-title">
+                                <span class="tool-card-icon">${tool.icon}</span>
+                                <span class="tool-card-name">Zoho ${tool.name}</span>
+                            </div>
+                            <div class="tool-card-status">
+                                <span class="tool-status-dot ${dotClass}"></span>
+                                ${statusText}
+                            </div>
+                        </div>
+                        <div class="tool-card-desc">${tool.description}</div>
+                        <div class="tool-card-modules">
+                            ${tool.modules.map(m => `<span class="module-chip">${m}</span>`).join('')}
+                        </div>
+                        <div class="tool-card-footer">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <label class="tool-toggle" title="${isConnected ? (isEnabled ? 'Disable' : 'Enable') : 'Connect Zoho first'}">
+                                    <input type="checkbox" ${isEnabled ? 'checked' : ''} ${!isConnected ? 'disabled' : ''}
+                                           onchange="toggleTool('${key}', this.checked)">
+                                    <span class="tool-toggle-slider"></span>
+                                </label>
+                                ${rc > 0 ? `<span class="tool-route-count">${rc} route${rc > 1 ? 's' : ''}</span>` : ''}
+                            </div>
+                            <span class="tool-card-impl${implClass}">${tool.implStatus}</span>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        async function toggleTool(toolKey, enable) {
+            if (!state.currentAppId || !state.token) return;
+
+            const currentApp = state.apps.find(a => a.id === state.currentAppId);
+            if (!currentApp) return;
+
+            let tools = Array.isArray(currentApp.zoho_tools) ? [...currentApp.zoho_tools] : ['crm'];
+
+            if (enable && !tools.includes(toolKey)) {
+                tools.push(toolKey);
+            } else if (!enable) {
+                tools = tools.filter(t => t !== toolKey);
+                if (tools.length === 0) {
+                    tools = ['crm'];
+                    showToast('At least one tool must be enabled', 'error');
+                    renderIntegrations();
+                    return;
+                }
+            }
+
+            try {
+                const resp = await fetch(`/api/apps/${state.currentAppId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
+                    body: JSON.stringify({ zoho_tools: tools }),
+                });
+                if (!resp.ok) throw new Error('Failed to update tools');
+
+                const updated = await resp.json();
+                const idx = state.apps.findIndex(a => a.id === state.currentAppId);
+                if (idx !== -1) state.apps[idx].zoho_tools = updated.zoho_tools;
+
+                showToast(enable ? `${ZOHO_TOOLS_CONFIG[toolKey]?.name || toolKey} enabled` : `${ZOHO_TOOLS_CONFIG[toolKey]?.name || toolKey} disabled`, 'success');
+                renderIntegrations();
+            } catch (e) {
+                showToast(e.message || 'Failed to toggle tool', 'error');
+                renderIntegrations();
+            }
+        }
+
+        // Connect Zoho button — event delegation (button rendered dynamically)
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.id === 'connectZohoBtn') handleConnectZoho();
+        });
 
         // Check for ?connected=true in URL after OAuth callback
         const urlParams = new URLSearchParams(window.location.search);
