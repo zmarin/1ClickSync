@@ -641,6 +641,72 @@
         }
         .tool-card-impl.full { color: var(--success); }
 
+        /* Capabilities list */
+        .tool-card-capabilities {
+            list-style: none; padding: 0; margin: 0 0 12px 0;
+        }
+        .tool-card-capabilities li {
+            font-size: 11.5px; color: var(--text-secondary);
+            padding: 3px 0 3px 16px;
+            position: relative; line-height: 1.5;
+        }
+        .tool-card-capabilities li::before {
+            content: ''; position: absolute;
+            left: 0; top: 10px;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+        .tool-card.active .tool-card-capabilities li::before {
+            background: var(--tool-accent, var(--success));
+            box-shadow: 0 0 4px rgba(255,255,255,0.1);
+        }
+        .tool-card.active .tool-card-capabilities li { color: var(--text-primary); }
+
+        /* Setup hint */
+        .tool-card-hint {
+            font-size: 11.5px; color: var(--warning);
+            font-style: italic;
+            margin-bottom: 12px;
+            padding: 6px 10px;
+            background: rgba(245,158,11,0.06);
+            border-radius: 6px;
+            border-left: 2px solid var(--warning);
+        }
+        .tool-card.active .tool-card-hint {
+            color: var(--success);
+            background: rgba(16,185,129,0.06);
+            border-left-color: var(--success);
+        }
+
+        /* Action button in footer */
+        .tool-action-btn {
+            padding: 5px 12px;
+            font-size: 11px; font-weight: 600;
+            border-radius: 6px; border: none;
+            cursor: pointer; font-family: inherit;
+            transition: all 0.2s;
+        }
+        .tool-action-btn.ready {
+            background: var(--tool-accent, var(--accent));
+            color: #fff;
+        }
+        .tool-action-btn.ready:hover { opacity: 0.85; }
+        .tool-action-btn.soon {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            cursor: default;
+            font-style: italic;
+        }
+
+        /* Coming soon card treatment */
+        .tool-card.coming-soon {
+            opacity: 0.7;
+            border-left-color: var(--border) !important;
+        }
+        .tool-card.coming-soon:hover { opacity: 0.85; }
+
         /* Toggle switch */
         .tool-toggle { position: relative; width: 36px; height: 20px; cursor: pointer; display: inline-block; }
         .tool-toggle input { opacity: 0; width: 0; height: 0; }
@@ -1081,42 +1147,85 @@
                 icon: '\u{1F4CA}',
                 description: 'Lead capture, sales pipeline, contact management',
                 modules: ['Leads', 'Contacts', 'Deals', 'Accounts', 'Tasks', 'Events'],
-                implStatus: 'Full',
+                capabilities: [
+                    'Capture leads from any website via embeddable forms',
+                    'Auto-sync submissions to Leads, Contacts, or Deals',
+                    'Track Lead Source per form for attribution',
+                    'Run setup templates (custom fields, pipelines, workflows)',
+                ],
+                action: { label: '+ New Form', handler: 'openFormBuilder' },
+                setupHint: 'Create embeddable forms that push data straight to your CRM.',
+                ready: true,
             },
             desk: {
                 name: 'Desk',
                 icon: '\u{1F4AC}',
                 description: 'Support tickets, helpdesk, customer service',
                 modules: ['Tickets', 'Contacts', 'Accounts'],
-                implStatus: 'Partial',
+                capabilities: [
+                    'Create support tickets from web forms',
+                    'Route to departments automatically',
+                    'Attach customer context from CRM',
+                ],
+                action: { label: 'Coming Soon', handler: null },
+                setupHint: 'Support ticket routes are in development.',
+                ready: false,
             },
             bookings: {
                 name: 'Bookings',
                 icon: '\u{1F4C5}',
                 description: 'Appointment scheduling, service bookings',
                 modules: ['Appointments', 'Services', 'Staff'],
-                implStatus: 'Partial',
+                capabilities: [
+                    'Accept appointment bookings from your site',
+                    'Sync with Zoho Bookings calendar',
+                    'Auto-create CRM deals from bookings',
+                ],
+                action: { label: 'Coming Soon', handler: null },
+                setupHint: 'Booking routes are in development.',
+                ready: false,
             },
             salesiq: {
                 name: 'SalesIQ',
                 icon: '\u{1F514}',
                 description: 'Live chat widget, visitor tracking',
                 modules: ['Visitors', 'Chats'],
-                implStatus: 'Planned',
+                capabilities: [
+                    'Embed live chat widget on your site',
+                    'Track visitors in real-time',
+                    'Route chats to CRM contacts',
+                ],
+                action: { label: 'Coming Soon', handler: null },
+                setupHint: 'SalesIQ embed snippets are in development.',
+                ready: false,
             },
             books: {
                 name: 'Books',
                 icon: '\u{1F4B0}',
                 description: 'Invoicing, accounting, payments',
                 modules: ['Invoices', 'Contacts', 'Items'],
-                implStatus: 'Planned',
+                capabilities: [
+                    'Generate invoices from form submissions',
+                    'Sync contacts with Zoho Books',
+                    'Track payments and billing',
+                ],
+                action: { label: 'Coming Soon', handler: null },
+                setupHint: 'Invoice routes are in development.',
+                ready: false,
             },
             projects: {
                 name: 'Projects',
                 icon: '\u{1F4C1}',
                 description: 'Project management, task tracking',
                 modules: ['Projects', 'Tasks', 'Milestones'],
-                implStatus: 'Planned',
+                capabilities: [
+                    'Create project tasks from web forms',
+                    'Track milestones and progress',
+                    'Sync with CRM deals',
+                ],
+                action: { label: 'Coming Soon', handler: null },
+                setupHint: 'Project routes are in development.',
+                ready: false,
             },
         };
 
@@ -1550,11 +1659,38 @@
             grid.innerHTML = Object.entries(ZOHO_TOOLS_CONFIG).map(([key, tool]) => {
                 const isEnabled = enabledTools.includes(key);
                 const isActive = isConnected && isEnabled;
-                const cardClass = isActive ? 'active' : (isConnected ? 'available' : '');
-                const dotClass = isActive ? 'active' : (isConnected ? 'available' : 'disconnected');
-                const statusText = isActive ? 'Active' : (isConnected ? 'Available' : 'Connect');
+                const isReady = tool.ready;
+                const comingSoon = !isReady;
+
+                // Card state classes
+                let cardClass = isActive ? 'active' : (isConnected ? 'available' : '');
+                if (comingSoon) cardClass += ' coming-soon';
+
+                const dotClass = isActive ? 'active' : (isConnected && isReady ? 'available' : 'disconnected');
+                const statusText = comingSoon ? 'Coming Soon' : (isActive ? 'Active' : (isConnected ? 'Available' : 'Connect'));
                 const rc = routesByTool[key] || 0;
-                const implClass = tool.implStatus === 'Full' ? ' full' : '';
+
+                // Toggle: disabled if not connected OR if tool is not ready
+                const toggleDisabled = !isConnected || comingSoon;
+
+                // Action button
+                const actionBtnClass = isReady && isActive ? 'ready' : 'soon';
+                const actionLabel = tool.action.label;
+                const actionHandler = tool.action.handler && isActive
+                    ? `onclick="${tool.action.handler}()"`
+                    : '';
+
+                // Hint text
+                let hintText = '';
+                if (isActive && isReady) {
+                    hintText = tool.setupHint;
+                } else if (isConnected && isReady && !isEnabled) {
+                    hintText = 'Toggle on to enable this integration.';
+                } else if (!isConnected && isReady) {
+                    hintText = 'Connect Zoho above to get started.';
+                } else if (comingSoon) {
+                    hintText = tool.setupHint;
+                }
 
                 return `
                     <div class="tool-card ${cardClass}" data-tool="${key}">
@@ -1569,19 +1705,25 @@
                             </div>
                         </div>
                         <div class="tool-card-desc">${tool.description}</div>
+                        <ul class="tool-card-capabilities">
+                            ${tool.capabilities.map(c => `<li>${c}</li>`).join('')}
+                        </ul>
+                        ${hintText ? `<div class="tool-card-hint">${hintText}</div>` : ''}
                         <div class="tool-card-modules">
                             ${tool.modules.map(m => `<span class="module-chip">${m}</span>`).join('')}
                         </div>
                         <div class="tool-card-footer">
                             <div style="display:flex;align-items:center;gap:10px;">
-                                <label class="tool-toggle" title="${isConnected ? (isEnabled ? 'Disable' : 'Enable') : 'Connect Zoho first'}">
-                                    <input type="checkbox" ${isEnabled ? 'checked' : ''} ${!isConnected ? 'disabled' : ''}
+                                <label class="tool-toggle" title="${toggleDisabled ? (comingSoon ? 'Coming soon' : 'Connect Zoho first') : (isEnabled ? 'Disable' : 'Enable')}">
+                                    <input type="checkbox" ${isEnabled && !comingSoon ? 'checked' : ''} ${toggleDisabled ? 'disabled' : ''}
                                            onchange="toggleTool('${key}', this.checked)">
                                     <span class="tool-toggle-slider"></span>
                                 </label>
                                 ${rc > 0 ? `<span class="tool-route-count">${rc} route${rc > 1 ? 's' : ''}</span>` : ''}
                             </div>
-                            <span class="tool-card-impl${implClass}">${tool.implStatus}</span>
+                            <button class="tool-action-btn ${actionBtnClass}" ${actionHandler} ${!actionHandler ? 'disabled' : ''}>
+                                ${actionLabel}
+                            </button>
                         </div>
                     </div>`;
             }).join('');
@@ -1772,6 +1914,11 @@
             } catch (e) {
                 select.innerHTML = '<option value="">Could not load (connect Zoho first)</option>';
             }
+        }
+
+        // Open form builder from integrations panel CRM action button
+        function openFormBuilder() {
+            document.getElementById('createFormBtn')?.click();
         }
 
         // Modal event listeners
