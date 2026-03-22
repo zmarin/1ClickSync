@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1ClickSync — Automate Your Zoho CRM in One Click</title>
+    <meta name="description" content="Embed lead capture forms on any website. Every submission lands in Zoho CRM with the right Lead Source. Built for web developers and agencies.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #06080d;
+            --bg-card: #0d1117;
+            --bg-card-hover: #131a24;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59,130,246,0.15);
+            --cyan: #22d3ee;
+            --text: #e2e8f0;
+            --text-dim: #64748b;
+            --text-bright: #f8fafc;
+            --border: #1e293b;
+            --radius: 12px;
+            --font: 'Outfit', -apple-system, sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ── NAV ──────────────────────────────── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 16px 0;
+            background: rgba(6,8,13,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-inner {
+            max-width: 1200px; margin: 0 auto; padding: 0 24px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .logo {
+            font-weight: 800; font-size: 20px; letter-spacing: -0.5px;
+            color: var(--text-bright);
+        }
+        .logo span { color: var(--accent); }
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-links a {
+            color: var(--text-dim); text-decoration: none; font-size: 14px;
+            font-weight: 500; transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text-bright); }
+        .nav-cta {
+            background: var(--accent) !important; color: #fff !important;
+            padding: 8px 20px; border-radius: 8px; font-weight: 600;
+        }
+        .nav-cta:hover { opacity: 0.9; }
+
+        /* ── HERO ─────────────────────────────── */
+        .hero {
+            min-height: 100vh; display: flex; align-items: center;
+            position: relative; overflow: hidden;
+        }
+        .hero::before {
+            content: ''; position: absolute; top: -40%; left: -20%;
+            width: 800px; height: 800px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero::after {
+            content: ''; position: absolute; bottom: -30%; right: -10%;
+            width: 600px; height: 600px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(34,211,238,0.05) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-inner {
+            max-width: 1200px; margin: 0 auto; padding: 120px 24px 80px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+            position: relative; z-index: 1;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--accent-glow); border: 1px solid rgba(59,130,246,0.25);
+            border-radius: 999px; padding: 6px 16px; font-size: 13px;
+            font-weight: 500; color: var(--accent); margin-bottom: 24px;
+        }
+        .hero-badge::before {
+            content: ''; width: 6px; height: 6px; border-radius: 50%;
+            background: var(--accent); animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .hero h1 {
+            font-size: clamp(40px, 5vw, 64px); font-weight: 800;
+            line-height: 1.08; letter-spacing: -2px;
+            color: var(--text-bright); margin-bottom: 24px;
+        }
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, var(--accent), var(--cyan));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-sub {
+            font-size: 18px; color: var(--text-dim); line-height: 1.7;
+            max-width: 480px; margin-bottom: 40px;
+        }
+        .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--accent); color: #fff; padding: 14px 28px;
+            border-radius: 10px; font-weight: 600; font-size: 15px;
+            text-decoration: none; transition: all 0.2s; border: none; cursor: pointer;
+            font-family: var(--font);
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(59,130,246,0.3); }
+        .btn-outline {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: transparent; color: var(--text); padding: 14px 28px;
+            border-radius: 10px; font-weight: 500; font-size: 15px;
+            text-decoration: none; border: 1px solid var(--border); transition: all 0.2s;
+        }
+        .btn-outline:hover { border-color: var(--text-dim); background: var(--bg-card); }
+
+        /* Hero code block */
+        .hero-visual {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .code-header {
+            display: flex; align-items: center; gap: 8px;
+            padding: 14px 20px; border-bottom: 1px solid var(--border);
+        }
+        .code-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+        }
+        .code-dot:nth-child(1) { background: #ef4444; }
+        .code-dot:nth-child(2) { background: #f59e0b; }
+        .code-dot:nth-child(3) { background: #22c55e; }
+        .code-title {
+            margin-left: 12px; font-size: 12px; color: var(--text-dim);
+            font-family: var(--mono);
+        }
+        .code-body {
+            padding: 24px; font-family: var(--mono); font-size: 13px;
+            line-height: 1.8; color: var(--text-dim); overflow-x: auto;
+        }
+        .code-body .kw { color: #c084fc; }
+        .code-body .str { color: #34d399; }
+        .code-body .tag { color: #60a5fa; }
+        .code-body .attr { color: #fbbf24; }
+        .code-body .cmt { color: #475569; font-style: italic; }
+
+        /* ── METRICS ──────────────────────────── */
+        .metrics {
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 48px 0;
+        }
+        .metrics-inner {
+            max-width: 1200px; margin: 0 auto; padding: 0 24px;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px;
+            text-align: center;
+        }
+        .metric-num {
+            font-size: 40px; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(135deg, var(--text-bright), var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .metric-label { font-size: 14px; color: var(--text-dim); margin-top: 4px; }
+
+        /* ── FEATURES ─────────────────────────── */
+        .features { padding: 120px 0; }
+        .section-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        .section-label {
+            display: inline-block; font-size: 12px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 2px; color: var(--accent);
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-size: clamp(32px, 4vw, 48px); font-weight: 800;
+            letter-spacing: -1.5px; color: var(--text-bright); margin-bottom: 16px;
+        }
+        .section-sub {
+            font-size: 17px; color: var(--text-dim); max-width: 560px; margin-bottom: 64px;
+        }
+        .features-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+        }
+        .feature-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 32px;
+            transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .feature-card:hover {
+            border-color: rgba(59,130,246,0.3);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+        .feature-icon {
+            width: 48px; height: 48px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; margin-bottom: 20px;
+            background: var(--accent-glow); border: 1px solid rgba(59,130,246,0.2);
+        }
+        .feature-card h3 {
+            font-size: 18px; font-weight: 700; color: var(--text-bright);
+            margin-bottom: 10px;
+        }
+        .feature-card p { font-size: 14px; color: var(--text-dim); line-height: 1.7; }
+
+        /* ── HOW IT WORKS ─────────────────────── */
+        .how { padding: 120px 0; background: var(--bg-card); }
+        .steps {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px;
+            margin-top: 64px;
+        }
+        .step { position: relative; }
+        .step-num {
+            font-size: 64px; font-weight: 900; letter-spacing: -3px;
+            color: rgba(59,130,246,0.1); position: absolute;
+            top: -20px; left: -8px; line-height: 1;
+        }
+        .step-content { position: relative; z-index: 1; padding-top: 32px; }
+        .step-content h3 {
+            font-size: 20px; font-weight: 700; color: var(--text-bright);
+            margin-bottom: 12px;
+        }
+        .step-content p { font-size: 15px; color: var(--text-dim); line-height: 1.7; }
+
+        /* ── CONTACT ──────────────────────────── */
+        .contact { padding: 120px 0; }
+        .contact-inner {
+            max-width: 1200px; margin: 0 auto; padding: 0 24px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: start;
+        }
+        .contact-info h2 {
+            font-size: clamp(32px, 4vw, 48px); font-weight: 800;
+            letter-spacing: -1.5px; color: var(--text-bright); margin-bottom: 20px;
+        }
+        .contact-info p {
+            font-size: 17px; color: var(--text-dim); line-height: 1.7;
+            margin-bottom: 40px;
+        }
+        .contact-detail {
+            display: flex; align-items: center; gap: 16px;
+            padding: 16px 0; border-top: 1px solid var(--border);
+        }
+        .contact-detail-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: var(--accent-glow); border: 1px solid rgba(59,130,246,0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+        .contact-detail-label { font-size: 12px; color: var(--text-dim); }
+        .contact-detail-value { font-size: 15px; font-weight: 500; color: var(--text-bright); }
+
+        /* ── FOOTER ───────────────────────────── */
+        footer {
+            border-top: 1px solid var(--border); padding: 48px 0;
+            text-align: center;
+        }
+        footer p { font-size: 14px; color: var(--text-dim); }
+        footer a { color: var(--accent); text-decoration: none; }
+
+        /* ── FORM OVERRIDE (dark theme) ───────── */
+        #ocs-form-e7b482b4a619f92325305beba551aa0a {
+            --ocs-primary: #3b82f6 !important;
+            --ocs-bg: var(--bg-card) !important;
+            --ocs-text: #e2e8f0 !important;
+            --ocs-input-bg: #0a0f1a !important;
+            --ocs-input-border: #1e293b !important;
+            --ocs-shadow: 0 8px 40px rgba(0,0,0,0.4) !important;
+            border: 1px solid var(--border) !important;
+            max-width: 100% !important;
+        }
+        #ocs-form-e7b482b4a619f92325305beba551aa0a label { color: #94a3b8 !important; }
+        #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-title { color: #f8fafc !important; }
+        #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-powered { color: #334155 !important; }
+        #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-powered a { color: #475569 !important; }
+        #ocs-form-e7b482b4a619f92325305beba551aa0a input::placeholder,
+        #ocs-form-e7b482b4a619f92325305beba551aa0a textarea::placeholder { color: #334155 !important; }
+        #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-success { color: #34d399 !important; }
+
+        /* ── RESPONSIVE ───────────────────────── */
+        @media (max-width: 900px) {
+            .hero-inner { grid-template-columns: 1fr; gap: 48px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr; gap: 32px; }
+            .metrics-inner { grid-template-columns: repeat(2, 1fr); }
+            .contact-inner { grid-template-columns: 1fr; gap: 48px; }
+            .nav-links a:not(.nav-cta) { display: none; }
+        }
+
+        /* ── ANIMATIONS ───────────────────────── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hero-text { animation: fadeUp 0.8s ease-out; }
+        .hero-visual { animation: fadeUp 0.8s ease-out 0.2s both; }
+        .feature-card:nth-child(1) { animation: fadeUp 0.6s ease-out 0.1s both; }
+        .feature-card:nth-child(2) { animation: fadeUp 0.6s ease-out 0.2s both; }
+        .feature-card:nth-child(3) { animation: fadeUp 0.6s ease-out 0.3s both; }
+        .feature-card:nth-child(4) { animation: fadeUp 0.6s ease-out 0.4s both; }
+        .feature-card:nth-child(5) { animation: fadeUp 0.6s ease-out 0.5s both; }
+        .feature-card:nth-child(6) { animation: fadeUp 0.6s ease-out 0.6s both; }
+    </style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+    <div class="nav-inner">
+        <div class="logo">1Click<span>Sync</span></div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how">How It Works</a>
+            <a href="#contact">Contact</a>
+            <a href="https://1clicksync.com" class="nav-cta">Open App</a>
+        </div>
+    </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-text">
+            <div class="hero-badge">Now with Lead Source tracking</div>
+            <h1>Your Zoho CRM,<br><span class="gradient">automated.</span></h1>
+            <p class="hero-sub">
+                Embed lead capture forms on any website. Every submission
+                lands in Zoho CRM with the right Lead Source &mdash; so you always
+                know where your leads come from.
+            </p>
+            <div class="hero-actions">
+                <a href="https://1clicksync.com" class="btn-primary">
+                    Get Started Free &rarr;
+                </a>
+                <a href="#how" class="btn-outline">See how it works</a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="code-header">
+                <div class="code-dot"></div>
+                <div class="code-dot"></div>
+                <div class="code-dot"></div>
+                <span class="code-title">embed.html</span>
+            </div>
+            <div class="code-body">
+<span class="cmt">&lt;!-- Paste on any website --&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="str">"ocs-form-..."</span><span class="tag">&gt;</span>
+
+  <span class="cmt">&lt;!-- Style tokens --&gt;</span>
+  <span class="kw">--ocs-primary</span>: <span class="str">#3b82f6</span>;
+  <span class="kw">--ocs-bg</span>:      <span class="str">#ffffff</span>;
+
+  <span class="cmt">&lt;!-- Auto-sync to Zoho CRM --&gt;</span>
+  <span class="tag">fetch</span>(<span class="str">'1clicksync.com/api/f/...'</span>, {
+    <span class="attr">Lead_Source</span>: <span class="str">"Website - client.com"</span>
+  })
+
+<span class="tag">&lt;/div&gt;</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ METRICS ═══ -->
+<section class="metrics">
+    <div class="metrics-inner">
+        <div>
+            <div class="metric-num">1</div>
+            <div class="metric-label">Click to deploy</div>
+        </div>
+        <div>
+            <div class="metric-num">5</div>
+            <div class="metric-label">Zoho datacenters</div>
+        </div>
+        <div>
+            <div class="metric-num">0</div>
+            <div class="metric-label">Coding required</div>
+        </div>
+        <div>
+            <div class="metric-num">&infin;</div>
+            <div class="metric-label">Websites supported</div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ FEATURES ═══ -->
+<section class="features" id="features">
+    <div class="section-inner">
+        <div class="section-label">Features</div>
+        <h2 class="section-title">Everything you need to<br>capture &amp; sync leads</h2>
+        <p class="section-sub">Built for web developers and agencies managing multiple client websites with Zoho CRM.</p>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">&#x2699;</div>
+                <h3>Embeddable Forms</h3>
+                <p>Generate a self-contained HTML snippet with inline CSS. Paste it on any website &mdash; WordPress, Wix, custom builds. No dependencies.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#x21C4;</div>
+                <h3>Instant CRM Sync</h3>
+                <p>Every form submission creates a Lead or Contact in Zoho CRM immediately. No CSV imports, no manual data entry.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#x1F3AF;</div>
+                <h3>Lead Source Tracking</h3>
+                <p>Each form carries a Lead Source that maps to your Zoho CRM picklist. Know exactly which website or campaign generated each lead.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#x1F3A8;</div>
+                <h3>Fully Styleable</h3>
+                <p>CSS custom properties let you (or an LLM) restyle the form in seconds. Match any brand, any design system.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#x1F512;</div>
+                <h3>Encrypted Tokens</h3>
+                <p>OAuth tokens are AES-256-GCM encrypted at rest. Automatic refresh keeps your connection alive without re-auth.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">&#x1F310;</div>
+                <h3>Multi-DC Support</h3>
+                <p>Works with all Zoho datacenters &mdash; .com, .eu, .in, .com.au, .jp. Auto-detects the right one from your OAuth response.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section class="how" id="how">
+    <div class="section-inner">
+        <div class="section-label">How It Works</div>
+        <h2 class="section-title">Three steps. That's it.</h2>
+        <p class="section-sub">From sign-up to live lead capture in under five minutes.</p>
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">01</div>
+                <div class="step-content">
+                    <h3>Connect Zoho</h3>
+                    <p>One-click OAuth. We detect your datacenter automatically and store encrypted tokens. You never touch an API key.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <div class="step-content">
+                    <h3>Create a Form</h3>
+                    <p>Name it, pick a Lead Source from your CRM (or create a new one), and choose your style. We generate the embed code instantly.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <div class="step-content">
+                    <h3>Paste &amp; Go</h3>
+                    <p>Drop the HTML snippet on your client's website. Submissions flow to Zoho CRM in real time with full Lead Source attribution.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══ CONTACT ═══ -->
+<section class="contact" id="contact">
+    <div class="contact-inner">
+        <div class="contact-info">
+            <div class="section-label">Contact Us</div>
+            <h2>Ready to automate<br>your CRM?</h2>
+            <p>Have questions about 1ClickSync? Want a custom integration for your agency? Drop us a message &mdash; we respond within 24 hours.</p>
+            <div class="contact-detail">
+                <div class="contact-detail-icon">&#x2709;</div>
+                <div>
+                    <div class="contact-detail-label">Email</div>
+                    <div class="contact-detail-value">support@1clicksync.com</div>
+                </div>
+            </div>
+            <div class="contact-detail">
+                <div class="contact-detail-icon">&#x1F310;</div>
+                <div>
+                    <div class="contact-detail-label">App</div>
+                    <div class="contact-detail-value">1clicksync.com</div>
+                </div>
+            </div>
+            <div class="contact-detail">
+                <div class="contact-detail-icon">&#x26A1;</div>
+                <div>
+                    <div class="contact-detail-label">Response Time</div>
+                    <div class="contact-detail-value">Within 24 hours</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ EMBEDDED 1CLICKSYNC FORM ═══ -->
+        <div>
+<!-- 1ClickSync Form: 1Click sync -->
+<div id="ocs-form-e7b482b4a619f92325305beba551aa0a" class="ocs-form-wrapper">
+  <style>
+    #ocs-form-e7b482b4a619f92325305beba551aa0a {
+      --ocs-primary: #3b82f6;
+      --ocs-bg: #ffffff;
+      --ocs-text: #1a1a1a;
+      --ocs-radius: 8px;
+      --ocs-font: 'Outfit', Inter, sans-serif;
+      --ocs-input-bg: #f9fafb;
+      --ocs-input-border: #d1d5db;
+      --ocs-shadow: 0 4px 24px rgba(0,0,0,0.08);
+
+      font-family: var(--ocs-font);
+      color: var(--ocs-text);
+      background: var(--ocs-bg);
+      border-radius: var(--ocs-radius);
+      box-shadow: var(--ocs-shadow);
+      max-width: 480px;
+      padding: 32px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-title {
+      font-size: 1.25rem; font-weight: 600; margin: 0 0 20px 0;
+    }
+    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-field { margin-bottom: 16px; }
+    #ocs-form-e7b482b4a619f92325305beba551aa0a label {
+      display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 6px;
+    }
+    #ocs-form-e7b482b4a619f92325305beba551aa0a input,
+    #ocs-form-e7b482b4a619f92325305beba551aa0a textarea,
+    #ocs-form-e7b482b4a619f92325305beba551aa0a select {
+      width: 100%; padding: 10px 12px;
+      border: 1px solid var(--ocs-input-border);
+      border-radius: var(--ocs-radius);
+      background: var(--ocs-input-bg);
+      font-family: var(--ocs-font); font-size: 0.9rem;
+      color: var(--ocs-text); box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    #ocs-form-e7b482b4a619f92325305beba551aa0a input:focus,
+    #ocs-form-e7b482b4a619f92325305beba551aa0a textarea:focus,
+    #ocs-form-e7b482b4a619f92325305beba551aa0a select:focus {
+      outline: none; border-color: var(--ocs-primary);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-btn {
+      width: 100%; padding: 12px; background: var(--ocs-primary);
+      color: #fff; border: none; border-radius: var(--ocs-radius);
+      font-family: var(--ocs-font); font-size: 1rem; font-weight: 600;
+      cursor: pointer; transition: opacity 0.2s; margin-top: 8px;
+    }
+    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-btn:hover { opacity: 0.9; }
+    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-btn:disabled { opacity: 0.6; cursor: wait; }
+    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-success {
+      text-align: center; padding: 24px; color: #059669; font-weight: 500;
+    }
+    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-error {
+      color: #ef4444; font-size: 0.85rem; margin-top: 8px;
+    }
+    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-powered {
+      text-align: center; margin-top: 16px; font-size: 0.75rem; color: #9ca3af;
+    }
+    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-powered a { color: #6b7280; text-decoration: none; }
+  </style>
+
+  <form id="ocs-formEl-e7b482b4a619f92325305beba551aa0a" novalidate>
+    <div class="ocs-title">Get in Touch</div>
+    <div class="ocs-field">
+      <label for="ocs-first_name">First Name</label>
+      <input type="text" id="ocs-first_name" name="first_name" placeholder="John" />
+    </div>
+    <div class="ocs-field">
+      <label for="ocs-last_name">Last Name <span style="color:#ef4444">*</span></label>
+      <input type="text" id="ocs-last_name" name="last_name" required placeholder="Doe" />
+    </div>
+    <div class="ocs-field">
+      <label for="ocs-email">Email <span style="color:#ef4444">*</span></label>
+      <input type="email" id="ocs-email" name="email" required placeholder="john@company.com" />
+    </div>
+    <div class="ocs-field">
+      <label for="ocs-phone">Phone</label>
+      <input type="tel" id="ocs-phone" name="phone" placeholder="+1 (555) 000-0000" />
+    </div>
+    <div class="ocs-field">
+      <label for="ocs-company">Company</label>
+      <input type="text" id="ocs-company" name="company" placeholder="Acme Inc." />
+    </div>
+    <div class="ocs-field">
+      <label for="ocs-message">Message</label>
+      <textarea id="ocs-message" name="message" rows="3" placeholder="Tell us about your project..."></textarea>
+    </div>
+    <button type="submit" class="ocs-btn">Send Message</button>
+    <div class="ocs-error" id="ocs-error-e7b482b4a619f92325305beba551aa0a" style="display:none"></div>
+    <div class="ocs-powered">Powered by <a href="https://1clicksync.com" target="_blank">1ClickSync</a></div>
+  </form>
+
+  <script>
+  (function(){
+    var form = document.getElementById('ocs-formEl-e7b482b4a619f92325305beba551aa0a');
+    var errEl = document.getElementById('ocs-error-e7b482b4a619f92325305beba551aa0a');
+    var wrapper = document.getElementById('ocs-form-e7b482b4a619f92325305beba551aa0a');
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      errEl.style.display = 'none';
+      var btn = form.querySelector('.ocs-btn');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      var data = {};
+      var inputs = form.querySelectorAll('input, textarea, select');
+      for (var i = 0; i < inputs.length; i++) {
+        if (inputs[i].name) data[inputs[i].name] = inputs[i].value;
+      }
+      fetch('https://1clicksync.com/api/f/e7b482b4a619f92325305beba551aa0a', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.success) {
+          wrapper.innerHTML = '<div class="ocs-success">' + (res.message || 'Thank you! We\'ll be in touch within 24 hours.') + '</div>';
+        } else {
+          errEl.textContent = res.error || 'Something went wrong.';
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Send Message';
+        }
+      })
+      .catch(function() {
+        errEl.textContent = 'Network error. Please try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Send Message';
+      });
+    });
+  })();
+  </script>
+</div>
+<!-- End 1ClickSync Form -->
+        </div>
+    </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+    <div class="section-inner">
+        <p>&copy; 2026 <a href="https://1clicksync.com">1ClickSync</a>. Automate your Zoho CRM.</p>
+    </div>
+</footer>
+
+</body>
+</html>
