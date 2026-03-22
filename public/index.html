@@ -826,6 +826,21 @@
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom:16px;">
+                            <label>Lead Source <span style="color:var(--text-secondary);font-weight:400;font-size:0.85rem;">(tracks which site/form the lead came from)</span></label>
+                            <div style="display:flex;gap:8px;">
+                                <select id="fbLeadSource" class="form-input" style="flex:1;">
+                                    <option value="">Loading lead sources...</option>
+                                </select>
+                                <button type="button" id="fbAddLeadSource" class="btn" style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);white-space:nowrap;font-size:0.85rem;">+ New</button>
+                            </div>
+                            <div id="fbNewLeadSourceInput" style="display:none;margin-top:8px;display:none;">
+                                <div style="display:flex;gap:8px;">
+                                    <input type="text" id="fbNewLeadSourceName" class="form-input" style="flex:1;" placeholder="e.g. Website - clientsite.com" />
+                                    <button type="button" id="fbSaveLeadSource" class="btn btn-primary" style="font-size:0.85rem;">Add</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom:16px;">
                             <label>Primary Color</label>
                             <input type="color" id="fbColor" value="#3b82f6" style="height:40px;width:80px;border:none;cursor:pointer;" />
                         </div>
@@ -1212,12 +1227,35 @@
             }
         }
 
+        // ── Lead Source state ─────────────────────────
+        let leadSourceFieldId = null;
+
+        async function fetchLeadSources() {
+            if (!state.customerId || !state.token) return;
+            const select = document.getElementById('fbLeadSource');
+            select.innerHTML = '<option value="">Loading...</option>';
+            try {
+                const resp = await fetch(`/api/lead-sources/${state.customerId}`, {
+                    headers: { 'Authorization': `Bearer ${state.token}` }
+                });
+                if (!resp.ok) throw new Error('Failed to fetch');
+                const data = await resp.json();
+                leadSourceFieldId = data.field_id;
+                select.innerHTML = '<option value="">Select lead source...</option>' +
+                    data.values.map(v => `<option value="${escapeHtml(v.display_value)}">${escapeHtml(v.display_value)}</option>`).join('');
+            } catch (e) {
+                select.innerHTML = '<option value="">Could not load (connect Zoho first)</option>';
+            }
+        }
+
         // Modal event listeners
         document.getElementById('createFormBtn')?.addEventListener('click', () => {
             document.getElementById('formBuilderModal').style.display = 'flex';
+            fetchLeadSources();
         });
         document.getElementById('fbCancel')?.addEventListener('click', () => {
             document.getElementById('formBuilderModal').style.display = 'none';
+            document.getElementById('fbNewLeadSourceInput').style.display = 'none';
         });
         document.getElementById('closeEmbedBtn')?.addEventListener('click', () => {
             document.getElementById('embedModal').style.display = 'none';
@@ -1228,14 +1266,52 @@
             navigator.clipboard.writeText(area.value).then(() => showToast('Copied!', 'success'));
         });
 
+        // Show/hide new lead source input
+        document.getElementById('fbAddLeadSource')?.addEventListener('click', () => {
+            const input = document.getElementById('fbNewLeadSourceInput');
+            input.style.display = input.style.display === 'none' ? 'block' : 'none';
+            if (input.style.display === 'block') {
+                document.getElementById('fbNewLeadSourceName').focus();
+            }
+        });
+
+        // Save new lead source to Zoho CRM
+        document.getElementById('fbSaveLeadSource')?.addEventListener('click', async () => {
+            const name = document.getElementById('fbNewLeadSourceName').value.trim();
+            if (!name) { showToast('Enter a lead source name', 'error'); return; }
+            if (!leadSourceFieldId) { showToast('Lead source field not loaded', 'error'); return; }
+
+            try {
+                const resp = await fetch(`/api/lead-sources/${state.customerId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
+                    body: JSON.stringify({ field_id: leadSourceFieldId, display_value: name }),
+                });
+                if (!resp.ok) throw new Error('Failed to add');
+                showToast('Lead source added to Zoho CRM!', 'success');
+                document.getElementById('fbNewLeadSourceName').value = '';
+                document.getElementById('fbNewLeadSourceInput').style.display = 'none';
+                // Refresh dropdown and select the new value
+                await fetchLeadSources();
+                document.getElementById('fbLeadSource').value = name;
+            } catch (e) {
+                showToast('Failed to add lead source to CRM', 'error');
+            }
+        });
+
         document.getElementById('formBuilderForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
-            // For now we need a customer_id — use a placeholder or first customer
-            // In production this would come from the dashboard state
+            const leadSource = document.getElementById('fbLeadSource').value;
+            if (!leadSource) {
+                showToast('Select a Lead Source to track where leads come from', 'error');
+                return;
+            }
+
             const body = {
                 customer_id: state.customerId || null,
                 name: document.getElementById('fbName').value,
                 target_module: document.getElementById('fbModule').value,
+                lead_source: leadSource,
                 fields: [
                     { name: 'first_name', label: 'First Name', type: 'text', required: false, zoho_field: 'First_Name' },
                     { name: 'last_name', label: 'Last Name', type: 'text', required: true, zoho_field: 'Last_Name' },

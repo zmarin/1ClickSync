@@ -11,6 +11,7 @@ const createFormSchema = z.object({
   customer_id: z.string().uuid(),
   name: z.string().min(1).max(255).default('Contact Form'),
   target_module: z.enum(['Leads', 'Contacts']).default('Leads'),
+  lead_source: z.string().min(1).max(255),
   fields: z.array(z.object({
     name: z.string(),
     label: z.string(),
@@ -67,8 +68,8 @@ export async function formsPlugin(app: FastifyInstance) {
       fieldMapping[field.name] = field.zoho_field;
     }
 
-    // Lead source = "1ClickSync:<userId>" for attribution
-    const leadSource = `1ClickSync:${userId}`;
+    // Lead source from user selection (dropdown or custom value)
+    const leadSource = body.lead_source;
 
     const [form] = await query(
       `INSERT INTO form_configs
@@ -240,6 +241,59 @@ export async function formsPlugin(app: FastifyInstance) {
       success: true,
       message: (form.style_config as any).successMessage || 'Thank you! We will be in touch.',
     };
+  });
+
+  // ══════════════════════════════════════════════════
+  // Lead Source management (fetches from Zoho CRM)
+  // ══════════════════════════════════════════════════
+
+  // Get available Lead_Source picklist values from Zoho CRM
+  app.get('/api/lead-sources/:customerId', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { customerId } = request.params as { customerId: string };
+
+    try {
+      const result = await crmApi.getFields(customerId, 'Leads');
+      const fields = result.fields || [];
+      const leadSourceField = fields.find((f: any) => f.api_name === 'Lead_Source');
+
+      if (!leadSourceField) {
+        return reply.status(404).send({ error: 'Lead_Source field not found in Leads module' });
+      }
+
+      const values = (leadSourceField.pick_list_values || [])
+        .filter((v: any) => v.type === 'used')
+        .map((v: any) => ({
+          display_value: v.display_value,
+          actual_value: v.actual_value || v.display_value,
+          id: v.id,
+        }));
+
+      return { field_id: leadSourceField.id, values };
+    } catch (err: any) {
+      request.log.error({ err: err.message }, 'Failed to fetch lead sources');
+      return reply.status(500).send({ error: 'Failed to fetch lead sources from Zoho CRM' });
+    }
+  });
+
+  // Add a new Lead_Source picklist value to Zoho CRM
+  app.post('/api/lead-sources/:customerId', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { customerId } = request.params as { customerId: string };
+    const { field_id, display_value } = request.body as { field_id: string; display_value: string };
+
+    if (!field_id || !display_value) {
+      return reply.status(400).send({ error: 'field_id and display_value are required' });
+    }
+
+    try {
+      await crmApi.updateField(customerId, 'Leads', field_id, {
+        pick_list_values: [{ display_value }],
+      });
+
+      return { success: true, display_value };
+    } catch (err: any) {
+      request.log.error({ err: err.message }, 'Failed to add lead source');
+      return reply.status(500).send({ error: 'Failed to add lead source to Zoho CRM' });
+    }
   });
 
   // CORS preflight for the public form endpoint
