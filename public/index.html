@@ -1504,13 +1504,12 @@
                 </div>
             `;
 
-            document.getElementById('appSelector').addEventListener('change', (e) => {
+            document.getElementById('appSelector').addEventListener('change', async (e) => {
                 state.currentAppId = e.target.value;
-                state.currentAppId = state.currentAppId;
                 localStorage.setItem('currentAppId', state.currentAppId);
-                // Refresh dashboard for new app
-                checkZohoConnection();
-                fetchForms();
+                // Refresh integrations + forms for selected app
+                await checkZohoConnection();
+                await fetchForms();
             });
         }
 
@@ -1779,6 +1778,7 @@
         if (urlParams.get('connected') === 'true') {
             showToast('Zoho account connected successfully!', 'success');
             window.history.replaceState({}, '', '/app');
+            if (state.token) checkZohoConnection();
         } else if (urlParams.get('error')) {
             showToast(`Connection failed: ${urlParams.get('error')}`, 'error');
             window.history.replaceState({}, '', '/app');
