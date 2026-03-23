@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1ClickSync — Automated Zoho One Setup</title>
+    <title>1ClickSync — Zoho Integration Generator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -770,7 +770,7 @@
             <div class="auth-box">
                 <div class="auth-header">
                     <h1>1ClickSync</h1>
-                    <p id="authSubtitle">Sign in to your account</p>
+                    <p id="authSubtitle">Sign in to generate Zoho integrations for your apps</p>
                 </div>
 
                 <!-- Login form -->
@@ -784,6 +784,9 @@
                         <input type="password" id="loginPassword" required placeholder="••••••••">
                     </div>
                     <button type="submit" class="btn btn-primary form-submit" id="loginSubmit">Sign in</button>
+                    <div class="toggle-form">
+                        Need a reset link? <button type="button" id="forgotPasswordBtn">Forgot password</button>
+                    </div>
                     <div class="toggle-form">
                         Don't have an account? <button type="button" id="switchToRegister">Create one</button>
                     </div>
@@ -812,6 +815,18 @@
                         Already have an account? <button type="button" id="switchToLogin">Sign in</button>
                     </div>
                 </form>
+
+                <!-- Reset password form -->
+                <form id="resetForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="resetPassword">New Password</label>
+                        <input type="password" id="resetPassword" required placeholder="Choose a new password">
+                    </div>
+                    <button type="submit" class="btn btn-primary form-submit" id="resetSubmit">Reset password</button>
+                    <div class="toggle-form">
+                        Back to sign in? <button type="button" id="resetBackToLogin">Return to login</button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -831,13 +846,13 @@
             <!-- App Selector -->
             <div id="appSelectorContainer" class="container" style="margin-bottom:0;"></div>
 
-            <!-- Available Templates section -->
+            <!-- Legacy Automation section -->
             <div class="section-header">
-                <h2>Available Templates</h2>
+                <h2>Legacy Automation Beta</h2>
             </div>
             <div class="templates-grid" id="templatesGrid">
                 <div class="empty-state">
-                    <p>Loading templates...</p>
+                    <p>Loading legacy automation templates...</p>
                 </div>
             </div>
 
@@ -851,7 +866,7 @@
                     </div>
                 </div>
                 <div id="integrationsConnectPrompt" class="integrations-connect-prompt" style="display:none;">
-                    <p>Connect your Zoho account to enable integrations for this app.</p>
+                    <p>Connect your Zoho account to generate integration code for this project.</p>
                     <button class="btn btn-primary" id="connectZohoBtn">Connect Zoho Account</button>
                 </div>
                 <div class="integrations-grid" id="integrationsGrid">
@@ -859,24 +874,24 @@
                 </div>
             </div>
 
-            <!-- Web Forms section -->
+            <!-- Generated Routes section -->
             <div class="section-header" style="margin-top: 40px;">
-                <h2>Web Forms</h2>
+                <h2>Generated Routes</h2>
             </div>
             <div class="status-section" id="formsSection">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <p style="color: var(--text-secondary); margin: 0;">Embeddable forms that push leads directly to your Zoho CRM</p>
-                    <button class="btn btn-primary" id="createFormBtn" style="white-space: nowrap;">+ New Form</button>
+                    <p style="color: var(--text-secondary); margin: 0;">Create copy-paste HTML/JS routes with sample requests, responses, and LLM-ready exports.</p>
+                    <button class="btn btn-primary" id="createFormBtn" style="white-space: nowrap;">+ New Route</button>
                 </div>
                 <div id="formsList"></div>
             </div>
 
-            <!-- Form Preview -->
+            <!-- Route Preview -->
             <div class="section-header" style="margin-top: 40px;">
-                <h2>Form Preview</h2>
+                <h2>Route Preview</h2>
             </div>
             <div class="status-section">
-                <p style="color: var(--text-secondary); margin-bottom: 20px;">Live preview of your embeddable form — edit CSS variables in the embed code to restyle.</p>
+                <p style="color: var(--text-secondary); margin-bottom: 20px;">Live preview of the generated HTML/JS route starter. Edit the CSS variables in the export to match your product.</p>
                 <div id="ocs-form-cd0a807db8f6d27eadb08f747fdfb985" class="ocs-form-wrapper">
                   <style>
                     #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 {
@@ -1026,7 +1041,7 @@
                         if (inputs[i].name) data[inputs[i].name] = inputs[i].value;
                       }
 
-                      fetch('https://1clicksync.com/api/f/cd0a807db8f6d27eadb08f747fdfb985', {
+                      fetch('/api/f/cd0a807db8f6d27eadb08f747fdfb985', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
@@ -1057,20 +1072,18 @@
             <!-- Form Builder Modal -->
             <div id="formBuilderModal" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center;">
                 <div style="background:var(--bg-secondary); border-radius:12px; padding:32px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; border:1px solid var(--border);">
-                    <h3 style="margin:0 0 20px 0;" id="fbModalTitle">Create Web Form</h3>
+                    <h3 style="margin:0 0 20px 0;" id="fbModalTitle">Create Route</h3>
                     <form id="formBuilderForm">
                         <div class="form-group" style="margin-bottom:16px;">
                             <label>Zoho Tool</label>
                             <select id="fbRouteType" class="form-input" style="width:100%;" onchange="onRouteTypeChange(this.value)">
                                 <option value="crm">CRM — Lead/Contact/Deal capture</option>
                                 <option value="desk">Desk — Support tickets</option>
-                                <option value="bookings">Bookings — Appointments</option>
-                                <option value="books">Books — Contact/Invoice</option>
-                                <option value="projects">Projects — Tasks</option>
+                                <option value="books">Books — Contacts</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom:16px;">
-                            <label>Form Name</label>
+                            <label>Route Name</label>
                             <input type="text" id="fbName" value="Contact Form" class="form-input" style="width:100%;" />
                         </div>
                         <div class="form-group" style="margin-bottom:16px;">
@@ -1109,7 +1122,7 @@
                             <input type="text" id="fbSuccessMsg" value="Thank you! We will be in touch." class="form-input" style="width:100%;" />
                         </div>
                         <div style="display:flex; gap:12px; margin-top:24px;">
-                            <button type="submit" class="btn btn-primary" style="flex:1;">Create Form</button>
+                        <button type="submit" class="btn btn-primary" style="flex:1;">Create Route</button>
                             <button type="button" class="btn" id="fbCancel" style="flex:1; background:var(--bg-tertiary); color:var(--text-primary); border:1px solid var(--border);">Cancel</button>
                         </div>
                     </form>
@@ -1133,7 +1146,7 @@
 
     <!-- Footer -->
     <footer>
-        <p>1ClickSync — Automated Zoho One Setup</p>
+        <p>1ClickSync — Zoho integration code for developer-owned apps</p>
     </footer>
 
     <!-- Toast container -->
@@ -1141,6 +1154,7 @@
 
     <script>
         // State management
+        const pageParams = new URLSearchParams(window.location.search);
         const state = {
             token: localStorage.getItem('token'),
             user: null,
@@ -1155,17 +1169,18 @@
             crm: {
                 name: 'CRM',
                 icon: '\u{1F4CA}',
-                description: 'Lead capture, sales pipeline, contact management',
+                description: 'Lead capture routes, pipeline sync, contact management',
                 modules: ['Leads', 'Contacts', 'Deals', 'Accounts', 'Tasks', 'Events'],
                 capabilities: [
-                    'Capture leads from any website via embeddable forms',
+                    'Generate copy-paste HTML/JS routes for any site',
                     'Auto-sync submissions to Leads, Contacts, or Deals',
-                    'Track Lead Source per form for attribution',
-                    'Run setup templates (custom fields, pipelines, workflows)',
+                    'Track Lead Source per route for attribution',
+                    'Export manifest metadata and LLM integration prompts',
                 ],
-                action: { label: '+ New Form', handler: 'openFormBuilder' },
-                setupHint: 'Create embeddable forms that push data straight to your CRM.',
+                action: { label: '+ New Route', handler: 'openFormBuilder' },
+                setupHint: 'Generate a CRM route and export the starter code.',
                 ready: true,
+                availability: 'ga',
             },
             desk: {
                 name: 'Desk',
@@ -1173,13 +1188,14 @@
                 description: 'Support tickets, helpdesk, customer service',
                 modules: ['Tickets', 'Contacts', 'Accounts'],
                 capabilities: [
-                    'Create support tickets from web forms',
-                    'Route to departments automatically',
-                    'Attach customer context from CRM',
+                    'Generate support routes that create Desk tickets',
+                    'Return sample payloads and public endpoint examples',
+                    'Reuse the same export flow as CRM routes',
                 ],
                 action: { label: '+ Support Route', handler: 'openRouteBuilder_desk' },
-                setupHint: 'Create a support form that creates Desk tickets automatically.',
+                setupHint: 'Generate a Desk support route with ready-to-paste code.',
                 ready: true,
+                availability: 'ga',
             },
             bookings: {
                 name: 'Bookings',
@@ -1187,71 +1203,78 @@
                 description: 'Appointment scheduling, service bookings',
                 modules: ['Appointments', 'Services', 'Staff'],
                 capabilities: [
-                    'Accept appointment bookings from your site',
-                    'Sync with Zoho Bookings calendar',
-                    'Auto-create CRM deals from bookings',
+                    'Needs service and staff selection before export',
+                    'Will generate booking routes once config UI lands',
+                    'Kept visible so roadmap is explicit',
                 ],
                 action: { label: '+ Booking Route', handler: 'openRouteBuilder_bookings' },
-                setupHint: 'Create a booking form that schedules appointments automatically.',
-                ready: true,
+                setupHint: 'Beta only: hidden from route generation until service/staff config exists.',
+                ready: false,
+                availability: 'beta',
             },
             salesiq: {
                 name: 'SalesIQ',
                 icon: '\u{1F514}',
-                description: 'Live chat widget, visitor tracking',
-                modules: ['Visitors', 'Chats'],
+                description: 'Live chat widget and visitor engagement',
+                modules: ['Widget', 'Visitors', 'Chats'],
                 capabilities: [
-                    'Embed live chat widget on your site',
-                    'Track visitors in real-time',
-                    'Route chats to CRM contacts',
+                    'Generate a copy-paste SalesIQ widget snippet',
+                    'Return setup instructions for framework adaptation',
+                    'Keep chat embed separate from form-route logic',
                 ],
-                action: { label: 'Embed Only', handler: null },
-                setupHint: 'SalesIQ is a JavaScript embed widget — paste your widget code in app settings.',
-                ready: false,
+                action: { label: 'Get Widget Code', handler: 'showSalesIQExport' },
+                setupHint: 'Generate a SalesIQ widget starter and replace the widget code placeholder if needed.',
+                ready: true,
+                availability: 'ga',
             },
             books: {
                 name: 'Books',
                 icon: '\u{1F4B0}',
-                description: 'Invoicing, accounting, payments',
-                modules: ['Invoices', 'Contacts', 'Items'],
+                description: 'Contact capture for Zoho Books',
+                modules: ['Contacts'],
                 capabilities: [
-                    'Capture contacts from web forms into Zoho Books',
-                    'Sync customer details for invoicing',
-                    'Track payments and billing',
+                    'Generate Books contact routes with sample payloads',
+                    'Use a single contact-focused export flow',
+                    'Invoice generation remains beta-only',
                 ],
                 action: { label: '+ Contact Route', handler: 'openRouteBuilder_books' },
-                setupHint: 'Create a form that adds contacts to Zoho Books.',
+                setupHint: 'Generate a Books contact route. Invoice routes stay beta until implemented.',
                 ready: true,
+                availability: 'ga',
             },
             projects: {
                 name: 'Projects',
                 icon: '\u{1F4C1}',
                 description: 'Project management, task tracking',
-                modules: ['Projects', 'Tasks', 'Milestones'],
+                modules: ['Tasks'],
                 capabilities: [
-                    'Create project tasks from web forms',
-                    'Track milestones and progress',
-                    'Sync with CRM deals',
+                    'Needs portal and project selection before export',
+                    'Will generate task routes after config UI lands',
+                    'Kept visible so roadmap is explicit',
                 ],
                 action: { label: '+ Task Route', handler: 'openRouteBuilder_projects' },
-                setupHint: 'Create a form that adds tasks to Zoho Projects.',
-                ready: true,
+                setupHint: 'Beta only: hidden from route generation until portal/project config exists.',
+                ready: false,
+                availability: 'beta',
             },
         };
 
         // DOM elements
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const resetForm = document.getElementById('resetForm');
         const authView = document.getElementById('authView');
         const dashboardView = document.getElementById('dashboardView');
         const navbar = document.getElementById('navbar');
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
         const logoutBtn = document.getElementById('logoutBtn');
         const toastContainer = document.getElementById('toastContainer');
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             setupEventListeners();
-            if (state.token) {
+            if (pageParams.get('reset_token')) {
+                showResetView();
+            } else if (state.token) {
                 fetchCurrentUser();
             } else {
                 showAuthView();
@@ -1262,19 +1285,41 @@
         function setupEventListeners() {
             loginForm.addEventListener('submit', handleLogin);
             registerForm.addEventListener('submit', handleRegister);
+            resetForm.addEventListener('submit', handleResetPassword);
             document.getElementById('switchToRegister').addEventListener('click', (e) => {
                 e.preventDefault();
-                loginForm.style.display = 'none';
-                registerForm.style.display = 'block';
-                document.getElementById('authSubtitle').textContent = 'Create your account';
+                showAuthScreen('register');
             });
             document.getElementById('switchToLogin').addEventListener('click', (e) => {
                 e.preventDefault();
-                registerForm.style.display = 'none';
-                loginForm.style.display = 'block';
-                document.getElementById('authSubtitle').textContent = 'Sign in to your account';
+                showAuthScreen('login');
             });
+            document.getElementById('resetBackToLogin').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.history.replaceState({}, '', '/app');
+                showAuthScreen('login');
+            });
+            document.getElementById('forgotPasswordBtn').addEventListener('click', handleForgotPassword);
             logoutBtn.addEventListener('click', handleLogout);
+        }
+
+        function showAuthScreen(screen) {
+            loginForm.style.display = screen === 'login' ? 'block' : 'none';
+            registerForm.style.display = screen === 'register' ? 'block' : 'none';
+            resetForm.style.display = screen === 'reset' ? 'block' : 'none';
+
+            document.getElementById('authSubtitle').textContent =
+                screen === 'register'
+                    ? 'Create a project and generate Zoho integrations'
+                    : screen === 'reset'
+                        ? 'Choose a new password for your account'
+                        : 'Sign in to generate Zoho integrations for your apps';
+        }
+
+        function showResetView() {
+            clearAuth();
+            showAuthView();
+            showAuthScreen('reset');
         }
 
         // Auth handlers
@@ -1340,6 +1385,60 @@
             }
         }
 
+        async function handleForgotPassword() {
+            const email = window.prompt('Enter the email address for your 1ClickSync account:');
+            if (!email) return;
+
+            try {
+                const response = await fetch('/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                if (!response.ok) throw new Error('Failed to send reset email');
+
+                const data = await response.json();
+                showToast(data.message || 'Reset link sent if the email exists', 'success');
+            } catch (error) {
+                showToast(error.message || 'Failed to send reset email', 'error');
+            }
+        }
+
+        async function handleResetPassword(e) {
+            e.preventDefault();
+            const token = pageParams.get('reset_token');
+            const newPassword = document.getElementById('resetPassword').value;
+
+            if (!token) {
+                showToast('Reset token missing from URL', 'error');
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const response = await fetch('/api/auth/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, newPassword })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.error || 'Failed to reset password');
+                }
+
+                showToast('Password reset successfully. You can sign in now.', 'success');
+                window.history.replaceState({}, '', '/app');
+                document.getElementById('resetPassword').value = '';
+                showAuthScreen('login');
+            } catch (error) {
+                showToast(error.message || 'Failed to reset password', 'error');
+            } finally {
+                setLoading(false);
+            }
+        }
+
         async function fetchCurrentUser() {
             try {
                 const response = await fetch('/api/auth/me', {
@@ -1391,7 +1490,7 @@
             const userName = state.user.name || 'User';
             document.getElementById('dashboardUserName').textContent = userName;
             document.getElementById('navUserName').textContent = userName;
-            document.getElementById('welcomeDescription').textContent = `Managing automation for ${state.user.company || 'your organization'}`;
+            document.getElementById('welcomeDescription').textContent = `Generating Zoho integrations for ${state.user.company || 'your next project'}`;
             const plan = (state.user.plan || 'free').toUpperCase();
             document.getElementById('planBadge').textContent = `${plan} PLAN`;
         }
@@ -1400,13 +1499,14 @@
             authView.style.display = 'flex';
             dashboardView.classList.remove('active');
             navbar.style.display = 'none';
+            showAuthScreen('login');
         }
 
         function renderTemplates(templates) {
             const grid = document.getElementById('templatesGrid');
 
             if (!templates || templates.length === 0) {
-                grid.innerHTML = '<div class="empty-state"><p>No templates available yet</p></div>';
+                grid.innerHTML = '<div class="empty-state"><p>No legacy templates published yet.</p></div>';
                 return;
             }
 
@@ -1414,9 +1514,10 @@
                 <div class="template-card">
                     <div class="template-name">${escapeHtml(template.name)}</div>
                     <div class="template-description">${escapeHtml(template.description)}</div>
+                    <div style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--warning);margin-bottom:12px;">Legacy beta</div>
                     <div class="template-steps">
                         <span class="template-steps-count">${template.step_count || 0} steps</span>
-                        <button type="button" onclick="alert('Launch template: ${template.name}')">Launch</button>
+                        <button type="button" disabled title="Legacy automation is API-only for now">Read Only</button>
                     </div>
                 </div>
             `).join('');
@@ -1428,7 +1529,7 @@
             showToast('Logged out successfully', 'success');
         }
 
-        // ── Apps Management ────────────────────────
+        // ── Project Management ─────────────────────
         async function fetchApps() {
             try {
                 const response = await fetch('/api/apps', {
@@ -1437,7 +1538,7 @@
                 if (!response.ok) return;
                 state.apps = await response.json();
 
-                // If no apps exist, create a default one
+                // If no projects exist, create a default one
                 if (state.apps.length === 0) {
                     await createDefaultApp();
                     return;
@@ -1476,23 +1577,9 @@
                 state.currentAppId = app.id;
                 localStorage.setItem('currentAppId', app.id);
 
-                // Also create backward-compat customer record
-                await fetch('/api/customers', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${state.token}`,
-                    },
-                    body: JSON.stringify({
-                        email: state.user.email,
-                        site_name: state.user.company || state.user.name || 'My App',
-                        business_type: 'saas',
-                    }),
-                }).catch(() => {});
-
                 renderAppSelector();
             } catch (e) {
-                showToast('Failed to create default app', 'error');
+                showToast('Failed to create default project', 'error');
             }
         }
 
@@ -1504,12 +1591,12 @@
 
             container.innerHTML = `
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;">
-                    <label style="font-size:0.85rem;color:var(--text-secondary);white-space:nowrap;">Current App:</label>
+                    <label style="font-size:0.85rem;color:var(--text-secondary);white-space:nowrap;">Current Project:</label>
                     <select id="appSelector" style="flex:1;padding:8px 12px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;">
                         ${state.apps.map(a => `<option value="${a.id}" ${a.id === state.currentAppId ? 'selected' : ''}>${escapeHtml(a.name)}${a.zoho_connected ? ' ✓' : ''}</option>`).join('')}
                     </select>
-                    <button class="btn btn-secondary" onclick="showCreateAppModal()" style="font-size:0.85rem;padding:6px 12px;white-space:nowrap;">+ New App</button>
-                    <button class="btn btn-secondary" onclick="showManifest()" style="font-size:0.85rem;padding:6px 12px;white-space:nowrap;">Manifest</button>
+                    <button class="btn btn-secondary" onclick="showCreateAppModal()" style="font-size:0.85rem;padding:6px 12px;white-space:nowrap;">+ New Project</button>
+                    <button class="btn btn-secondary" onclick="showManifest()" style="font-size:0.85rem;padding:6px 12px;white-space:nowrap;">Manifest JSON</button>
                     <button class="btn btn-secondary" onclick="showPrompt()" style="font-size:0.85rem;padding:6px 12px;white-space:nowrap;">LLM Prompt</button>
                 </div>
             `;
@@ -1524,7 +1611,7 @@
         }
 
         async function showCreateAppModal() {
-            const name = prompt('App name (e.g. "Acme SaaS", "Client Portfolio"):');
+            const name = prompt('Project name (e.g. "Acme SaaS", "Client Portfolio"):');
             if (!name) return;
 
             try {
@@ -1536,10 +1623,10 @@
                     },
                     body: JSON.stringify({ name, business_type: 'saas', zoho_tools: ['crm'] }),
                 });
-                if (!response.ok) throw new Error('Failed to create app');
+                if (!response.ok) throw new Error('Failed to create project');
 
                 const app = await response.json();
-                showToast(`App "${app.name}" created`, 'success');
+                showToast(`Project "${app.name}" created`, 'success');
                 await fetchApps();
                 // Switch to new app
                 state.currentAppId = app.id;
@@ -1554,7 +1641,7 @@
         }
 
         async function showManifest() {
-            if (!state.currentAppId) return showToast('Select an app first', 'error');
+            if (!state.currentAppId) return showToast('Select a project first', 'error');
             try {
                 const resp = await fetch(`/api/apps/${state.currentAppId}/manifest`, {
                     headers: { 'Authorization': `Bearer ${state.token}` }
@@ -1569,7 +1656,7 @@
         }
 
         async function showPrompt() {
-            if (!state.currentAppId) return showToast('Select an app first', 'error');
+            if (!state.currentAppId) return showToast('Select a project first', 'error');
             try {
                 const resp = await fetch(`/api/apps/${state.currentAppId}/prompt`, {
                     headers: { 'Authorization': `Bearer ${state.token}` }
@@ -1660,23 +1747,28 @@
             // Show connect prompt if not connected
             if (prompt) prompt.style.display = isConnected ? 'none' : 'block';
 
-            // Count routes per tool (all current routes are CRM)
+            // Count routes per tool
             const routesByTool = {};
-            for (const r of routes) { routesByTool['crm'] = (routesByTool['crm'] || 0) + 1; }
+            for (const r of routes) {
+                const routeKey = r.route_type || 'crm';
+                routesByTool[routeKey] = (routesByTool[routeKey] || 0) + 1;
+            }
 
             // Render tool cards
             grid.innerHTML = Object.entries(ZOHO_TOOLS_CONFIG).map(([key, tool]) => {
                 const isEnabled = enabledTools.includes(key);
                 const isActive = isConnected && isEnabled;
                 const isReady = tool.ready;
-                const comingSoon = !isReady;
+                const availability = tool.availability || (isReady ? 'ga' : 'beta');
+                const isBeta = availability === 'beta';
+                const comingSoon = availability !== 'ga';
 
                 // Card state classes
                 let cardClass = isActive ? 'active' : (isConnected ? 'available' : '');
                 if (comingSoon) cardClass += ' coming-soon';
 
                 const dotClass = isActive ? 'active' : (isConnected && isReady ? 'available' : 'disconnected');
-                const statusText = comingSoon ? 'Coming Soon' : (isActive ? 'Active' : (isConnected ? 'Available' : 'Connect'));
+                const statusText = comingSoon ? (isBeta ? 'Beta' : 'Coming Soon') : (isActive ? 'Active' : (isConnected ? 'Available' : 'Connect'));
                 const rc = routesByTool[key] || 0;
 
                 // Toggle: disabled if not connected OR if tool is not ready
@@ -1723,7 +1815,7 @@
                         </div>
                         <div class="tool-card-footer">
                             <div style="display:flex;align-items:center;gap:10px;">
-                                <label class="tool-toggle" title="${toggleDisabled ? (comingSoon ? 'Coming soon' : 'Connect Zoho first') : (isEnabled ? 'Disable' : 'Enable')}">
+                                <label class="tool-toggle" title="${toggleDisabled ? (comingSoon ? (isBeta ? 'Beta integration' : 'Coming soon') : 'Connect Zoho first') : (isEnabled ? 'Disable' : 'Enable')}">
                                     <input type="checkbox" ${isEnabled && !comingSoon ? 'checked' : ''} ${toggleDisabled ? 'disabled' : ''}
                                            onchange="toggleTool('${key}', this.checked)">
                                     <span class="tool-toggle-slider"></span>
@@ -1783,21 +1875,27 @@
             if (e.target && e.target.id === 'connectZohoBtn') handleConnectZoho();
         });
 
-        // Check for ?connected=true in URL after OAuth callback
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('connected') === 'true') {
+        // Check for query-string status after redirects
+        if (pageParams.get('connected') === 'true') {
             showToast('Zoho account connected successfully!', 'success');
             window.history.replaceState({}, '', '/app');
             if (state.token) checkZohoConnection();
-        } else if (urlParams.get('error')) {
-            showToast(`Connection failed: ${urlParams.get('error')}`, 'error');
+        } else if (pageParams.get('checkout') === 'success') {
+            showToast('Billing updated successfully.', 'success');
+            window.history.replaceState({}, '', '/app');
+        } else if (pageParams.get('checkout') === 'cancel') {
+            showToast('Checkout canceled.', 'error');
+            window.history.replaceState({}, '', '/app');
+        } else if (pageParams.get('error')) {
+            showToast(`Connection failed: ${pageParams.get('error')}`, 'error');
             window.history.replaceState({}, '', '/app');
         }
 
-        // ── Web Forms ───────────────────────────────
+        // ── Generated Routes ─────────────────────────
         async function fetchForms() {
+            if (!state.currentAppId) return;
             try {
-                const response = await fetch('/api/forms', {
+                const response = await fetch('/api/forms?app_id=' + encodeURIComponent(state.currentAppId), {
                     headers: { 'Authorization': `Bearer ${state.token}` }
                 });
                 if (!response.ok) return;
@@ -1809,7 +1907,7 @@
         function renderForms(forms) {
             const el = document.getElementById('formsList');
             if (!forms || forms.length === 0) {
-                el.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:16px;">No forms yet. Create one to start capturing leads.</p>';
+                el.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:16px;">No generated routes yet. Create one to get HTML/JS, request samples, and an exportable prompt.</p>';
                 return;
             }
             el.innerHTML = forms.map(f => `
@@ -1821,7 +1919,7 @@
                         <span style="color:var(--text-secondary);margin-left:8px;font-size:0.85rem;">${f.submissions_count} submissions</span>
                     </div>
                     <div style="display:flex;gap:8px;align-items:center;">
-                        <button class="btn" onclick="showEmbedCode('${f.id}')" style="font-size:0.85rem;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Get Code</button>
+                        <button class="btn" onclick="showIntegrationExport('${f.id}')" style="font-size:0.85rem;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Get Export</button>
                         <button class="btn" onclick="editForm('${f.id}')" style="font-size:0.85rem;padding:6px 12px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;cursor:pointer;">Edit</button>
                         <button class="btn" onclick="toggleFormActive('${f.id}', ${!f.is_active})" style="font-size:0.85rem;padding:6px 10px;border-radius:6px;background:${f.is_active ? '#065f46' : '#7f1d1d'};color:#fff;border:none;cursor:pointer;">${f.is_active ? 'Active' : 'Inactive'}</button>
                         <button class="btn" onclick="deleteForm('${f.id}', '${escapeHtml(f.name)}')" style="font-size:0.85rem;padding:6px 10px;background:transparent;color:var(--error);border:1px solid var(--error);border-radius:6px;cursor:pointer;">Delete</button>
@@ -1830,19 +1928,24 @@
             `).join('');
         }
 
-        async function showEmbedCode(formId) {
+        async function showIntegrationExport(integrationId) {
             try {
-                const response = await fetch('/api/forms/' + formId, {
+                const response = await fetch(`/api/apps/${state.currentAppId}/exports/${integrationId}?target=html-js`, {
                     headers: { 'Authorization': `Bearer ${state.token}` }
                 });
-                if (!response.ok) throw new Error('Failed to load form');
+                if (!response.ok) throw new Error('Failed to load export');
                 const data = await response.json();
-                document.getElementById('embedCodeArea').value = data.embed_code;
+                document.getElementById('embedCodeArea').value = data.content || data.snippet || '';
                 const modal = document.getElementById('embedModal');
                 modal.style.display = 'flex';
             } catch (e) {
                 showToast(e.message, 'error');
             }
+        }
+
+        async function showSalesIQExport() {
+            if (!state.currentAppId) return showToast('Select a project first', 'error');
+            return showIntegrationExport('salesiq-widget');
         }
 
         // ── Edit form ────────────────────────────────
@@ -1853,7 +1956,7 @@
                 const resp = await fetch('/api/forms/' + formId, {
                     headers: { 'Authorization': `Bearer ${state.token}` }
                 });
-                if (!resp.ok) throw new Error('Failed to load form');
+                if (!resp.ok) throw new Error('Failed to load route');
                 const form = resp.ok ? await resp.json() : null;
                 if (!form) return;
 
@@ -1876,14 +1979,14 @@
         }
 
         async function deleteForm(formId, formName) {
-            if (!confirm(`Delete form "${formName}"? This cannot be undone.`)) return;
+            if (!confirm(`Delete route "${formName}"? This cannot be undone.`)) return;
             try {
                 const resp = await fetch('/api/forms/' + formId, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${state.token}` }
                 });
                 if (!resp.ok) throw new Error('Failed to delete');
-                showToast('Form deleted', 'success');
+                showToast('Route deleted', 'success');
                 fetchForms();
             } catch (e) {
                 showToast(e.message, 'error');
@@ -1898,7 +2001,7 @@
                     body: JSON.stringify({ is_active: newState })
                 });
                 if (!resp.ok) throw new Error('Failed to update');
-                showToast(newState ? 'Form activated' : 'Form deactivated', 'success');
+                showToast(newState ? 'Route activated' : 'Route deactivated', 'success');
                 fetchForms();
             } catch (e) {
                 showToast(e.message, 'error');
@@ -1932,7 +2035,7 @@
             crm: [['Leads', 'Leads'], ['Contacts', 'Contacts'], ['Deals', 'Deals']],
             desk: [['Tickets', 'Tickets']],
             bookings: [['Appointments', 'Appointments']],
-            books: [['Contacts', 'Contacts'], ['Invoices', 'Invoices']],
+            books: [['Contacts', 'Contacts']],
             projects: [['Tasks', 'Tasks']],
         };
 
@@ -1981,7 +2084,7 @@
             document.getElementById('fbColor').value = '#3b82f6';
             document.getElementById('fbSuccessMsg').value = 'Thank you! We will be in touch.';
             document.getElementById('fbModalTitle').textContent =
-                routeType === 'crm' ? 'Create Web Form' :
+                routeType === 'crm' ? 'Create CRM Route' :
                 routeType === 'desk' ? 'Create Support Route' :
                 routeType === 'bookings' ? 'Create Booking Route' :
                 routeType === 'books' ? 'Create Books Route' :
@@ -2104,7 +2207,7 @@
             };
 
             if (!body.app_id) {
-                showToast('Create an app first to manage forms', 'error');
+                showToast('Create a project first to manage routes', 'error');
                 return;
             }
 
@@ -2123,15 +2226,16 @@
                 });
                 if (!response.ok) {
                     const err = await response.json().catch(() => ({}));
-                    throw new Error(err.error || `Failed to ${isEdit ? 'update' : 'create'} form`);
+                    throw new Error(err.error || `Failed to ${isEdit ? 'update' : 'create'} route`);
                 }
                 const data = await response.json();
                 document.getElementById('formBuilderModal').style.display = 'none';
-                showToast(isEdit ? 'Form updated!' : 'Form created!', 'success');
+                showToast(isEdit ? 'Route updated!' : 'Route created!', 'success');
                 editingFormId = null;
-                // Show embed code immediately
-                document.getElementById('embedCodeArea').value = data.embed_code;
-                document.getElementById('embedModal').style.display = 'flex';
+                const integrationId = data.form?.id || data.id;
+                if (integrationId) {
+                    await showIntegrationExport(integrationId);
+                }
                 fetchForms();
             } catch (e) {
                 showToast(e.message, 'error');
@@ -2141,7 +2245,9 @@
         function clearAuth() {
             state.token = null;
             state.user = null;
+            state.currentAppId = null;
             localStorage.removeItem('token');
+            localStorage.removeItem('currentAppId');
         }
 
         // Utilities
@@ -2168,7 +2274,13 @@
             const submitBtns = document.querySelectorAll('.form-submit');
             submitBtns.forEach(btn => {
                 btn.disabled = isLoading;
-                btn.textContent = isLoading ? 'Loading...' : (btn.id === 'loginSubmit' ? 'Sign in' : 'Create account');
+                btn.textContent = isLoading
+                    ? 'Loading...'
+                    : btn.id === 'loginSubmit'
+                        ? 'Sign in'
+                        : btn.id === 'resetSubmit'
+                            ? 'Reset password'
+                            : 'Create account';
             });
         }
     </script>

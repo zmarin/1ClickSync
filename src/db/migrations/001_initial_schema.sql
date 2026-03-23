@@ -1,5 +1,7 @@
 -- 1ClickSync Database Schema
--- Automated Zoho One Setup Platform
+-- Zoho Integration Generator Platform
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- ============================================
 -- USERS & AUTH

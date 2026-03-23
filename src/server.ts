@@ -16,7 +16,11 @@ import { billingPlugin } from './billing';
 import { formsPlugin } from './api/forms';
 import { pool } from './db';
 
-async function main() {
+interface BuildServerOptions {
+  scheduleMaintenance?: boolean;
+}
+
+export async function buildServer(options: BuildServerOptions = {}) {
   const app = Fastify({
     logger: {
       level: env.NODE_ENV === 'production' ? 'info' : 'debug',
@@ -106,17 +110,25 @@ async function main() {
     app.log.info('Stripe billing enabled');
   }
 
-  // ── Forms (webform generator) ──────────────────────
+  // ── Generated integrations ─────────────────────────
   await app.register(formsPlugin);
 
-  // ── Apps (multi-app cockpit) ──────────────────────
+  // ── Projects, manifests, and prompts ──────────────
   await app.register(appRoutesPlugin);
   app.log.info('App routes (manifest + prompt) enabled');
 
   // ── Zoho setup ────────────────────────────────────
   loadTemplates();
   await registerRoutes(app);
-  await scheduleMaintenanceJobs();
+  if (options.scheduleMaintenance !== false) {
+    await scheduleMaintenanceJobs();
+  }
+
+  return app;
+}
+
+async function main() {
+  const app = await buildServer();
 
   // ── Start ─────────────────────────────────────────
   const address = await app.listen({ port: env.PORT, host: '0.0.0.0' });
@@ -149,7 +161,9 @@ async function main() {
   });
 }
 
-main().catch((err) => {
-  console.error('[1ClickSync] Fatal startup error:', err);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((err) => {
+    console.error('[1ClickSync] Fatal startup error:', err);
+    process.exit(1);
+  });
+}

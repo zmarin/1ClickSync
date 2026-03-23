@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1ClickSync — Connect Your Apps to Zoho CRM</title>
-    <meta name="description" content="Embed lead capture forms on any website. Every submission lands in your Zoho CRM with the right Lead Source. Built for vibecoders and agencies.">
+    <title>1ClickSync — Generate Zoho Integration Code</title>
+    <meta name="description" content="Generate copy-paste HTML/JS, prompts, and manifests for Zoho CRM, Desk, Books, and SalesIQ integrations. Built for developers and agencies.">
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -253,7 +253,7 @@
     <div class="nav-inner">
         <a href="/" class="logo">1Click<span>Sync</span></a>
         <div class="nav-links">
-            <a href="#zoho-one">Why Zoho One</a>
+            <a href="#zoho-one">Why Zoho</a>
             <a href="#features">Features</a>
             <a href="#how">How It Works</a>
             <a href="#pricing">Pricing</a>
@@ -267,13 +267,13 @@
 <section class="hero">
     <div class="hero-inner">
         <div class="hero-text">
-            <div class="hero-badge">For vibecoders who ship</div>
-            <h1>Your apps deserve<br>a <span class="accent">pipeline.</span></h1>
+            <div class="hero-badge">For developers who ship</div>
+            <h1>Generate <span class="accent">Zoho integrations</span><br>for every app you ship.</h1>
             <p class="hero-sub">
-                You build apps. People visit. They're interested &mdash; but then what?
-                1ClickSync adds contact forms to every site you run. Every submission
-                flows into your Zoho CRM as a Lead, Contact, or Deal &mdash; with the right
-                source, so you know exactly where each person came from.
+                Connect a Zoho account, choose the integration you need, and get copy-paste
+                HTML/JS, sample requests, a machine-readable manifest, and an LLM prompt.
+                Start with CRM, Desk, Books contacts, or a SalesIQ widget without building
+                the integration layer from scratch.
             </p>
             <div class="hero-actions">
                 <a href="/app" class="btn btn-blue">Get Started Free &rarr;</a>
@@ -283,19 +283,19 @@
         <div class="hero-visual">
             <div class="code-header">
                 <div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div>
-                <span class="code-title">embed.html</span>
+                <span class="code-title">integration-export.html</span>
             </div>
             <div class="code-body">
-<span class="cmt">&lt;!-- Paste on any website --&gt;</span>
+<span class="cmt">&lt;!-- Copy-paste into your app shell --&gt;</span>
 <span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="str">"ocs-form-..."</span><span class="tag">&gt;</span>
 
   <span class="cmt">&lt;!-- Style tokens --&gt;</span>
   <span class="kw">--ocs-primary</span>: <span class="str">#3b82f6</span>;
   <span class="kw">--ocs-bg</span>:      <span class="str">#ffffff</span>;
 
-  <span class="cmt">&lt;!-- Auto-sync to Zoho CRM --&gt;</span>
-  <span class="tag">fetch</span>(<span class="str">'1clicksync.com/api/f/...'</span>, {
-    <span class="attr">Lead_Source</span>: <span class="str">"Website - myapp.com"</span>
+  <span class="cmt">&lt;!-- Generated public route --&gt;</span>
+  <span class="tag">fetch</span>(<span class="str">'/api/f/...'</span>, {
+    <span class="attr">email</span>: <span class="str">"developer@example.com"</span>
   })
 
 <span class="tag">&lt;/div&gt;</span>
@@ -307,10 +307,10 @@
 <!-- ═══ METRICS ═══ -->
 <section class="metrics">
     <div class="metrics-inner">
-        <div><div class="metric-num">1</div><div class="metric-label">Click to deploy</div></div>
-        <div><div class="metric-num">50+</div><div class="metric-label">Zoho One apps</div></div>
-        <div><div class="metric-num">0</div><div class="metric-label">Coding required</div></div>
-        <div><div class="metric-num">&infin;</div><div class="metric-label">Websites supported</div></div>
+        <div><div class="metric-num">4</div><div class="metric-label">GA Zoho exports</div></div>
+        <div><div class="metric-num">1</div><div class="metric-label">Prompt per project</div></div>
+        <div><div class="metric-num">1</div><div class="metric-label">Manifest per project</div></div>
+        <div><div class="metric-num">&infin;</div><div class="metric-label">Apps and sites supported</div></div>
     </div>
 </section>
 
@@ -319,21 +319,21 @@
     <div class="section-inner">
         <div class="zoho-grid">
             <div>
-                <div class="section-label">Why Zoho One</div>
-                <h2 class="section-title">You code the apps.<br>Zoho runs your business.</h2>
+        <div class="section-label">Why Zoho</div>
+        <h2 class="section-title">You ship the product.<br>Zoho powers the ops stack.</h2>
                 <p style="font-size:16px;color:var(--text-dim);line-height:1.8;margin-bottom:24px;">
                     Zoho One is a suite of <strong>50+ integrated business apps</strong> &mdash; CRM, email,
                     invoicing, project management, analytics, helpdesk, and more.
                     One login, one bill, one ecosystem.
                 </p>
                 <p style="font-size:16px;color:var(--text-dim);line-height:1.8;margin-bottom:24px;">
-                    As a vibecoder, you're great at building products. But running a business means
-                    tracking leads, sending invoices, managing support tickets, and analyzing data.
-                    Zoho One handles all of that so you can focus on shipping.
+                    As a developer or agency, you still need CRM capture, support routing,
+                    finance contacts, and chat widgets. Zoho handles those systems, but
+                    the integration work usually slows shipping down.
                 </p>
                 <p style="font-size:16px;color:var(--text);line-height:1.8;font-weight:700;">
-                    1ClickSync is the bridge &mdash; it connects your apps to Zoho CRM so every
-                    contact form, every inquiry, every lead flows into your pipeline automatically.
+                    1ClickSync is the bridge &mdash; it generates the integration starter so your
+                    app can talk to Zoho faster, with exports you can hand to an LLM or ship directly.
                 </p>
                 <div class="zoho-cta-box">
                     <div>
@@ -367,28 +367,28 @@
 <section class="section" id="features">
     <div class="section-inner">
         <div class="section-label">Features</div>
-        <h2 class="section-title">Turn every app into a lead machine</h2>
-        <p class="section-sub">You have 5 side projects, 3 client sites, and a SaaS. Each one generates traffic &mdash; but zero pipeline. Fix that.</p>
+        <h2 class="section-title">Generate the boring integration layer fast</h2>
+        <p class="section-sub">Use one project to generate Zoho route exports, widget snippets, prompts, and machine-readable manifests for every app you maintain.</p>
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon fi-blue">&#x2699;</div>
-                <h3>Embeddable Forms</h3>
-                <p>One HTML snippet per site. Paste it anywhere &mdash; Next.js, WordPress, static HTML. No npm install. No framework lock-in.</p>
+                <h3>HTML/JS Exports</h3>
+                <p>Generate copy-paste starters for CRM, Desk, Books contacts, and SalesIQ. Paste them into static HTML, a CMS, or your app shell.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon fi-green">&#x21C4;</div>
-                <h3>Instant CRM Sync</h3>
-                <p>Submit on your app &rarr; Lead, Contact, or Deal appears in Zoho CRM instantly. No CSV imports. No dead inboxes.</p>
+                <h3>Route + Payload Samples</h3>
+                <p>Each generated export includes a public route, sample request body, and sample response so you can wire it into your app without guessing.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon fi-red">&#x1F3AF;</div>
-                <h3>Lead Source Tracking</h3>
-                <p>Each form gets its own Lead Source. See in your CRM dashboard exactly which app or site brought each person in.</p>
+                <h3>LLM-Ready Prompt</h3>
+                <p>Every project gets a prompt you can paste into ChatGPT, Cursor, or Claude to adapt the generated export for your framework.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon fi-yellow">&#x1F3A8;</div>
-                <h3>Fully Styleable</h3>
-                <p>CSS variables make every form match its site. Hand it to a designer or ask an LLM to restyle it &mdash; 8 tokens, done.</p>
+                <h3>Manifest JSON</h3>
+                <p>Use the project manifest when you want machine-readable metadata about endpoints, fields, target modules, and supported exports.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon fi-green">&#x1F512;</div>
@@ -408,28 +408,28 @@
 <section class="section how" id="how">
     <div class="section-inner">
         <div class="section-label">How It Works</div>
-        <h2 class="section-title">Three steps. Every site covered.</h2>
-        <p class="section-sub">60 seconds per site. Your apps stop being pet projects and start building your pipeline.</p>
+        <h2 class="section-title">Three steps. Export and ship.</h2>
+        <p class="section-sub">Connect once, generate code, and adapt it to any app you own or build for clients.</p>
         <div class="steps">
             <div class="step">
                 <div class="step-num">01</div>
                 <div class="step-content">
-                    <h3>Connect Your CRM</h3>
-                    <p>One OAuth click. We detect your datacenter, encrypt your tokens, and you're in. No API keys, no config files. <a href="https://go.zoho.com/wDt" target="_blank" style="color:var(--zoho-blue);font-weight:700;">Need Zoho? Try free &rarr;</a></p>
+                    <h3>Connect Zoho</h3>
+                    <p>One OAuth click. We detect your datacenter, encrypt your tokens, and unlock export generation for supported Zoho tools. <a href="https://go.zoho.com/wDt" target="_blank" style="color:var(--zoho-blue);font-weight:700;">Need Zoho? Try free &rarr;</a></p>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">02</div>
                 <div class="step-content">
-                    <h3>Build Forms for Each Site</h3>
-                    <p>Pick a target (Leads, Contacts, or Deals), choose a Lead Source per site so you know where every inquiry came from, and we generate the embed code.</p>
+                    <h3>Choose the Integration</h3>
+                    <p>Pick CRM, Desk, Books contacts, or SalesIQ. Configure the target, then export the starter route or widget snippet.</p>
                 </div>
             </div>
             <div class="step">
                 <div class="step-num">03</div>
                 <div class="step-content">
-                    <h3>Paste &amp; Pipeline</h3>
-                    <p>Drop the snippet on your site. Someone fills it out &mdash; they appear in your CRM pipeline. Process them like a real business, not a side project.</p>
+                    <h3>Paste, Adapt, Ship</h3>
+                    <p>Use the generated HTML/JS directly, or hand the prompt and manifest to an LLM to adapt the integration to React, Next.js, or your backend.</p>
                 </div>
             </div>
         </div>
@@ -446,10 +446,10 @@
                 <h3>Free</h3>
                 <div class="price-amount">$0<span>/mo</span></div>
                 <ul>
-                    <li>1 form</li>
-                    <li>3 CRM setups</li>
-                    <li>1 template</li>
-                    <li>Lead Source tracking</li>
+                    <li>1 project</li>
+                    <li>3 generated routes</li>
+                    <li>Manifest + prompt exports</li>
+                    <li>SalesIQ widget starter</li>
                 </ul>
                 <a href="/app" class="btn btn-outline" style="width:100%;justify-content:center;">Start Free</a>
             </div>
@@ -457,9 +457,9 @@
                 <h3>Starter</h3>
                 <div class="price-amount">$19<span>/mo</span></div>
                 <ul>
-                    <li>5 forms</li>
-                    <li>50 CRM setups</li>
-                    <li>5 templates</li>
+                    <li>5 projects</li>
+                    <li>50 generated routes</li>
+                    <li>Desk + Books exports</li>
                     <li>Priority support</li>
                 </ul>
                 <a href="/app" class="btn btn-blue" style="width:100%;justify-content:center;">Get Starter</a>
@@ -468,9 +468,9 @@
                 <h3>Pro</h3>
                 <div class="price-amount">$49<span>/mo</span></div>
                 <ul>
-                    <li>Unlimited forms</li>
-                    <li>Unlimited setups</li>
-                    <li>All templates</li>
+                    <li>Unlimited projects</li>
+                    <li>Unlimited generated routes</li>
+                    <li>All supported Zoho exports</li>
                     <li>Custom integrations</li>
                 </ul>
                 <a href="/app" class="btn btn-outline" style="width:100%;justify-content:center;">Go Pro</a>
@@ -485,10 +485,11 @@
         <div class="contact-inner">
             <div>
                 <div class="section-label">Contact Us</div>
-                <h2 class="section-title">Start your<br>pipeline today.</h2>
+                <h2 class="section-title">Start your<br>next integration today.</h2>
                 <p style="font-size:16px;color:var(--text-dim);line-height:1.7;margin-bottom:32px;">
-                    Questions? Need a custom setup for your agency? This form feeds directly into
-                    our Zoho CRM &mdash; proof that it works. We respond within 24 hours.
+                    Questions? Need a custom export flow for your agency or product team?
+                    This form feeds directly into our Zoho CRM &mdash; proof that the generated
+                    route model works. We respond within 24 hours.
                 </p>
                 <div class="contact-detail">
                     <div class="contact-icon">&#x2709;</div>
@@ -566,7 +567,7 @@
       var btn = form.querySelector('.ocs-btn'); btn.disabled = true; btn.textContent = 'Sending...';
       var data = {}; var inputs = form.querySelectorAll('input, textarea');
       for (var i = 0; i < inputs.length; i++) { if (inputs[i].name) data[inputs[i].name] = inputs[i].value; }
-      fetch('https://1clicksync.com/api/f/e7b482b4a619f92325305beba551aa0a', {
+      fetch('/api/f/e7b482b4a619f92325305beba551aa0a', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
       }).then(function(r) { return r.json(); }).then(function(res) {
         if (res.success) { wrapper.innerHTML = '<div class="ocs-success">Thank you! We\'ll be in touch within 24 hours.</div>'; }
@@ -584,8 +585,8 @@
 <!-- ═══ FOOTER ═══ -->
 <footer>
     <div class="footer-inner">
-        <p>&copy; 2026 <a href="/">1ClickSync</a>. Connect your apps to Zoho CRM.</p>
-        <p>Don't have Zoho? <a href="https://go.zoho.com/wDt" target="_blank">Try Zoho One free &rarr;</a></p>
+        <p>&copy; 2026 <a href="/">1ClickSync</a>. Generate Zoho integration code for your apps.</p>
+        <p>Need a Zoho account first? <a href="https://go.zoho.com/wDt" target="_blank">Try Zoho One free &rarr;</a></p>
     </div>
 </footer>
 

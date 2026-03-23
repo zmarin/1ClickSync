@@ -49,8 +49,8 @@ export async function billingPlugin(app: FastifyInstance) {
       customer: customerId,
       mode: 'subscription',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${env.APP_URL}/dashboard?checkout=success`,
-      cancel_url: `${env.APP_URL}/dashboard?checkout=cancel`,
+      success_url: `${env.APP_URL}/app?checkout=success`,
+      cancel_url: `${env.APP_URL}/app?checkout=cancel`,
       metadata: { userId, plan },
     });
 
