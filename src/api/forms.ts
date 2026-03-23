@@ -7,6 +7,22 @@ import { crmApi, deskApi, bookingsApi, booksApi, projectsApi, ZohoApiError } fro
 import { env } from '../config';
 
 // ── Schemas ─────────────────────────────────────────
+const formStyleSchema = z.object({
+  primaryColor: z.string().default('#3b82f6'),
+  backgroundColor: z.string().default('#ffffff'),
+  textColor: z.string().default('#1a1a1a'),
+  borderRadius: z.string().default('8px'),
+  fontFamily: z.string().default('Inter, sans-serif'),
+  buttonText: z.string().default('Submit'),
+  successMessage: z.string().default('Thank you! We will be in touch.'),
+  service_id: z.string().optional(),
+  staff_id: z.string().optional(),
+  timezone: z.string().optional(),
+  portalId: z.string().optional(),
+  projectId: z.string().optional(),
+  defaultPriority: z.enum(['None', 'Low', 'Medium', 'High']).optional(),
+}).default({});
+
 const createFormSchema = z.object({
   app_id: z.string().uuid().optional(),
   customer_id: z.string().uuid().optional(),  // backward compat
@@ -22,15 +38,7 @@ const createFormSchema = z.object({
     zoho_field: z.string(),
     options: z.array(z.string()).optional(),
   })).min(1),
-  style: z.object({
-    primaryColor: z.string().default('#3b82f6'),
-    backgroundColor: z.string().default('#ffffff'),
-    textColor: z.string().default('#1a1a1a'),
-    borderRadius: z.string().default('8px'),
-    fontFamily: z.string().default('Inter, sans-serif'),
-    buttonText: z.string().default('Submit'),
-    successMessage: z.string().default('Thank you! We will be in touch.'),
-  }).default({}),
+  style: formStyleSchema,
 });
 
 const submitFormSchema = z.object({}).catchall(z.string());
@@ -107,6 +115,14 @@ export async function formsPlugin(app: FastifyInstance) {
     }
     if (!owner) {
       return reply.status(404).send({ error: 'App not found' });
+    }
+
+    if (body.route_type === 'bookings' && (!body.style.service_id || !body.style.staff_id)) {
+      return reply.status(400).send({ error: 'Bookings routes require a service ID and staff ID' });
+    }
+
+    if (body.route_type === 'projects' && (!body.style.portalId || !body.style.projectId)) {
+      return reply.status(400).send({ error: 'Projects routes require a portal ID and project ID' });
     }
 
     // Generate unique form key
@@ -473,7 +489,7 @@ async function dispatchToZoho(
         staff_id: mappedData.staff_id || form.style_config?.staff_id,
         from_time: mappedData.from_time || rawData.preferred_date,
         time_slot: mappedData.time_slot || rawData.preferred_time,
-        timezone: mappedData.timezone || rawData.timezone || 'UTC',
+        timezone: mappedData.timezone || rawData.timezone || form.style_config?.timezone || 'UTC',
         customer_details: {
           name: mappedData.customer_name || rawData.name || '',
           email: mappedData.customer_email || rawData.email || '',
@@ -504,7 +520,7 @@ async function dispatchToZoho(
       return projectsApi.createTask(appId, portalId, projectId, {
         name: mappedData.name || rawData.task_name || 'New Task',
         description: mappedData.description || rawData.description || '',
-        priority: mappedData.priority || rawData.priority || 'None',
+        priority: mappedData.priority || rawData.priority || form.style_config?.defaultPriority || 'None',
         end_date: mappedData.end_date || rawData.due_date || undefined,
       });
     }

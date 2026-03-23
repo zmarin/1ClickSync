@@ -11,14 +11,14 @@
 - A machine-readable project manifest
 - An LLM prompt you can paste into ChatGPT, Cursor, or Claude
 
-Current GA exports focus on Zoho CRM routes, Zoho Desk routes, Zoho Books contact routes, and a Zoho SalesIQ widget starter.
+Current GA exports cover Zoho CRM routes, Zoho Desk routes, Zoho Bookings routes, Zoho Books contact routes, Zoho Projects task routes, and a Zoho SalesIQ widget starter.
 
 ## Product Direction
 
 1ClickSync is now centered on helping developers and agencies ship Zoho integrations faster.
 
-- `GA`: CRM, Desk, Books contacts, SalesIQ widget export
-- `Beta`: Bookings and Projects until extra configuration UI exists
+- `GA`: CRM, Desk, Bookings, Books contacts, Projects, SalesIQ widget export
+- `Beta`: Books invoice workflows until invoice-specific configuration is added
 - `Legacy`: Template-driven setup automation remains in the codebase for backward compatibility, but it is no longer the primary product surface
 
 ## Architecture
