@@ -1079,7 +1079,9 @@
                             <select id="fbRouteType" class="form-input" style="width:100%;" onchange="onRouteTypeChange(this.value)">
                                 <option value="crm">CRM — Lead/Contact/Deal capture</option>
                                 <option value="desk">Desk — Support tickets</option>
+                                <option value="bookings">Bookings — Appointments</option>
                                 <option value="books">Books — Contacts</option>
+                                <option value="projects">Projects — Tasks</option>
                             </select>
                         </div>
                         <div class="form-group" style="margin-bottom:16px;">
@@ -1093,6 +1095,47 @@
                                 <option value="Contacts">Contacts</option>
                                 <option value="Deals">Deals</option>
                             </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:16px; display:none;" id="fbBookingsConfigGroup">
+                            <label>Bookings Configuration</label>
+                            <p style="margin:6px 0 12px 0; color:var(--text-secondary); font-size:0.9rem;">Set the Zoho Bookings service and staff IDs this route should create appointments for.</p>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                                <div>
+                                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Service ID</label>
+                                    <input type="text" id="fbBookingServiceId" class="form-input" style="width:100%;" placeholder="e.g. 47501000000012345" />
+                                </div>
+                                <div>
+                                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Staff ID</label>
+                                    <input type="text" id="fbBookingStaffId" class="form-input" style="width:100%;" placeholder="e.g. 47501000000067890" />
+                                </div>
+                            </div>
+                            <div style="margin-top:12px;">
+                                <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Timezone</label>
+                                <input type="text" id="fbBookingTimezone" class="form-input" style="width:100%;" value="UTC" placeholder="e.g. Europe/Zagreb" />
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom:16px; display:none;" id="fbProjectsConfigGroup">
+                            <label>Projects Configuration</label>
+                            <p style="margin:6px 0 12px 0; color:var(--text-secondary); font-size:0.9rem;">Set the Zoho Projects portal and project IDs this route should create tasks in.</p>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                                <div>
+                                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Portal ID</label>
+                                    <input type="text" id="fbProjectPortalId" class="form-input" style="width:100%;" placeholder="e.g. 736144111" />
+                                </div>
+                                <div>
+                                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Project ID</label>
+                                    <input type="text" id="fbProjectId" class="form-input" style="width:100%;" placeholder="e.g. 736144111000000123" />
+                                </div>
+                            </div>
+                            <div style="margin-top:12px;">
+                                <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Default Priority</label>
+                                <select id="fbProjectPriority" class="form-input" style="width:100%;">
+                                    <option value="None">None</option>
+                                    <option value="Low">Low</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group" style="margin-bottom:16px;" id="fbLeadSourceGroup">
                             <label>Lead Source <span style="color:var(--text-secondary);font-weight:400;font-size:0.85rem;">(tracks which site/form the lead came from)</span></label>
@@ -1203,14 +1246,14 @@
                 description: 'Appointment scheduling, service bookings',
                 modules: ['Appointments', 'Services', 'Staff'],
                 capabilities: [
-                    'Needs service and staff selection before export',
-                    'Will generate booking routes once config UI lands',
-                    'Kept visible so roadmap is explicit',
+                    'Generate booking routes for a selected service and staff member',
+                    'Capture appointment intent with ready-to-paste HTML and JS',
+                    'Store service, staff, and timezone config server-side',
                 ],
                 action: { label: '+ Booking Route', handler: 'openRouteBuilder_bookings' },
-                setupHint: 'Beta only: hidden from route generation until service/staff config exists.',
-                ready: false,
-                availability: 'beta',
+                setupHint: 'Configure a service ID and staff ID, then generate a live booking route.',
+                ready: true,
+                availability: 'ga',
             },
             salesiq: {
                 name: 'SalesIQ',
@@ -1248,14 +1291,14 @@
                 description: 'Project management, task tracking',
                 modules: ['Tasks'],
                 capabilities: [
-                    'Needs portal and project selection before export',
-                    'Will generate task routes after config UI lands',
-                    'Kept visible so roadmap is explicit',
+                    'Generate task-creation routes for a target portal and project',
+                    'Capture task details with exported HTML and JS starters',
+                    'Store portal, project, and default priority config server-side',
                 ],
                 action: { label: '+ Task Route', handler: 'openRouteBuilder_projects' },
-                setupHint: 'Beta only: hidden from route generation until portal/project config exists.',
-                ready: false,
-                availability: 'beta',
+                setupHint: 'Configure a portal ID and project ID, then generate a live task route.',
+                ready: true,
+                availability: 'ga',
             },
         };
 
@@ -1961,16 +2004,27 @@
                 if (!form) return;
 
                 editingFormId = formId;
+                const routeType = form.route_type || 'crm';
+                document.getElementById('fbRouteType').value = routeType;
+                onRouteTypeChange(routeType);
                 document.getElementById('fbName').value = form.name || '';
                 document.getElementById('fbModule').value = form.target_module || 'Leads';
                 const style = form.style_config || {};
                 document.getElementById('fbColor').value = style.primaryColor || '#3b82f6';
                 document.getElementById('fbButtonText').value = style.buttonText || 'Submit';
                 document.getElementById('fbSuccessMsg').value = style.successMessage || 'Thank you! We will be in touch.';
+                document.getElementById('fbBookingServiceId').value = style.service_id || '';
+                document.getElementById('fbBookingStaffId').value = style.staff_id || '';
+                document.getElementById('fbBookingTimezone').value = style.timezone || 'UTC';
+                document.getElementById('fbProjectPortalId').value = style.portalId || '';
+                document.getElementById('fbProjectId').value = style.projectId || '';
+                document.getElementById('fbProjectPriority').value = style.defaultPriority || 'None';
 
                 // Load lead sources for the module, then select the current one
-                await fetchLeadSources(form.target_module);
-                document.getElementById('fbLeadSource').value = form.lead_source || '';
+                if (routeType === 'crm') {
+                    await fetchLeadSources(form.target_module);
+                    document.getElementById('fbLeadSource').value = form.lead_source || '';
+                }
 
                 document.getElementById('formBuilderModal').style.display = 'flex';
             } catch (e) {
@@ -2047,6 +2101,11 @@
             projects: { name: 'Task Form', module: 'Tasks', button: 'Create Task' },
         };
 
+        function setIntegrationConfigVisibility(routeType) {
+            document.getElementById('fbBookingsConfigGroup').style.display = routeType === 'bookings' ? 'block' : 'none';
+            document.getElementById('fbProjectsConfigGroup').style.display = routeType === 'projects' ? 'block' : 'none';
+        }
+
         function onRouteTypeChange(routeType) {
             const modules = ROUTE_TYPE_MODULES[routeType] || ROUTE_TYPE_MODULES.crm;
             const defaults = ROUTE_TYPE_DEFAULTS[routeType] || ROUTE_TYPE_DEFAULTS.crm;
@@ -2060,11 +2119,19 @@
             // Update defaults
             document.getElementById('fbName').value = defaults.name;
             document.getElementById('fbButtonText').value = defaults.button;
+            if (routeType === 'bookings' && !document.getElementById('fbBookingTimezone').value) {
+                document.getElementById('fbBookingTimezone').value = 'UTC';
+            }
+            if (routeType === 'projects') {
+                document.getElementById('fbProjectPriority').value = 'None';
+            }
 
             // Lead source only relevant for CRM
             if (leadSourceGroup) {
                 leadSourceGroup.style.display = routeType === 'crm' ? 'block' : 'none';
             }
+
+            setIntegrationConfigVisibility(routeType);
 
             // Fetch lead sources only for CRM
             if (routeType === 'crm') fetchLeadSources();
@@ -2077,12 +2144,54 @@
         function openRouteBuilder_books() { openRouteBuilder('books'); }
         function openRouteBuilder_projects() { openRouteBuilder('projects'); }
 
+        function collectRouteIntegrationConfig(routeType) {
+            if (routeType === 'bookings') {
+                const serviceId = document.getElementById('fbBookingServiceId').value.trim();
+                const staffId = document.getElementById('fbBookingStaffId').value.trim();
+                const timezone = document.getElementById('fbBookingTimezone').value.trim() || 'UTC';
+
+                if (!serviceId || !staffId) {
+                    throw new Error('Bookings routes require both a service ID and a staff ID');
+                }
+
+                return {
+                    service_id: serviceId,
+                    staff_id: staffId,
+                    timezone,
+                };
+            }
+
+            if (routeType === 'projects') {
+                const portalId = document.getElementById('fbProjectPortalId').value.trim();
+                const projectId = document.getElementById('fbProjectId').value.trim();
+                const defaultPriority = document.getElementById('fbProjectPriority').value || 'None';
+
+                if (!portalId || !projectId) {
+                    throw new Error('Projects routes require both a portal ID and a project ID');
+                }
+
+                return {
+                    portalId,
+                    projectId,
+                    defaultPriority,
+                };
+            }
+
+            return {};
+        }
+
         function openRouteBuilder(routeType) {
             editingFormId = null;
             document.getElementById('fbRouteType').value = routeType;
             onRouteTypeChange(routeType);
             document.getElementById('fbColor').value = '#3b82f6';
             document.getElementById('fbSuccessMsg').value = 'Thank you! We will be in touch.';
+            document.getElementById('fbBookingServiceId').value = '';
+            document.getElementById('fbBookingStaffId').value = '';
+            document.getElementById('fbBookingTimezone').value = 'UTC';
+            document.getElementById('fbProjectPortalId').value = '';
+            document.getElementById('fbProjectId').value = '';
+            document.getElementById('fbProjectPriority').value = 'None';
             document.getElementById('fbModalTitle').textContent =
                 routeType === 'crm' ? 'Create CRM Route' :
                 routeType === 'desk' ? 'Create Support Route' :
@@ -2147,10 +2256,18 @@
             e.preventDefault();
             const routeType = document.getElementById('fbRouteType').value;
             const leadSource = document.getElementById('fbLeadSource').value;
+            let integrationConfig = {};
 
             // Lead source only required for CRM routes
             if (routeType === 'crm' && !leadSource) {
                 showToast('Select a Lead Source to track where leads come from', 'error');
+                return;
+            }
+
+            try {
+                integrationConfig = collectRouteIntegrationConfig(routeType);
+            } catch (err) {
+                showToast(err.message, 'error');
                 return;
             }
 
@@ -2175,8 +2292,8 @@
                     { name: 'name', label: 'Full Name', type: 'text', required: true, zoho_field: 'customer_name' },
                     { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'customer_email' },
                     { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'customer_phone' },
-                    { name: 'preferred_date', label: 'Preferred Date', type: 'text', required: true, zoho_field: 'from_time' },
-                    { name: 'preferred_time', label: 'Preferred Time', type: 'text', required: true, zoho_field: 'time_slot' },
+                    { name: 'preferred_date', label: 'Preferred Date', type: 'date', required: true, zoho_field: 'from_time' },
+                    { name: 'preferred_time', label: 'Preferred Time', type: 'time', required: true, zoho_field: 'time_slot' },
                     { name: 'notes', label: 'Notes', type: 'textarea', required: false, zoho_field: 'additional_fields' },
                 ],
                 books: [
@@ -2188,7 +2305,8 @@
                 projects: [
                     { name: 'task_name', label: 'Task Name', type: 'text', required: true, zoho_field: 'name' },
                     { name: 'description', label: 'Description', type: 'textarea', required: false, zoho_field: 'description' },
-                    { name: 'due_date', label: 'Due Date', type: 'text', required: false, zoho_field: 'end_date' },
+                    { name: 'priority', label: 'Priority', type: 'select', required: false, zoho_field: 'priority', options: ['None', 'Low', 'Medium', 'High'] },
+                    { name: 'due_date', label: 'Due Date', type: 'date', required: false, zoho_field: 'end_date' },
                 ],
             };
 
@@ -2203,6 +2321,7 @@
                     primaryColor: document.getElementById('fbColor').value,
                     buttonText: document.getElementById('fbButtonText').value,
                     successMessage: document.getElementById('fbSuccessMsg').value,
+                    ...integrationConfig,
                 },
             };
 

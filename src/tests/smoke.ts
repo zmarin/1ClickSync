@@ -46,7 +46,7 @@ async function main() {
         name: 'Smoke Project',
         domain: 'https://example.com',
         business_type: 'saas',
-        zoho_tools: ['crm', 'desk', 'books', 'salesiq'],
+        zoho_tools: ['crm', 'desk', 'bookings', 'books', 'projects', 'salesiq'],
       },
     });
     expectStatus(createProjectResponse.statusCode, 201, 'create project', createProjectResponse.body);
@@ -132,6 +132,60 @@ async function main() {
     expectStatus(booksRouteResponse.statusCode, 201, 'create Books contact route', booksRouteResponse.body);
     const booksRoute = booksRouteResponse.json() as { form: { id: string } };
 
+    const bookingsRouteResponse = await app.inject({
+      method: 'POST',
+      url: '/api/forms',
+      headers: authHeaders(token),
+      payload: {
+        app_id: project.id,
+        route_type: 'bookings',
+        name: 'Appointment Booking Route',
+        target_module: 'Appointments',
+        fields: [
+          { name: 'name', label: 'Full Name', type: 'text', required: true, zoho_field: 'customer_name' },
+          { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'customer_email' },
+          { name: 'preferred_date', label: 'Preferred Date', type: 'date', required: true, zoho_field: 'from_time' },
+          { name: 'preferred_time', label: 'Preferred Time', type: 'time', required: true, zoho_field: 'time_slot' },
+        ],
+        style: {
+          buttonText: 'Book Appointment',
+          successMessage: 'Appointment request received.',
+          service_id: 'booking-service-123',
+          staff_id: 'booking-staff-456',
+          timezone: 'UTC',
+        },
+      },
+    });
+    expectStatus(bookingsRouteResponse.statusCode, 201, 'create Bookings route', bookingsRouteResponse.body);
+    const bookingsRoute = bookingsRouteResponse.json() as { form: { id: string } };
+
+    const projectsRouteResponse = await app.inject({
+      method: 'POST',
+      url: '/api/forms',
+      headers: authHeaders(token),
+      payload: {
+        app_id: project.id,
+        route_type: 'projects',
+        name: 'Project Task Route',
+        target_module: 'Tasks',
+        fields: [
+          { name: 'task_name', label: 'Task Name', type: 'text', required: true, zoho_field: 'name' },
+          { name: 'description', label: 'Description', type: 'textarea', required: false, zoho_field: 'description' },
+          { name: 'priority', label: 'Priority', type: 'select', required: false, zoho_field: 'priority', options: ['None', 'Low', 'Medium', 'High'] },
+          { name: 'due_date', label: 'Due Date', type: 'date', required: false, zoho_field: 'end_date' },
+        ],
+        style: {
+          buttonText: 'Create Task',
+          successMessage: 'Task request received.',
+          portalId: 'portal-123',
+          projectId: 'project-456',
+          defaultPriority: 'Medium',
+        },
+      },
+    });
+    expectStatus(projectsRouteResponse.statusCode, 201, 'create Projects route', projectsRouteResponse.body);
+    const projectsRoute = projectsRouteResponse.json() as { form: { id: string } };
+
     const manifestResponse = await app.inject({
       method: 'GET',
       url: `/api/apps/${project.id}/manifest`,
@@ -149,6 +203,8 @@ async function main() {
     assert.ok(manifest.integrations.some((item) => item.id === crmRoute.form.id && item.tool === 'crm'));
     assert.ok(manifest.integrations.some((item) => item.id === deskRoute.form.id && item.tool === 'desk'));
     assert.ok(manifest.integrations.some((item) => item.id === booksRoute.form.id && item.tool === 'books'));
+    assert.ok(manifest.integrations.some((item) => item.id === bookingsRoute.form.id && item.tool === 'bookings'));
+    assert.ok(manifest.integrations.some((item) => item.id === projectsRoute.form.id && item.tool === 'projects'));
 
     const promptResponse = await app.inject({
       method: 'GET',
@@ -206,6 +262,36 @@ async function main() {
     assert.equal(salesIqExport.kind, 'embed_widget');
     assert.match(salesIqExport.snippet, /PASTE_YOUR_SALESIQ_WIDGET_CODE/);
     assert.ok(salesIqExport.instructions.length >= 2);
+
+    const bookingsExportResponse = await app.inject({
+      method: 'GET',
+      url: `/api/apps/${project.id}/exports/${bookingsRoute.form.id}?target=html-js`,
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expectStatus(bookingsExportResponse.statusCode, 200, 'fetch Bookings export', bookingsExportResponse.body);
+    const bookingsExport = bookingsExportResponse.json() as {
+      tool: string;
+      integration_config: Record<string, string>;
+      sample_request: { body: Record<string, string> };
+    };
+    assert.equal(bookingsExport.tool, 'bookings');
+    assert.equal(bookingsExport.integration_config.service_id, 'booking-service-123');
+    assert.equal(bookingsExport.sample_request.body.preferred_date, '2026-03-23');
+
+    const projectsExportResponse = await app.inject({
+      method: 'GET',
+      url: `/api/apps/${project.id}/exports/${projectsRoute.form.id}?target=html-js`,
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expectStatus(projectsExportResponse.statusCode, 200, 'fetch Projects export', projectsExportResponse.body);
+    const projectsExport = projectsExportResponse.json() as {
+      tool: string;
+      integration_config: Record<string, string>;
+      sample_request: { body: Record<string, string> };
+    };
+    assert.equal(projectsExport.tool, 'projects');
+    assert.equal(projectsExport.integration_config.projectId, 'project-456');
+    assert.equal(projectsExport.sample_request.body.priority, 'example_priority');
 
     const publicSubmitResponse = await app.inject({
       method: 'POST',

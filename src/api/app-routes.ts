@@ -7,6 +7,7 @@ import {
   buildFormRouteExport,
   buildSalesIQExport,
   getFormFields,
+  getIntegrationConfig,
   getToolSupportSummary,
 } from './export-utils';
 
@@ -203,6 +204,7 @@ export async function appRoutesPlugin(app: FastifyInstance) {
 
     for (const route of routes) {
       const fields = getFormFields(route);
+      const integrationConfig = getIntegrationConfig(route);
       const fieldMapping = route.field_mapping as Record<string, string>;
       const tool = route.route_type || 'crm';
       const support = getToolSupportSummary(tool);
@@ -221,6 +223,7 @@ export async function appRoutesPlugin(app: FastifyInstance) {
         lead_source: route.lead_source,
         generated_artifacts: support.generated_artifacts,
         export_url: `${env.APP_URL}/api/apps/${appRecord.id}/exports/${route.id}?target=html-js`,
+        integration_config: integrationConfig,
         fields: fields.map((f: any) => ({
           name: f.name,
           label: f.label,
@@ -430,12 +433,16 @@ function generateLLMPrompt(appRecord: any, routes: any[], zohoTools: string[]): 
       const submitUrl = `${baseUrl}/api/f/${route.form_key}`;
       const exportUrl = `${baseUrl}/api/apps/${appRecord.id}/exports/${route.id}?target=html-js`;
       const toolName = (route.route_type || 'crm').toUpperCase();
+      const integrationConfig = getIntegrationConfig(route);
 
       prompt += `### ${route.name}\n\n`;
       prompt += `- Tool: Zoho ${toolName}\n`;
       prompt += `- Target: ${route.target_module}\n`;
       prompt += `- Public endpoint: \`${submitUrl}\`\n`;
       prompt += `- Export: \`${exportUrl}\`\n`;
+      if (integrationConfig) {
+        prompt += `- Integration config: \`${JSON.stringify(integrationConfig)}\`\n`;
+      }
       if (route.lead_source) {
         prompt += `- Lead Source: ${route.lead_source}\n`;
       }

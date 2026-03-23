@@ -17,6 +17,7 @@ export interface IntegrationExport {
   snippet: string;
   instructions: string[];
   content: string;
+  integration_config?: Record<string, string>;
   sample_request?: {
     method: string;
     url: string;
@@ -72,18 +73,18 @@ export function getToolSupportSummary(tool: string): ToolSummary {
     case 'bookings':
       return {
         tool,
-        status: 'beta',
+        status: 'ga',
         kind: 'form_route',
-        summary: 'Needs service/staff configuration before it can be generated safely.',
-        generated_artifacts: ['manifest'],
+        summary: 'Booking routes that create appointments from a configured service and staff member.',
+        generated_artifacts: ['html-js', 'sample-request', 'sample-response', 'llm-prompt', 'manifest'],
       };
     case 'projects':
       return {
         tool,
-        status: 'beta',
+        status: 'ga',
         kind: 'form_route',
-        summary: 'Needs portal/project selection before it can be generated safely.',
-        generated_artifacts: ['manifest'],
+        summary: 'Task creation routes for a configured Zoho Projects portal and project.',
+        generated_artifacts: ['html-js', 'sample-request', 'sample-response', 'llm-prompt', 'manifest'],
       };
     default:
       return {
@@ -106,6 +107,29 @@ export function getFormStyle(form: any): Record<string, any> {
   const style = { ...styleConfig };
   delete style.fields;
   return style;
+}
+
+export function getIntegrationConfig(form: any): Record<string, string> | undefined {
+  const style = getFormStyle(form);
+  const tool = form.route_type || 'crm';
+
+  if (tool === 'bookings') {
+    const config: Record<string, string> = {};
+    if (style.service_id) config.service_id = String(style.service_id);
+    if (style.staff_id) config.staff_id = String(style.staff_id);
+    if (style.timezone) config.timezone = String(style.timezone);
+    return Object.keys(config).length > 0 ? config : undefined;
+  }
+
+  if (tool === 'projects') {
+    const config: Record<string, string> = {};
+    if (style.portalId) config.portalId = String(style.portalId);
+    if (style.projectId) config.projectId = String(style.projectId);
+    if (style.defaultPriority) config.defaultPriority = String(style.defaultPriority);
+    return Object.keys(config).length > 0 ? config : undefined;
+  }
+
+  return undefined;
 }
 
 export function buildExamplePayload(fields: Array<{ name: string; type: string }>): Record<string, string> {
@@ -147,6 +171,7 @@ export function buildFormRouteExport(form: any): IntegrationExport {
   const submitUrl = `${env.APP_URL}/api/f/${form.form_key}`;
   const tool = form.route_type || 'crm';
   const summary = getToolSupportSummary(tool);
+  const integrationConfig = getIntegrationConfig(form);
   const payload = buildExamplePayload(fields);
   const javascript = buildJavascriptExample(submitUrl, payload);
   const snippet = generateEmbedCode(form.form_key, form.name, fields, style, submitUrl);
@@ -155,8 +180,7 @@ export function buildFormRouteExport(form: any): IntegrationExport {
     message: style.successMessage || 'Thank you! We will be in touch.',
     record_id: tool === 'crm' || tool === 'desk' || tool === 'books' ? 'zoho-record-id' : undefined,
   };
-
-  const content = [
+  const contentParts = [
     `# ${form.name}`,
     '',
     `Tool: Zoho ${tool.toUpperCase()}`,
@@ -169,6 +193,20 @@ export function buildFormRouteExport(form: any): IntegrationExport {
     snippet,
     '```',
     '',
+  ];
+
+  if (integrationConfig) {
+    contentParts.push(
+      '## Integration Configuration',
+      '```json',
+      JSON.stringify(integrationConfig, null, 2),
+      '```',
+      '',
+    );
+  }
+
+  const content = [
+    ...contentParts,
     '## Sample JavaScript Request',
     '```javascript',
     javascript,
@@ -192,10 +230,14 @@ export function buildFormRouteExport(form: any): IntegrationExport {
     snippet,
     instructions: [
       `Paste the snippet into your site or app and keep the submit URL pointed at ${submitUrl}.`,
+      ...(integrationConfig
+        ? [`This route is preconfigured with ${Object.entries(integrationConfig).map(([key, value]) => `${key}=${value}`).join(', ')}.`]
+        : []),
       `Use the project manifest for machine-readable integration metadata.`,
       `Use the generated prompt when you want an LLM to adapt the snippet to a specific framework.`,
     ],
     content,
+    integration_config: integrationConfig,
     sample_request: {
       method: 'POST',
       url: submitUrl,
