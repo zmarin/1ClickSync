@@ -1,124 +1,132 @@
 # 1ClickSync
 
-**Automated Zoho One setup. Connect your account, get a working CRM in minutes.**
+**Zoho integration generator for developer-owned apps. Connect your account, generate working integration code in minutes.**
 
-## What it does
+## What It Does
 
-1ClickSync connects to your Zoho One account via OAuth and runs templated setup jobs — creating CRM fields, deal stages, workflows, and more — so you don't have to click through dozens of screens manually.
+1ClickSync connects to your Zoho account via OAuth and generates developer-facing integration artifacts for supported Zoho tools:
+
+- Copy-paste HTML/JS starters
+- Sample request and response payloads
+- A machine-readable project manifest
+- An LLM prompt you can paste into ChatGPT, Cursor, or Claude
+
+Current GA exports focus on Zoho CRM routes, Zoho Desk routes, Zoho Books contact routes, and a Zoho SalesIQ widget starter.
+
+## Product Direction
+
+1ClickSync is now centered on helping developers and agencies ship Zoho integrations faster.
+
+- `GA`: CRM, Desk, Books contacts, SalesIQ widget export
+- `Beta`: Bookings and Projects until extra configuration UI exists
+- `Legacy`: Template-driven setup automation remains in the codebase for backward compatibility, but it is no longer the primary product surface
 
 ## Architecture
 
-```
-┌─────────────┐     ┌──────────────────────────────────────┐
-│  Dashboard   │────▶│  Fastify API (Node.js + TypeScript)  │
-│  (React)     │     │  - Auth (JWT + bcrypt)                │
-└─────────────┘     │  - OAuth flow (Zoho)                  │
-                    │  - Stripe billing                     │
-                    └──────────┬───────────────────────────┘
+```text
+┌─────────────┐     ┌────────────────────────────────────────┐
+│ Dashboard   │────▶│ Fastify API (Node.js + TypeScript)     │
+│ (HTML/JS)   │     │ - Auth (JWT + bcrypt)                  │
+└─────────────┘     │ - Zoho OAuth                           │
+                    │ - Manifest / prompt / export endpoints │
+                    │ - Billing + account flows              │
+                    └──────────┬─────────────────────────────┘
                                │
-                    ┌──────────▼───────────────────────────┐
-                    │  BullMQ Job Queue (Redis-backed)      │
-                    │  - Rate-limited (15 calls/10s)        │
-                    │  - Retryable (3 attempts, exp backoff)│
-                    │  - Idempotent (skip completed steps)  │
-                    └──────────┬───────────────────────────┘
+                    ┌──────────▼─────────────────────────────┐
+                    │ BullMQ Job Queue (Redis-backed)         │
+                    │ - Legacy setup automation only          │
+                    │ - Rate limited and retryable            │
+                    └──────────┬─────────────────────────────┘
                                │
-                    ┌──────────▼───────────────────────────┐
-                    │  Workers                              │
-                    │  - CRM: fields, stages, workflows     │
-                    │  - Forms: create + map to CRM         │
-                    │  - SalesIQ: widget config              │
-                    └──────────┬───────────────────────────┘
-                               │
-                    ┌──────────▼───────────────────────────┐
-                    │  Zoho APIs (CRM, Forms, SalesIQ...)   │
-                    └──────────────────────────────────────┘
+                    ┌──────────▼─────────────────────────────┐
+                    │ Zoho APIs                               │
+                    │ - CRM / Desk / Books / SalesIQ         │
+                    └────────────────────────────────────────┘
 ```
 
 ## Quick Start
 
 ```bash
-# 1. Install
 npm install
-
-# 2. Start Postgres + Redis
 docker compose up postgres redis -d
-
-# 3. Configure
 cp .env.example .env
-# Edit .env with your Zoho OAuth credentials
-
-# 4. Run
-npm run dev          # API server on :3000
-npm run dev:worker   # Job processor
+npm run db:migrate
+npm run dev
+npm run dev:worker
 ```
+
+The app runs at `http://localhost:3000/app`.
+
+For a lightweight API regression pass, run `npm run test:smoke` after migrations.
+
+## Core API Endpoints
+
+### Auth
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/auth/register` | Create account |
+| POST | `/api/auth/login` | Login and return JWT |
+| GET | `/api/auth/me` | Get current user |
+| POST | `/api/auth/forgot-password` | Request reset email |
+| POST | `/api/auth/reset-password` | Reset password with token |
+
+### Projects And Exports
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/apps` | Create project |
+| GET | `/api/apps` | List projects |
+| GET | `/api/apps/:appId` | Project detail |
+| PATCH | `/api/apps/:appId` | Update project |
+| GET | `/api/apps/:appId/manifest` | Developer manifest |
+| GET | `/api/apps/:appId/prompt` | LLM integration prompt |
+| GET | `/api/apps/:appId/exports/:integrationId?target=html-js` | HTML/JS export |
+
+### Zoho Connection And Routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/auth/zoho` | Start Zoho OAuth flow |
+| GET | `/api/auth/zoho/callback` | OAuth callback |
+| GET | `/api/connection/:customerId` | Check Zoho connection status |
+| POST | `/api/forms` | Create a generated route |
+| GET | `/api/forms` | List generated routes |
+| GET | `/api/forms/:formId` | Get route detail + legacy embed code |
+| POST | `/api/f/:formKey` | Public submission endpoint |
+
+### Legacy Automation
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/templates` | List legacy setup templates |
+| POST | `/api/setup/start` | Trigger legacy setup job |
+| GET | `/api/setup/status/:jobId` | Check legacy job status |
 
 ## Project Structure
 
-```
+```text
 src/
-├── server.ts              # Fastify entry point
-├── worker.ts              # BullMQ worker entry point
-├── config.ts              # Environment + Zoho DC config
+├── server.ts
+├── worker.ts
 ├── api/
-│   └── routes.ts          # Zoho setup REST endpoints
+│   ├── app-routes.ts
+│   ├── core-routes.ts
+│   ├── export-utils.ts
+│   └── forms.ts
 ├── auth/
-│   ├── index.ts           # Registration, login, JWT auth
-│   └── password-reset.ts  # Forgot/reset password flow
 ├── billing/
-│   └── index.ts           # Stripe subscriptions + webhooks
 ├── db/
-│   └── index.ts           # Postgres pool + helpers
 ├── email/
-│   └── index.ts           # Nodemailer transporter
 ├── queue/
-│   ├── setup.ts           # Queue definitions + job enqueuing
-│   └── processors.ts      # Step execution logic
 ├── security/
-│   └── index.ts           # Rate limiting, headers, sanitization
-├── zoho/
-│   ├── oauth.ts           # OAuth flow + token management
-│   ├── client.ts          # Zoho API client + CRM helpers
-│   └── encryption.ts      # AES-256-GCM for token storage
-└── templates/
-    ├── loader.ts           # Template loading + variable resolution
-    └── saas-crm-quickstart.json
+├── templates/
+└── zoho/
 ```
 
-## API Endpoints
+## Deployment
 
-### Auth
-| Method | Path                          | Description                    |
-|--------|-------------------------------|--------------------------------|
-| POST   | /api/auth/register            | Create account                 |
-| POST   | /api/auth/login               | Login (returns JWT)            |
-| GET    | /api/auth/me                  | Current user profile           |
-| POST   | /api/auth/change-password     | Change password (authed)       |
-| POST   | /api/auth/forgot-password     | Request reset email            |
-| POST   | /api/auth/reset-password      | Reset with token               |
-
-### Zoho Setup
-| Method | Path                          | Description                    |
-|--------|-------------------------------|--------------------------------|
-| GET    | /health                       | Health check                   |
-| POST   | /api/customers                | Create customer                |
-| GET    | /api/auth/zoho                | Start Zoho OAuth flow          |
-| GET    | /api/auth/zoho/callback       | OAuth callback                 |
-| GET    | /api/connection/:customerId   | Check Zoho connection status   |
-| GET    | /api/templates                | List available templates       |
-| POST   | /api/setup/start              | Trigger a setup job            |
-| GET    | /api/setup/status/:jobId      | Get job progress               |
-
-### Billing
-| Method | Path                          | Description                    |
-|--------|-------------------------------|--------------------------------|
-| POST   | /api/billing/checkout         | Create Stripe checkout session |
-| GET    | /api/billing/status           | Get subscription status        |
-| POST   | /api/billing/webhook          | Stripe webhook receiver        |
-
-## Production Deploy
-
-See [DEPLOY.md](./DEPLOY.md) for full Dokploy + Hetzner deployment guide.
+See [DEPLOY.md](./DEPLOY.md) for the current Dokploy/Hetzner deployment notes.
 
 ## License
 

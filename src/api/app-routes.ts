@@ -3,6 +3,12 @@ import { z } from 'zod';
 import { query, queryOne } from '../db';
 import { authenticate } from '../auth';
 import { env } from '../config';
+import {
+  buildFormRouteExport,
+  buildSalesIQExport,
+  getFormFields,
+  getToolSupportSummary,
+} from './export-utils';
 
 // ── Schemas ─────────────────────────────────────────
 const createAppSchema = z.object({
@@ -10,6 +16,7 @@ const createAppSchema = z.object({
   domain: z.string().max(255).optional(),
   business_type: z.string().max(100).default('saas'),
   zoho_tools: z.array(z.enum(['crm', 'desk', 'bookings', 'salesiq', 'books', 'projects'])).default(['crm']),
+  settings: z.record(z.any()).optional(),
 });
 
 const updateAppSchema = z.object({
@@ -18,6 +25,7 @@ const updateAppSchema = z.object({
   business_type: z.string().max(100).optional(),
   zoho_tools: z.array(z.enum(['crm', 'desk', 'bookings', 'salesiq', 'books', 'projects'])).optional(),
   is_active: z.boolean().optional(),
+  settings: z.record(z.any()).optional(),
 });
 
 /**
@@ -43,9 +51,17 @@ export async function appRoutesPlugin(app: FastifyInstance) {
     const slug = generateSlug(body.name);
 
     const [created] = await query(
-      `INSERT INTO apps (user_id, name, slug, domain, business_type, zoho_tools)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [userId, body.name, slug, body.domain || null, body.business_type, JSON.stringify(body.zoho_tools)]
+      `INSERT INTO apps (user_id, name, slug, domain, business_type, zoho_tools, settings)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [
+        userId,
+        body.name,
+        slug,
+        body.domain || null,
+        body.business_type,
+        JSON.stringify(body.zoho_tools),
+        JSON.stringify(body.settings || {}),
+      ]
     );
 
     // Also create a corresponding customers record for backward compat
@@ -99,7 +115,7 @@ export async function appRoutesPlugin(app: FastifyInstance) {
     if (!appRecord) return reply.status(404).send({ error: 'App not found' });
 
     const routes = await query(
-      `SELECT id, form_key, name, target_module, lead_source, is_active, submissions_count, created_at
+      `SELECT id, form_key, name, target_module, route_type, lead_source, is_active, submissions_count, created_at
        FROM form_configs WHERE app_id = $1 ORDER BY created_at DESC`,
       [appId]
     );
@@ -128,6 +144,7 @@ export async function appRoutesPlugin(app: FastifyInstance) {
     if (body.business_type !== undefined) { sets.push(`business_type = $${idx}`); values.push(body.business_type); idx++; }
     if (body.zoho_tools !== undefined) { sets.push(`zoho_tools = $${idx}`); values.push(JSON.stringify(body.zoho_tools)); idx++; }
     if (body.is_active !== undefined) { sets.push(`is_active = $${idx}`); values.push(body.is_active); idx++; }
+    if (body.settings !== undefined) { sets.push(`settings = $${idx}`); values.push(JSON.stringify(body.settings)); idx++; }
 
     values.push(appId);
     const [updated] = await query(
@@ -180,20 +197,30 @@ export async function appRoutesPlugin(app: FastifyInstance) {
       [appId]
     );
 
-    // Build manifest
+    const zohoTools = (appRecord.zoho_tools as string[]) || ['crm'];
     const routeManifest: Record<string, any> = {};
-    for (const route of routes) {
-      const styleConfig = route.style_config as any;
-      const fields = styleConfig?.fields || [];
-      const fieldMapping = route.field_mapping as Record<string, string>;
+    const integrations: any[] = [];
 
-      routeManifest[route.name.toLowerCase().replace(/\s+/g, '_')] = {
+    for (const route of routes) {
+      const fields = getFormFields(route);
+      const fieldMapping = route.field_mapping as Record<string, string>;
+      const tool = route.route_type || 'crm';
+      const support = getToolSupportSummary(tool);
+      const manifestKey = route.name.toLowerCase().replace(/\s+/g, '_');
+
+      const manifestEntry = {
+        id: route.id,
         name: route.name,
+        kind: 'form_route',
+        status: support.status,
+        tool,
         key: route.form_key,
         endpoint: `${env.APP_URL}/api/f/${route.form_key}`,
         method: 'POST',
-        target: `${route.route_type || 'crm'}.${route.target_module}`,
+        target: `${tool}.${route.target_module}`,
         lead_source: route.lead_source,
+        generated_artifacts: support.generated_artifacts,
+        export_url: `${env.APP_URL}/api/apps/${appRecord.id}/exports/${route.id}?target=html-js`,
         fields: fields.map((f: any) => ({
           name: f.name,
           label: f.label,
@@ -203,12 +230,39 @@ export async function appRoutesPlugin(app: FastifyInstance) {
         })),
         embed_url: `${env.APP_URL}/api/forms/${route.id}`,
       };
+
+      routeManifest[manifestKey] = manifestEntry;
+      integrations.push(manifestEntry);
     }
 
-    const zohoTools = (appRecord.zoho_tools as string[]) || ['crm'];
+    if (zohoTools.includes('salesiq')) {
+      const salesIqSupport = getToolSupportSummary('salesiq');
+      integrations.push({
+        id: 'salesiq-widget',
+        name: 'SalesIQ Widget',
+        kind: salesIqSupport.kind,
+        status: salesIqSupport.status,
+        tool: 'salesiq',
+        target: 'salesiq.widget',
+        generated_artifacts: salesIqSupport.generated_artifacts,
+        export_url: `${env.APP_URL}/api/apps/${appRecord.id}/exports/salesiq-widget?target=html-js`,
+        summary: salesIqSupport.summary,
+      });
+    }
 
     const manifest = {
+      product: {
+        name: '1ClickSync',
+        positioning: 'Zoho integration generator for developer-owned apps and sites',
+      },
       app: {
+        id: appRecord.id,
+        name: appRecord.name,
+        slug: appRecord.slug,
+        domain: appRecord.domain,
+        business_type: appRecord.business_type,
+      },
+      project: {
         id: appRecord.id,
         name: appRecord.name,
         slug: appRecord.slug,
@@ -222,6 +276,15 @@ export async function appRoutesPlugin(app: FastifyInstance) {
         enabled_tools: zohoTools,
       },
       routes: routeManifest,
+      integrations,
+      tool_support: Object.fromEntries(zohoTools.map((tool) => [tool, getToolSupportSummary(tool)])),
+      supported_integration_kinds: ['form_route', 'embed_widget'],
+      generated_artifacts: ['manifest', 'llm-prompt', 'html-js exports'],
+      exports: {
+        manifest_url: `${env.APP_URL}/api/apps/${appRecord.id}/manifest`,
+        prompt_url: `${env.APP_URL}/api/apps/${appRecord.id}/prompt`,
+        integration_export_template: `${env.APP_URL}/api/apps/${appRecord.id}/exports/{integrationId}?target=html-js`,
+      },
       available_modules: buildAvailableModules(zohoTools),
       generated_at: new Date().toISOString(),
       api_base: env.APP_URL,
@@ -253,10 +316,48 @@ export async function appRoutesPlugin(app: FastifyInstance) {
       [appId]
     );
 
-    const prompt = generateLLMPrompt(appRecord, routes);
+    const prompt = generateLLMPrompt(appRecord, routes, (appRecord.zoho_tools as string[]) || ['crm']);
 
     reply.type('text/markdown');
     return prompt;
+  });
+
+  app.get('/api/apps/:appId/exports/:integrationId', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { appId, integrationId } = request.params as { appId: string; integrationId: string };
+    const userId = (request as any).userId;
+    const { target = 'html-js' } = request.query as { target?: string };
+
+    if (target !== 'html-js') {
+      return reply.status(400).send({ error: 'Only html-js exports are supported right now' });
+    }
+
+    const appRecord = await queryOne(
+      `SELECT a.*, zt.zoho_dc, zt.zoho_org_id,
+              CASE WHEN zt.is_valid = TRUE THEN TRUE ELSE FALSE END as zoho_connected
+       FROM apps a
+       LEFT JOIN zoho_tokens zt ON zt.app_id = a.id
+       WHERE a.id = $1 AND a.user_id = $2`,
+      [appId, userId]
+    );
+    if (!appRecord) return reply.status(404).send({ error: 'App not found' });
+
+    if (integrationId === 'salesiq-widget') {
+      const zohoTools = (appRecord.zoho_tools as string[]) || ['crm'];
+      if (!zohoTools.includes('salesiq')) {
+        return reply.status(404).send({ error: 'SalesIQ export is not enabled for this app' });
+      }
+      return buildSalesIQExport(appRecord);
+    }
+
+    const form = await queryOne(
+      'SELECT * FROM form_configs WHERE id = $1 AND app_id = $2',
+      [integrationId, appId]
+    );
+    if (!form) {
+      return reply.status(404).send({ error: 'Integration export not found' });
+    }
+
+    return buildFormRouteExport(form);
   });
 }
 
@@ -276,13 +377,13 @@ function buildAvailableModules(tools: string[]): Record<string, string[]> {
     modules.bookings = ['Appointments', 'Services', 'Staff'];
   }
   if (tools.includes('salesiq')) {
-    modules.salesiq = ['Visitors', 'Chats'];
+    modules.salesiq = ['Widget', 'Visitors', 'Chats'];
   }
   if (tools.includes('books')) {
-    modules.books = ['Invoices', 'Contacts', 'Items'];
+    modules.books = ['Contacts'];
   }
   if (tools.includes('projects')) {
-    modules.projects = ['Projects', 'Tasks', 'Milestones'];
+    modules.projects = ['Tasks'];
   }
 
   return modules;
@@ -292,120 +393,83 @@ function buildAvailableModules(tools: string[]): Record<string, string[]> {
  * Generate a markdown prompt for LLM consumption.
  * This is the text a developer pastes into their AI tool.
  */
-function generateLLMPrompt(appRecord: any, routes: any[]): string {
+function generateLLMPrompt(appRecord: any, routes: any[], zohoTools: string[]): string {
   const appName = appRecord.name;
   const baseUrl = env.APP_URL;
+  const toolSupport = zohoTools.map((tool) => getToolSupportSummary(tool));
 
-  let prompt = `# ${appName} — Zoho Integration Guide\n\n`;
-  prompt += `> Generated by 1ClickSync. Paste this into your AI coding tool.\n\n`;
+  let prompt = `# ${appName} — Zoho Integration Generator Prompt\n\n`;
+  prompt += `> Generated by 1ClickSync. Use this in your AI coding tool to ship a Zoho integration faster.\n\n`;
+  prompt += `## Project Intent\n\n`;
+  prompt += `This project uses 1ClickSync as a developer-facing Zoho integration generator.\n`;
+  prompt += `Prefer copy-paste HTML/JS, plain fetch examples, and minimal framework assumptions.\n\n`;
 
-  // Connection status
   if (appRecord.zoho_connected) {
     prompt += `**Status:** Connected to Zoho (${appRecord.zoho_dc?.toUpperCase() || 'COM'} datacenter)\n\n`;
   } else {
-    prompt += `**Status:** Not connected to Zoho yet. Connect at ${baseUrl}/app\n\n`;
+    prompt += `**Status:** Not connected to Zoho yet. Connect at ${baseUrl}/app before relying on live account data.\n\n`;
   }
 
-  prompt += `---\n\n`;
-  prompt += `## Available Endpoints\n\n`;
+  prompt += `## Supported Zoho Tools\n\n`;
+  for (const tool of toolSupport) {
+    prompt += `- **${tool.tool.toUpperCase()}** (${tool.status.toUpperCase()}, ${tool.kind}): ${tool.summary}\n`;
+  }
+  prompt += `\n`;
+  prompt += `## Generated Exports\n\n`;
+  prompt += `- Manifest: \`${baseUrl}/api/apps/${appRecord.id}/manifest\`\n`;
+  prompt += `- Project prompt: \`${baseUrl}/api/apps/${appRecord.id}/prompt\`\n`;
+  prompt += `- Integration export template: \`${baseUrl}/api/apps/${appRecord.id}/exports/{integrationId}?target=html-js\`\n\n`;
+  prompt += `## Active Integration Routes\n\n`;
 
   if (routes.length === 0) {
-    prompt += `No routes configured yet. Create routes at ${baseUrl}/app\n\n`;
-    return prompt;
-  }
+    prompt += `No active form routes are configured yet. Create CRM, Desk, or Books contact routes at ${baseUrl}/app.\n\n`;
+  } else {
+    for (const route of routes) {
+      const fields = getFormFields(route);
+      const fieldMapping = route.field_mapping as Record<string, string>;
+      const submitUrl = `${baseUrl}/api/f/${route.form_key}`;
+      const exportUrl = `${baseUrl}/api/apps/${appRecord.id}/exports/${route.id}?target=html-js`;
+      const toolName = (route.route_type || 'crm').toUpperCase();
 
-  for (const route of routes) {
-    const styleConfig = route.style_config as any;
-    const fields = styleConfig?.fields || [];
-    const fieldMapping = route.field_mapping as Record<string, string>;
-    const submitUrl = `${baseUrl}/api/f/${route.form_key}`;
-
-    prompt += `### ${route.name}\n\n`;
-    prompt += `\`POST ${submitUrl}\`\n\n`;
-    const toolName = (route.route_type || 'crm').toUpperCase();
-    prompt += `**Target:** Zoho ${toolName} → ${route.target_module}\n`;
-    if (route.lead_source) {
-      prompt += `**Lead Source:** ${route.lead_source}\n`;
-    }
-    prompt += `\n`;
-
-    // Fields table
-    const requiredFields = fields.filter((f: any) => f.required);
-    const optionalFields = fields.filter((f: any) => !f.required);
-
-    if (requiredFields.length > 0) {
-      prompt += `**Required fields:**\n`;
-      for (const f of requiredFields) {
-        prompt += `- \`${f.name}\` (${f.type}) → maps to Zoho \`${fieldMapping[f.name] || f.zoho_field}\`\n`;
+      prompt += `### ${route.name}\n\n`;
+      prompt += `- Tool: Zoho ${toolName}\n`;
+      prompt += `- Target: ${route.target_module}\n`;
+      prompt += `- Public endpoint: \`${submitUrl}\`\n`;
+      prompt += `- Export: \`${exportUrl}\`\n`;
+      if (route.lead_source) {
+        prompt += `- Lead Source: ${route.lead_source}\n`;
       }
       prompt += `\n`;
-    }
 
-    if (optionalFields.length > 0) {
-      prompt += `**Optional fields:**\n`;
-      for (const f of optionalFields) {
-        prompt += `- \`${f.name}\` (${f.type}) → maps to Zoho \`${fieldMapping[f.name] || f.zoho_field}\`\n`;
+      const requiredFields = fields.filter((f: any) => f.required);
+      const optionalFields = fields.filter((f: any) => !f.required);
+
+      if (requiredFields.length > 0) {
+        prompt += `Required fields:\n`;
+        for (const f of requiredFields) {
+          prompt += `- \`${f.name}\` (${f.type}) -> \`${fieldMapping[f.name] || f.zoho_field}\`\n`;
+        }
       }
-      prompt += `\n`;
+
+      if (optionalFields.length > 0) {
+        prompt += `Optional fields:\n`;
+        for (const f of optionalFields) {
+          prompt += `- \`${f.name}\` (${f.type}) -> \`${fieldMapping[f.name] || f.zoho_field}\`\n`;
+        }
+      }
+
+      prompt += `\nAsk the LLM to start from the generated html-js export and adapt it to your framework without changing the request payload shape.\n\n`;
     }
-
-    // Example code
-    const examplePayload: Record<string, string> = {};
-    for (const f of fields) {
-      if (f.type === 'email') examplePayload[f.name] = 'user@example.com';
-      else if (f.type === 'tel') examplePayload[f.name] = '+1234567890';
-      else if (f.name === 'first_name') examplePayload[f.name] = 'John';
-      else if (f.name === 'last_name') examplePayload[f.name] = 'Doe';
-      else if (f.name === 'company') examplePayload[f.name] = 'Acme Inc';
-      else if (f.type === 'textarea') examplePayload[f.name] = 'Hello, I would like to learn more.';
-      else examplePayload[f.name] = `example_${f.name}`;
-    }
-
-    prompt += `**Example (JavaScript):**\n\n`;
-    prompt += '```javascript\n';
-    prompt += `const response = await fetch('${submitUrl}', {\n`;
-    prompt += `  method: 'POST',\n`;
-    prompt += `  headers: { 'Content-Type': 'application/json' },\n`;
-    prompt += `  body: JSON.stringify(${JSON.stringify(examplePayload, null, 4)})\n`;
-    prompt += `});\n`;
-    prompt += `const result = await response.json();\n`;
-    prompt += `// result: { success: true, message: "...", record_id: "..." }\n`;
-    prompt += '```\n\n';
-
-    // Response shape
-    prompt += `**Success response:**\n`;
-    prompt += '```json\n';
-    prompt += `{ "success": true, "message": "Thank you!", "record_id": "zoho-record-id" }\n`;
-    prompt += '```\n\n';
-
-    prompt += `**Error response:**\n`;
-    prompt += '```json\n';
-    prompt += `{ "error": "Form not found or inactive" }\n`;
-    prompt += '```\n\n';
-
-    prompt += `---\n\n`;
   }
 
-  // Embed section
-  prompt += `## Embedding Forms\n\n`;
-  prompt += `Each route has a self-contained HTML embed snippet available at:\n`;
-  prompt += `\`GET ${baseUrl}/api/forms/{formId}\` (authenticated)\n\n`;
-  prompt += `The embed code includes inline CSS with customizable CSS variables:\n`;
-  prompt += `- \`--ocs-primary\`: Button & accent color\n`;
-  prompt += `- \`--ocs-bg\`: Form background\n`;
-  prompt += `- \`--ocs-text\`: Text color\n`;
-  prompt += `- \`--ocs-radius\`: Border radius\n`;
-  prompt += `- \`--ocs-font\`: Font family\n\n`;
+  if (zohoTools.includes('salesiq')) {
+    prompt += `## SalesIQ Widget Export\n\n`;
+    prompt += `Use \`${baseUrl}/api/apps/${appRecord.id}/exports/salesiq-widget?target=html-js\` to get the starter widget snippet.\n`;
+    prompt += `If the widget code is still a placeholder, replace it with the widget code from Zoho SalesIQ before shipping.\n\n`;
+  }
 
-  // CORS note
-  prompt += `## CORS\n\n`;
-  prompt += `All \`/api/f/*\` endpoints accept cross-origin requests (\`Access-Control-Allow-Origin: *\`).\n`;
-  prompt += `You can call them from any domain.\n\n`;
-
-  // Manifest reference
-  prompt += `## Machine-Readable Manifest\n\n`;
-  prompt += `For programmatic access, use the JSON manifest:\n`;
-  prompt += `\`GET ${baseUrl}/api/apps/${appRecord.id}/manifest\` (authenticated)\n`;
+  prompt += `## Output Expectations\n\n`;
+  prompt += `When generating code, prefer plain HTML/JS first, preserve the public payload contract, and keep integration-specific details in environment/config layers rather than hardcoding them into components.\n`;
 
   return prompt;
 }

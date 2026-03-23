@@ -84,7 +84,7 @@ const MODULE_OPTIONS: Record<string, string[]> = {
   crm: ['Leads', 'Contacts', 'Deals'],
   desk: ['Tickets'],
   bookings: ['Appointments'],
-  books: ['Contacts', 'Invoices'],
+  books: ['Contacts'],
   projects: ['Tasks'],
 };
 
@@ -483,6 +483,9 @@ async function dispatchToZoho(
       });
 
     case 'books':
+      if ((form.target_module || 'Contacts') !== 'Contacts') {
+        throw new Error('Zoho Books exports currently support Contacts only');
+      }
       return booksApi.createContact(appId, {
         contact_name: mappedData.contact_name || rawData.contact_name || rawData.name || '',
         email: mappedData.email || rawData.email || '',
@@ -518,7 +521,7 @@ async function dispatchToZoho(
 // Every style token is clearly labeled so an LLM or user
 // can modify styling by changing the CSS custom properties.
 // ══════════════════════════════════════════════════════
-function generateEmbedCode(
+export function generateEmbedCode(
   formKey: string,
   formName: string,
   fields: Array<{ name: string; label: string; type: string; required?: boolean; options?: string[] }>,

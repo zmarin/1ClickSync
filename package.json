@@ -1,15 +1,15 @@
 {
   "name": "1clicksync",
   "version": "0.1.0",
-  "description": "1ClickSync — Automated Zoho One setup. Connect your account, get a working CRM in minutes.",
+  "description": "1ClickSync — Zoho integration generator for developer-owned apps and sites.",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "dev:worker": "tsx watch src/worker.ts",
     "build": "tsc",
+    "test:smoke": "tsx src/tests/smoke.ts",
     "start": "node dist/server.js",
     "start:worker": "node dist/worker.js",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^9.4.0",

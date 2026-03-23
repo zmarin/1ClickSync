@@ -35,7 +35,7 @@ export async function passwordResetPlugin(app: FastifyInstance) {
     );
 
     // Send email
-    const resetUrl = `${env.APP_URL}/reset-password?token=${token}`;
+    const resetUrl = `${env.APP_URL}/app?reset_token=${token}`;
     await sendEmail({
       to: email,
       subject: '1ClickSync — Reset your password',
