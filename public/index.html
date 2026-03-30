@@ -691,209 +691,160 @@
     </div>
   </div>
 
-  <div id="appShell" class="hidden">
-    <div class="shell">
-      <div class="topbar">
-        <div>
-          <div class="brand-kicker">Zoho capability workspace</div>
-          <h1 class="brand-title">Service inventory, action layer, and agent handoff for the user app</h1>
-        </div>
-        <div class="topbar-actions">
-          <select class="select" id="appSelector"></select>
-          <button class="btn btn-secondary" id="createWorkspaceBtn">New workspace</button>
-          <button class="btn btn-ghost" id="logoutBtn">Log out</button>
+  <div id="appShell" class="app-layout hidden">
+    <!-- Column 1: Icon bar -->
+    <nav class="icon-bar" id="iconBar">
+      <!-- Rendered by JS: account avatars -->
+      <button class="icon-bar-add pulse" id="addAccountBtn" title="Connect Zoho account">+</button>
+      <div class="icon-bar-guide" id="iconBarGuide">Connect</div>
+    </nav>
+
+    <!-- Column 2: Service panel -->
+    <aside class="service-panel" id="servicePanel">
+      <div class="service-panel-header" id="servicePanelHeader">No account</div>
+      <div class="service-panel-list" id="servicePanelList">
+        <!-- Rendered by JS: service items -->
+      </div>
+      <div class="service-panel-footer">
+        <button class="btn btn-ghost" id="logoutBtn" style="font-size:10px;padding:6px 12px;width:100%;">Log out</button>
+      </div>
+    </aside>
+
+    <!-- Column 3: Main panel -->
+    <main class="main-panel" id="mainPanel">
+      <!-- Empty state (no accounts) -->
+      <div id="emptyState" class="empty-state hidden">
+        <div class="empty-state-content">
+          <div style="font-size:28px;">&#x1F517;</div>
+          <h2>Connect your first Zoho account</h2>
+          <p>Link a Zoho workspace to discover services, manage routes, and generate agent handoff bundles.</p>
+          <button class="btn btn-primary" id="emptyConnectBtn">+ Connect Zoho Account</button>
         </div>
       </div>
 
-      <div id="workspaceEmpty" class="empty-card panel hidden">
-        <div class="step-head">
-          <div>
-            <div class="step-mark">
-              <div class="step-index">1</div>
-              <div class="step-label">Create workspace</div>
-            </div>
-            <h2 class="section-title">Define the app workspace before you connect Zoho</h2>
-            <p class="muted">Use one workspace per user app or client implementation target. The Zoho connection, saved app links, discovered resources, and generated handoff bundles stay attached to that workspace.</p>
-          </div>
-          <div class="stack">
-            <button class="btn btn-primary" id="createWorkspacePrimaryBtn">Create workspace</button>
-          </div>
-        </div>
-        <div class="split">
-          <div>
-            <label class="label" for="newAppName">Workspace name</label>
-            <input class="field" id="newAppName" placeholder="Acme client portal">
-          </div>
-          <div>
-            <label class="label" for="newAppDomain">User app URL</label>
-            <input class="field" id="newAppDomain" placeholder="https://app.acme.test">
+      <!-- Workspace create form (shown in main panel as modal-like card) -->
+      <div id="workspaceCreate" class="hidden" style="max-width:520px;margin:40px auto;">
+        <div class="main-card">
+          <h3 style="font-family:var(--display);margin:0 0 12px;">Create a new workspace</h3>
+          <p class="muted" style="font-size:11px;margin-bottom:16px;">One workspace per Zoho account. After creating, you'll connect via OAuth.</p>
+          <label class="label" for="newAppName">Workspace name</label>
+          <input class="field" id="newAppName" placeholder="Acme client portal">
+          <label class="label" for="newAppDomain" style="margin-top:10px;">User app URL (optional)</label>
+          <input class="field" id="newAppDomain" placeholder="https://app.acme.test">
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn btn-primary" id="createWorkspacePrimaryBtn">Create & connect Zoho</button>
+            <button class="btn btn-ghost" id="cancelCreateBtn">Cancel</button>
           </div>
         </div>
-        <p class="helper">The workspace name should map to the actual destination app, not to an internal sync label.</p>
       </div>
 
-      <div id="workspaceMain" class="workflow hidden">
-        <section class="step-card">
-          <div class="step-head">
-            <div>
-              <div class="step-mark">
-                <div class="step-index">1</div>
-                <div class="step-label">Current workspace</div>
-              </div>
-              <h2 class="section-title" id="heroTitle">Select a workspace</h2>
-              <p class="muted" id="heroCopy">Choose the workspace that should own the Zoho connection and handoff context.</p>
-            </div>
-            <div class="summary-strip">
-              <span class="info-pill" id="connectionTag">Zoho not connected</span>
-              <span class="info-pill" id="serviceCountTag">0 services</span>
-            </div>
-          </div>
-          <div class="summary-grid">
-            <div class="summary-card"><span class="small">Zoho datacenter</span><strong id="statDc">Not connected</strong></div>
-            <div class="summary-card"><span class="small">Organization</span><strong id="statOrg">Unknown</strong></div>
-            <div class="summary-card"><span class="small">Ready services</span><strong id="statReady">0 ready</strong></div>
-            <div class="summary-card"><span class="small">Generated routes</span><strong id="statRoutes">0 routes</strong></div>
-          </div>
-        </section>
+      <!-- Service content (shown when an account + service are selected) -->
+      <div id="serviceContent" class="hidden">
+        <div class="breadcrumb" id="breadcrumb">Account &rsaquo; Service</div>
 
-        <section class="step-card">
-          <div class="step-head">
+        <!-- Connection status card -->
+        <div class="main-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
             <div>
-              <div class="step-mark">
-                <div class="step-index">2</div>
-                <div class="step-label">User app context</div>
-              </div>
-              <h2 class="section-title">Tell the workspace where the implementation should land</h2>
-              <p class="muted">These links and notes are attached to every generated handoff bundle so the coding agent sees both the Zoho context and the destination app context.</p>
+              <h2 style="font-family:var(--display);font-size:15px;margin:0;" id="serviceTitle">Service</h2>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;" id="serviceMeta">DC &bull; Org</div>
             </div>
-            <div class="stack">
-              <button class="btn btn-primary" id="saveContextBtn">Save context</button>
-              <button class="btn btn-ghost" id="openAppLinkBtn">Open user app</button>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="status-badge" id="connectionBadge">Status</span>
+              <button class="btn btn-ghost" id="reconnectZohoBtn" style="font-size:10px;padding:6px 10px;">Reconnect</button>
             </div>
           </div>
-          <div class="split">
-            <div>
-              <label class="label" for="contextAppName">User app name</label>
-              <input class="field" id="contextAppName" placeholder="Acme client portal">
-            </div>
-            <div>
-              <label class="label" for="contextAppUrl">User app URL</label>
-              <input class="field" id="contextAppUrl" placeholder="https://app.acme.test">
-            </div>
-            <div>
-              <label class="label" for="contextDocsUrl">User app docs URL</label>
-              <input class="field" id="contextDocsUrl" placeholder="https://docs.acme.test">
-            </div>
-            <div>
-              <label class="label" for="contextTargetBaseUrl">Target base URL</label>
-              <input class="field" id="contextTargetBaseUrl" placeholder="https://api.acme.test">
-            </div>
-          </div>
-          <div style="margin-top: 14px;">
-            <label class="label" for="contextNotes">Notes for the coding agent</label>
-            <textarea class="textarea" id="contextNotes" placeholder="Example: this app uses Next.js route handlers, server-side token storage, and custom account settings pages."></textarea>
-          </div>
-        </section>
+        </div>
 
-        <section class="step-card">
-          <div class="step-head">
-            <div>
-              <div class="step-mark">
-                <div class="step-index">3</div>
-                <div class="step-label">Zoho connection</div>
-              </div>
-              <h2 class="section-title">Connect or reconnect Zoho to unlock live discovery</h2>
-              <p class="muted">This step determines which services can move from read-only discovery into managed actions. Reconnect when a service card says more scopes are required.</p>
-            </div>
-            <div class="stack">
-              <button class="btn btn-primary" id="connectZohoBtn">Connect Zoho</button>
-              <button class="btn btn-secondary" id="reconnectZohoBtn">Reconnect Zoho</button>
+        <!-- App context card -->
+        <div class="main-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <p class="main-card-title" style="margin:0;">Your App Context</p>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-primary" id="saveContextBtn" style="font-size:10px;padding:6px 12px;">Save context</button>
+              <button class="btn btn-ghost" id="openAppLinkBtn" style="font-size:10px;padding:6px 12px;">Open app</button>
             </div>
           </div>
-          <p class="helper" id="oauthHelper">If Mail or another service needs extra OAuth scopes, reconnecting refreshes the Zoho consent grant.</p>
-        </section>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div><label class="label" for="contextAppName">App name</label><input class="field" id="contextAppName" placeholder="Acme portal"></div>
+            <div><label class="label" for="contextAppUrl">App URL</label><input class="field" id="contextAppUrl" placeholder="https://app.acme.test"></div>
+            <div><label class="label" for="contextDocsUrl">Docs URL</label><input class="field" id="contextDocsUrl" placeholder="https://docs.acme.test"></div>
+            <div><label class="label" for="contextTargetBaseUrl">Target base URL</label><input class="field" id="contextTargetBaseUrl" placeholder="https://api.acme.test"></div>
+          </div>
+          <div style="margin-top:8px;">
+            <label class="label" for="contextNotes">Agent notes</label>
+            <textarea class="textarea" id="contextNotes" placeholder="Notes for your coding agent..." style="min-height:60px;"></textarea>
+          </div>
+        </div>
 
-        <section class="step-card">
-          <div class="step-head">
-            <div>
-              <div class="step-mark">
-                <div class="step-index">4</div>
-                <div class="step-label">Choose service</div>
-              </div>
-              <h2 class="section-title">Pick the Zoho surface you want to inspect or build next</h2>
-              <p class="muted">The cards are ordered as a decision point: which service is available, which one needs reconnect, and which one already has route coverage.</p>
-            </div>
+        <!-- Resources card -->
+        <div class="main-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <p class="main-card-title" style="margin:0;">Resources</p>
+            <button class="btn btn-ghost" id="refreshServiceBtn" style="font-size:10px;padding:6px 10px;">Refresh</button>
           </div>
-          <div id="serviceGrid" class="service-grid"></div>
-        </section>
+          <div class="tag-list" id="resourceGrid">
+            <span class="tag">No resources loaded</span>
+          </div>
+        </div>
 
-        <section class="step-card">
-          <div class="step-head">
-            <div>
-              <div class="step-mark">
-                <div class="step-index">5</div>
-                <div class="step-label">Inspect service</div>
-              </div>
-              <h2 class="section-title" id="detailTitle">Select a service</h2>
-              <p class="muted" id="detailSummary">Load a service to inspect existing resources, official docs, and platform references.</p>
-            </div>
-            <div class="stack">
-              <span class="info-pill" id="detailStatus">No selection</span>
-              <button class="btn btn-secondary" id="refreshServiceBtn">Refresh detail</button>
-            </div>
-          </div>
-          <div class="detail-grid">
-            <div>
-              <div id="resourceGrid" class="resource-grid"></div>
-              <div id="docsGrid" class="resource-grid" style="margin-top: 16px;"></div>
-            </div>
-            <div class="action-panel">
-              <div class="action-box">
-                <p class="action-name">Run a managed action</p>
-                <label class="label" for="actionSelect">Action</label>
-                <select class="select" id="actionSelect"></select>
-                <label class="label" for="actionPayload" style="margin-top: 14px;">Action payload</label>
-                <textarea class="textarea" id="actionPayload" placeholder="Select an action to load a JSON example."></textarea>
-                <div class="cta-row" style="margin-top: 14px;">
-                  <button class="btn btn-primary" id="runActionBtn">Run action</button>
-                  <button class="btn btn-ghost" id="loadActionExampleBtn">Load example</button>
-                </div>
-                <p class="helper" id="actionHelper">Managed actions use the same platform endpoints shown in the handoff bundle.</p>
-              </div>
-              <div id="actionResult" class="output-box hidden"></div>
-            </div>
-          </div>
-        </section>
+        <!-- Docs card -->
+        <div class="main-card" id="docsCard">
+          <p class="main-card-title">Documentation</p>
+          <div id="docsGrid" class="tag-list"></div>
+        </div>
 
-        <section class="step-card">
-          <div class="step-head">
-            <div>
-              <div class="step-mark">
-                <div class="step-index">6</div>
-                <div class="step-label">Generate handoff</div>
-              </div>
-              <h2 class="section-title">Produce the exact bundle to paste into your coding agent</h2>
-              <p class="muted">This final step combines the current service state, project context, platform endpoints, and official docs into one agent-ready bundle.</p>
+        <!-- Actions card -->
+        <div class="main-card">
+          <p class="main-card-title">Actions</p>
+          <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;">
+            <div style="flex:1;min-width:140px;">
+              <label class="label" for="actionSelect">Action</label>
+              <select class="select" id="actionSelect" style="width:100%;"></select>
             </div>
+            <button class="btn btn-primary" id="runActionBtn" style="font-size:10px;padding:8px 14px;">Run action</button>
+            <button class="btn btn-ghost" id="loadActionExampleBtn" style="font-size:10px;padding:8px 14px;">Load example</button>
+          </div>
+          <div style="margin-top:10px;">
+            <label class="label" for="actionPayload">Payload</label>
+            <textarea class="textarea" id="actionPayload" placeholder="Select an action to load a JSON example." style="min-height:100px;font-size:11px;"></textarea>
+          </div>
+          <p class="helper" id="actionHelper">Managed actions use the same platform endpoints shown in the handoff bundle.</p>
+          <div id="actionResult" class="hidden" style="margin-top:10px;background:#f9f9fb;border-radius:var(--radius);padding:12px;">
+            <p class="main-card-title">Result</p>
+            <pre class="code" id="actionResultPre" style="font-size:10px;max-height:200px;overflow:auto;"></pre>
+          </div>
+        </div>
+
+        <!-- Handoff card -->
+        <div class="main-card">
+          <p class="main-card-title">Generate Handoff Bundle</p>
+          <label class="label" for="handoffGoal">Goal</label>
+          <textarea class="textarea" id="handoffGoal" placeholder="Build a white-label CRM onboarding form..." style="min-height:60px;"></textarea>
+          <div style="margin-top:10px;">
             <button class="btn btn-primary" id="generateHandoffBtn">Generate handoff</button>
           </div>
-          <label class="label" for="handoffGoal">Goal</label>
-          <textarea class="textarea" id="handoffGoal" placeholder="Example: build a white-label CRM onboarding form that creates leads, links back to the user app account settings page, and handles missing scopes clearly."></textarea>
-          <div id="handoffResult" class="hidden" style="margin-top: 18px;">
-            <div class="output-grid">
-              <div class="output-box">
-                <div class="row"><p class="output-name">Prompt</p><button class="btn btn-ghost" id="copyPromptBtn">Copy prompt</button></div>
-                <textarea class="textarea" id="handoffPrompt" style="min-height: 320px;"></textarea>
+          <div id="handoffResult" class="hidden" style="margin-top:12px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                  <span class="label">Prompt</span>
+                  <button class="btn btn-ghost" id="copyPromptBtn" style="font-size:9px;padding:4px 8px;">Copy</button>
+                </div>
+                <textarea class="textarea" id="handoffPrompt" style="min-height:240px;font-size:10px;"></textarea>
               </div>
-              <div class="output-box">
-                <div class="row"><p class="output-name">Linked references</p><button class="btn btn-ghost" id="copyRefsBtn">Copy refs JSON</button></div>
-                <textarea class="textarea" id="handoffRefs" style="min-height: 320px;"></textarea>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                  <span class="label">Refs JSON</span>
+                  <button class="btn btn-ghost" id="copyRefsBtn" style="font-size:9px;padding:4px 8px;">Copy</button>
+                </div>
+                <textarea class="textarea" id="handoffRefs" style="min-height:240px;font-size:10px;"></textarea>
               </div>
             </div>
           </div>
-        </section>
+        </div>
       </div>
-    </div>
+    </main>
   </div>
 
   <div id="toastWrap" class="toast-wrap"></div>
