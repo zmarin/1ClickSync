@@ -10,6 +10,7 @@ interface ZohoApiResponse<T = any> {
   code?: string;
   message?: string;
   details?: any;
+  [key: string]: any;
 }
 
 interface ApiCallOptions {

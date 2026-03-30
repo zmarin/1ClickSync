@@ -1391,7 +1391,7 @@ async function discoverResources(context: AppContext, service: ServiceId): Promi
       }
       return resources;
     }
-    case 'forms':
+    default:
       return resources;
   }
 }
