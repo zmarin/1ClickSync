@@ -923,6 +923,50 @@
       byId('appShell').classList.remove('hidden');
     }
 
+    function renderIconBar() {
+      const bar = byId('iconBar');
+      const addBtn = byId('addAccountBtn');
+      const guide = byId('iconBarGuide');
+      // Remove existing avatars (keep addBtn and guide)
+      Array.from(bar.querySelectorAll('.icon-bar-avatar')).forEach((el) => el.remove());
+      // Insert avatars before the add button
+      state.apps.forEach((app) => {
+        const avatar = document.createElement('div');
+        avatar.className = `icon-bar-avatar ${app.id === state.currentAppId ? 'active' : ''}`;
+        avatar.textContent = (app.name || '??').substring(0, 2).toUpperCase();
+        avatar.title = app.name;
+        avatar.dataset.appId = app.id;
+        avatar.addEventListener('click', async () => {
+          state.currentAppId = app.id;
+          localStorage.setItem('currentAppId', state.currentAppId);
+          renderIconBar();
+          await loadWorkspace();
+        });
+        bar.insertBefore(avatar, addBtn);
+      });
+      // Show/hide guide text
+      if (state.apps.length === 0) {
+        addBtn.classList.add('pulse');
+        guide.classList.remove('hidden');
+      } else {
+        addBtn.classList.remove('pulse');
+        guide.classList.add('hidden');
+      }
+    }
+
+    function hideAllMainPanels() {
+      byId('emptyState').classList.add('hidden');
+      byId('workspaceCreate').classList.add('hidden');
+      byId('serviceContent').classList.add('hidden');
+    }
+
+    function showEmptyState() {
+      hideAllMainPanels();
+      byId('emptyState').classList.remove('hidden');
+      byId('servicePanelHeader').textContent = 'No account';
+      byId('servicePanelList').innerHTML = '';
+    }
+
     async function bootstrap() {
       const params = new URLSearchParams(window.location.search);
       if (params.get('connected') === 'true') showToast('Zoho connected to the current workspace.', 'success');
@@ -943,13 +987,11 @@
 
     async function loadApps() {
       state.apps = await api('/api/apps');
-      renderAppSelector();
+      renderIconBar();
       if (!state.apps.length) {
-        byId('workspaceEmpty').classList.remove('hidden');
-        byId('workspaceMain').classList.add('hidden');
+        showEmptyState();
         return;
       }
-      byId('workspaceMain').classList.remove('hidden');
       if (!state.currentAppId || !state.apps.find((app) => app.id === state.currentAppId)) {
         state.currentAppId = state.apps[0].id;
         localStorage.setItem('currentAppId', state.currentAppId);
@@ -957,53 +999,45 @@
       await loadWorkspace();
     }
 
-    function renderAppSelector() {
-      if (!state.apps.length) {
-        byId('appSelector').innerHTML = '<option value="">No workspaces yet</option>';
-        return;
-      }
-      byId('appSelector').innerHTML = state.apps.map((app) => `<option value="${app.id}" ${app.id === state.currentAppId ? 'selected' : ''}>${escapeHtml(app.name)}</option>`).join('');
-    }
-
     async function loadWorkspace() {
       const appRecord = state.apps.find((app) => app.id === state.currentAppId);
-      if (!appRecord) return;
+      if (!appRecord) return showEmptyState();
       state.account = await api(`/api/zoho/account?app_id=${state.currentAppId}`);
       state.projectContext = (await api(`/api/project-context?app_id=${state.currentAppId}`)).projectContext;
       state.services = (await api(`/api/zoho/services?app_id=${state.currentAppId}`)).services;
       state.details = {};
-      renderOverview(appRecord);
-      renderProjectContext();
-      renderServices();
+      renderServicePanel(appRecord);
       const params = new URLSearchParams(window.location.search);
       const requestedService = params.get('service');
-      const nextService = requestedService && state.services.find((service) => service.id === requestedService)
+      const nextService = requestedService && state.services.find((s) => s.id === requestedService)
         ? requestedService
-        : (state.activeService && state.services.find((service) => service.id === state.activeService)
+        : (state.activeService && state.services.find((s) => s.id === state.activeService)
           ? state.activeService
-          : (state.services[0] ? state.services[0].id : null));
+          : (state.services.find((s) => s.status === 'ready')
+            ? state.services.find((s) => s.status === 'ready').id
+            : (state.services[0] ? state.services[0].id : null)));
       if (nextService) {
         await selectService(nextService);
       } else {
-        renderDetailPlaceholder();
+        hideAllMainPanels();
+        byId('serviceContent').classList.remove('hidden');
+        byId('breadcrumb').textContent = appRecord.name;
+        byId('serviceTitle').textContent = 'No services available';
+        byId('serviceMeta').textContent = 'Connect Zoho to discover services';
       }
-      byId('workspaceEmpty').classList.add('hidden');
     }
 
-    function renderOverview(appRecord) {
-      const readyCount = state.services.filter((service) => service.status === 'ready').length;
-      const routeCount = state.services.reduce((sum, service) => sum + (service.routeCount || 0), 0);
-      byId('heroTitle').textContent = appRecord.name;
-      byId('heroCopy').textContent = appRecord.domain
-        ? `This workspace targets ${appRecord.domain}. Save the app context, connect Zoho, pick a service, then hand the resulting bundle to your agent.`
-        : 'Save the app context, connect Zoho, pick a service, then hand the resulting bundle to your agent.';
-      byId('connectionTag').textContent = state.account.zoho.connected ? 'Zoho connected' : 'Zoho not connected';
-      byId('serviceCountTag').textContent = `${state.services.length} services discovered`;
-      byId('statDc').textContent = state.account.zoho.dc || 'Not connected';
-      byId('statOrg').textContent = state.account.zoho.org_id || 'Unknown';
-      byId('statReady').textContent = `${readyCount} ready`;
-      byId('statRoutes').textContent = `${routeCount} routes`;
-      byId('openAppLinkBtn').disabled = !(state.projectContext && state.projectContext.appUrl);
+    function renderServicePanel(appRecord) {
+      byId('servicePanelHeader').textContent = appRecord.name;
+      byId('servicePanelList').innerHTML = state.services.map((service) => `
+        <div class="service-panel-item ${state.activeService === service.id ? 'active' : ''}" data-sid="${service.id}">
+          <span class="service-panel-dot ${service.status}"></span>
+          ${escapeHtml(service.name)}
+        </div>
+      `).join('');
+      Array.from(document.querySelectorAll('[data-sid]')).forEach((el) => {
+        el.addEventListener('click', () => selectService(el.dataset.sid));
+      });
     }
 
     function renderProjectContext() {
@@ -1015,31 +1049,12 @@
       byId('contextNotes').value = context.notes || '';
     }
 
-    function renderServices() {
-      byId('serviceGrid').innerHTML = state.services.map((service) => `
-        <article class="service-card ${state.activeService === service.id ? 'active' : ''}" data-service-id="${service.id}">
-          <div class="service-top">
-            <div>
-              <h3 class="service-name">${escapeHtml(service.name)}</h3>
-              <div class="service-meta">${escapeHtml(service.summary)}</div>
-            </div>
-            <span class="status-pill ${service.status}">${escapeHtml(statusLabel(service.status))}</span>
-          </div>
-          <div class="service-meta">Capability level: ${escapeHtml(service.capabilityLevel)}${service.firstTier ? ' - first tier' : ''}</div>
-          <div class="service-bottom">
-            <span class="pill">${service.routeCount || 0} route${service.routeCount === 1 ? '' : 's'}</span>
-            <button class="btn btn-ghost">Inspect</button>
-          </div>
-        </article>
-      `).join('');
-      Array.from(document.querySelectorAll('[data-service-id]')).forEach((node) => {
-        node.addEventListener('click', () => selectService(node.getAttribute('data-service-id')));
-      });
-    }
-
     async function selectService(serviceId) {
       state.activeService = serviceId;
-      renderServices();
+      const appRecord = state.apps.find((app) => app.id === state.currentAppId);
+      if (appRecord) renderServicePanel(appRecord);
+      hideAllMainPanels();
+      byId('serviceContent').classList.remove('hidden');
       if (!state.details[serviceId]) {
         const [resources, actions, references] = await Promise.all([
           api(`/api/zoho/services/${serviceId}/resources?app_id=${state.currentAppId}`),
@@ -1051,40 +1066,40 @@
       renderServiceDetail();
     }
 
-    function renderDetailPlaceholder() {
-      byId('detailTitle').textContent = 'Select a service';
-      byId('detailSummary').textContent = 'Load a service to inspect resources, references, and managed actions.';
-      byId('detailStatus').className = 'info-pill';
-      byId('detailStatus').textContent = 'No selection';
-      byId('resourceGrid').innerHTML = '';
-      byId('docsGrid').innerHTML = '';
-      byId('actionSelect').innerHTML = '<option value="">No actions loaded</option>';
-      byId('actionPayload').value = '';
-      byId('actionResult').classList.add('hidden');
-    }
-
     function renderServiceDetail() {
-      const service = state.services.find((entry) => entry.id === state.activeService);
+      const service = state.services.find((s) => s.id === state.activeService);
       const detail = state.details[state.activeService];
-      if (!service || !detail) return renderDetailPlaceholder();
-      byId('detailTitle').textContent = `${service.name} detail`;
-      byId('detailSummary').textContent = service.summary;
-      byId('detailStatus').className = `status-pill ${service.status}`;
-      byId('detailStatus').textContent = statusLabel(service.status);
+      const appRecord = state.apps.find((app) => app.id === state.currentAppId);
+      if (!service || !detail) return;
+
+      byId('breadcrumb').textContent = `${appRecord ? appRecord.name : 'Account'} \u203A ${service.name}`;
+      byId('serviceTitle').textContent = service.name;
+      byId('serviceMeta').textContent = `${state.account.zoho.dc || 'No DC'} \u2022 Org ${state.account.zoho.org_id || 'unknown'}`;
+
+      const connected = state.account.zoho.connected;
+      const badge = byId('connectionBadge');
+      badge.textContent = connected ? 'Connected' : 'Not connected';
+      badge.className = `status-badge ${connected ? 'connected' : 'disconnected'}`;
+      byId('reconnectZohoBtn').style.display = (service.status === 'reconnect_required' || !connected) ? '' : 'none';
+
+      renderProjectContext();
+
       const resources = detail.resources.resources || [];
-      byId('resourceGrid').innerHTML = resources.map((resource) => `
-        <div class="resource-box">
-          <p class="resource-name">${escapeHtml(resource.name || resource.type)}</p>
-          <p class="muted">${escapeHtml(resource.description || resource.status || '')}</p>
-          ${resource.status ? `<div class="helper">Status: ${escapeHtml(resource.status)}</div>` : ''}
-        </div>
-      `).join('') || '<div class="resource-box"><p class="resource-name">No live resources yet</p><p class="muted">This service has not returned any resources for the current workspace.</p></div>';
-      byId('docsGrid').innerHTML = (detail.references.documentationLinks || []).map((doc) => `
-        <a class="doc-box" href="${escapeHtml(doc.url)}" target="_blank" rel="noreferrer">
-          <p class="doc-name">${escapeHtml(doc.label)}</p>
-          <p class="muted">${escapeHtml(doc.source)}</p>
-        </a>
-      `).join('');
+      byId('resourceGrid').innerHTML = resources.length
+        ? resources.map((r) => `<span class="tag">${escapeHtml(r.name || r.type)}</span>`).join('')
+        : '<span class="tag">No live resources yet</span>';
+
+      const docs = detail.references.documentationLinks || [];
+      const docsCard = byId('docsCard');
+      if (docs.length) {
+        docsCard.classList.remove('hidden');
+        byId('docsGrid').innerHTML = docs.map((d) =>
+          `<a href="${escapeHtml(d.url)}" target="_blank" rel="noreferrer" class="tag tag-action" style="text-decoration:none;">${escapeHtml(d.label)}</a>`
+        ).join('');
+      } else {
+        docsCard.classList.add('hidden');
+      }
+
       renderActionDetail(detail.actions.actions || []);
     }
 
@@ -1126,9 +1141,8 @@
         const payload = JSON.parse(byId('actionPayload').value || '{}');
         payload.app_id = state.currentAppId;
         const result = await api(`/api/zoho/services/${state.activeService}/actions/${action.id}`, { method: 'POST', body: payload });
-        const panel = byId('actionResult');
-        panel.classList.remove('hidden');
-        panel.innerHTML = `<p class="output-name">Action result</p><pre class="code">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`;
+        byId('actionResult').classList.remove('hidden');
+        byId('actionResultPre').textContent = JSON.stringify(result, null, 2);
         showToast(`${action.label} completed.`, 'success');
         state.details[state.activeService] = null;
         await selectService(state.activeService);
@@ -1180,17 +1194,11 @@
         localStorage.setItem('currentAppId', state.currentAppId);
         byId('newAppName').value = '';
         byId('newAppDomain').value = '';
-        showToast('Workspace created.', 'success');
-        await loadApps();
+        showToast('Workspace created. Redirecting to Zoho OAuth...', 'success');
+        await connectZoho();
       } catch (error) {
         showToast(error.message);
       }
-    }
-
-    function showWorkspaceComposer() {
-      byId('workspaceEmpty').classList.remove('hidden');
-      byId('newAppName').focus();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     async function connectZoho() {
@@ -1217,7 +1225,6 @@
           },
         });
         state.projectContext = result.projectContext;
-        renderOverview(state.apps.find((app) => app.id === state.currentAppId));
         showToast('Project context saved.', 'success');
       } catch (error) {
         showToast(error.message);
@@ -1272,14 +1279,26 @@
     byId('authSubmitBtn').addEventListener('click', submitAuth);
     byId('authToggleBtn').addEventListener('click', () => setAuthMode(state.authMode === 'login' ? 'register' : 'login'));
     byId('logoutBtn').addEventListener('click', logout);
-    byId('appSelector').addEventListener('change', async (event) => {
-      state.currentAppId = event.target.value;
-      localStorage.setItem('currentAppId', state.currentAppId);
-      await loadWorkspace();
+    byId('addAccountBtn').addEventListener('click', () => {
+      hideAllMainPanels();
+      byId('workspaceCreate').classList.remove('hidden');
+      byId('newAppName').focus();
     });
-    byId('createWorkspaceBtn').addEventListener('click', showWorkspaceComposer);
-    byId('createWorkspacePrimaryBtn').addEventListener('click', createWorkspace);
-    byId('connectZohoBtn').addEventListener('click', connectZoho);
+    byId('emptyConnectBtn').addEventListener('click', () => {
+      hideAllMainPanels();
+      byId('workspaceCreate').classList.remove('hidden');
+      byId('newAppName').focus();
+    });
+    byId('cancelCreateBtn').addEventListener('click', async () => {
+      if (state.apps.length) {
+        await loadWorkspace();
+      } else {
+        showEmptyState();
+      }
+    });
+    byId('createWorkspacePrimaryBtn').addEventListener('click', async () => {
+      await createWorkspace();
+    });
     byId('reconnectZohoBtn').addEventListener('click', connectZoho);
     byId('openAppLinkBtn').addEventListener('click', openUserApp);
     byId('saveContextBtn').addEventListener('click', saveContext);
