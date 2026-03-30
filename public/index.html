@@ -1,2478 +1,1006 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1ClickSync — Zoho Integration Generator</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #16161f;
-            --bg-tertiary: #1e1e2e;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --text-primary: #ffffff;
-            --text-secondary: #a1a1a8;
-            --border: #2a2a3a;
-            --success: #10b981;
-            --error: #ef4444;
-            --warning: #f59e0b;
-            /* Zoho tool accent colors */
-            --tool-sales: #226DB4;
-            --tool-support: #089949;
-            --tool-scheduling: #F9B21D;
-            --tool-finance: #E42527;
-            --tool-projects: #8b5cf6;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-        }
-
-        a {
-            color: var(--accent);
-            text-decoration: none;
-        }
-
-        a:hover {
-            color: var(--accent-hover);
-        }
-
-        /* Layout */
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        /* Navigation */
-        nav {
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border);
-            padding: 16px 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .nav-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-brand {
-            font-weight: 700;
-            font-size: 18px;
-            letter-spacing: -0.5px;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .user-name {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-            font-family: inherit;
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-hover);
-        }
-
-        .btn-secondary {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover {
-            background: var(--border);
-        }
-
-        .btn-danger {
-            background: transparent;
-            color: var(--error);
-            border: 1px solid var(--error);
-        }
-
-        .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.1);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Main content */
-        main {
-            padding: 40px 0;
-            min-height: calc(100vh - 200px);
-        }
-
-        /* Auth forms */
-        .auth-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: calc(100vh - 100px);
-        }
-
-        .auth-box {
-            width: 100%;
-            max-width: 420px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 40px;
-        }
-
-        .auth-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .auth-header h1 {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .auth-header p {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 10px 12px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-size: 14px;
-            font-family: inherit;
-            transition: border-color 0.2s ease;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .form-submit {
-            width: 100%;
-            margin-top: 24px;
-        }
-
-        .toggle-form {
-            text-align: center;
-            margin-top: 16px;
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
-
-        .toggle-form button {
-            background: none;
-            border: none;
-            color: var(--accent);
-            cursor: pointer;
-            font-weight: 500;
-            padding: 0;
-            font-family: inherit;
-        }
-
-        .toggle-form button:hover {
-            color: var(--accent-hover);
-        }
-
-        /* Google Sign-In */
-        .btn-google {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            padding: 10px 16px;
-            background: #fff;
-            color: #3c4043;
-            border: 1px solid #dadce0;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            font-family: inherit;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background 0.2s, box-shadow 0.2s;
-        }
-
-        .btn-google:hover {
-            background: #f7f8f8;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-            color: #3c4043;
-        }
-
-        .auth-divider {
-            display: flex;
-            align-items: center;
-            margin: 20px 0;
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        .auth-divider::before,
-        .auth-divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .auth-divider span {
-            padding: 0 12px;
-        }
-
-        /* Dashboard */
-        .dashboard {
-            display: none;
-        }
-
-        .dashboard.active {
-            display: block;
-        }
-
-        .welcome-section {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 32px;
-            margin-bottom: 40px;
-        }
-
-        .welcome-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 8px;
-        }
-
-        .welcome-header h1 {
-            font-size: 28px;
-        }
-
-        .plan-badge {
-            background: var(--accent);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .welcome-description {
-            color: var(--text-secondary);
-            font-size: 15px;
-        }
-
-        /* Section headers */
-        .section-header {
-            margin-top: 40px;
-            margin-bottom: 20px;
-        }
-
-        .section-header h2 {
-            font-size: 18px;
-            font-weight: 600;
-            letter-spacing: -0.3px;
-        }
-
-        /* Templates grid */
-        .templates-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 16px;
-            margin-bottom: 40px;
-        }
-
-        .template-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .template-card:hover {
-            border-color: var(--accent);
-            box-shadow: 0 8px 24px rgba(59, 130, 246, 0.1);
-        }
-
-        .template-name {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .template-description {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-bottom: 16px;
-            line-height: 1.5;
-        }
-
-        .template-steps {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .template-steps-count {
-            color: var(--text-secondary);
-            font-size: 13px;
-        }
-
-        .template-card button {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .template-card button:hover {
-            background: var(--accent-hover);
-        }
-
-        /* Status section */
-        .status-section {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 40px;
-        }
-
-        .status-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .status-info h3 {
-            font-size: 16px;
-            margin-bottom: 4px;
-        }
-
-        .status-info p {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        .status-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: var(--bg-tertiary);
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--error);
-        }
-
-        .status-dot.connected {
-            background: var(--success);
-        }
-
-        /* Footer */
-        footer {
-            background: var(--bg-secondary);
-            border-top: 1px solid var(--border);
-            padding: 24px 0;
-            margin-top: 60px;
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        /* Toast notifications */
-        .toast-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 1000;
-            max-width: 400px;
-        }
-
-        .toast {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 12px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            animation: slideIn 0.3s ease;
-        }
-
-        .toast.error {
-            border-color: var(--error);
-            color: var(--error);
-        }
-
-        .toast.success {
-            border-color: var(--success);
-            color: var(--success);
-        }
-
-        .toast.error::before {
-            content: '';
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background: var(--error);
-            flex-shrink: 0;
-        }
-
-        .toast.success::before {
-            content: '';
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background: var(--success);
-            flex-shrink: 0;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        /* Loading state */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .auth-box {
-                padding: 24px;
-            }
-
-            .welcome-section {
-                padding: 20px;
-            }
-
-            .welcome-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .welcome-header h1 {
-                font-size: 22px;
-                margin-bottom: 12px;
-            }
-
-            .templates-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .nav-right {
-                gap: 8px;
-            }
-
-            .user-name {
-                display: none;
-            }
-        }
-
-        /* ── Integrations Panel ────────────────────── */
-        .integrations-panel { margin-bottom: 40px; }
-
-        .integrations-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .integrations-header h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.3px; }
-
-        .connection-badge {
-            display: flex; align-items: center; gap: 8px;
-            padding: 6px 14px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 12px; font-weight: 500;
-        }
-
-        .integrations-connect-prompt {
-            background: var(--bg-secondary);
-            border: 1px dashed var(--border);
-            border-radius: 12px;
-            padding: 32px; text-align: center;
-            margin-bottom: 20px;
-        }
-        .integrations-connect-prompt p { color: var(--text-secondary); margin-bottom: 16px; font-size: 14px; }
-
-        .integrations-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-        }
-
-        .tool-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-            position: relative;
-            transition: all 0.25s ease;
-            border-left: 3px solid var(--border);
-            overflow: hidden;
-        }
-        .tool-card::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            opacity: 0; transition: opacity 0.25s;
-            pointer-events: none; border-radius: 12px;
-        }
-        .tool-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-        }
-
-        /* Per-tool accent colors via data attribute */
-        .tool-card[data-tool="crm"]      { --tool-accent: var(--tool-sales); }
-        .tool-card[data-tool="salesiq"]   { --tool-accent: var(--tool-sales); }
-        .tool-card[data-tool="desk"]      { --tool-accent: var(--tool-support); }
-        .tool-card[data-tool="bookings"]  { --tool-accent: var(--tool-scheduling); }
-        .tool-card[data-tool="books"]     { --tool-accent: var(--tool-finance); }
-        .tool-card[data-tool="projects"]  { --tool-accent: var(--tool-projects); }
-
-        .tool-card.active {
-            border-left-color: var(--tool-accent, var(--success));
-        }
-        .tool-card.active::before {
-            background: radial-gradient(ellipse at top left, rgba(255,255,255,0.03), transparent 70%);
-            opacity: 1;
-        }
-        .tool-card.available { border-left-color: #3a3a4a; }
-
-        .tool-card-header {
-            display: flex; justify-content: space-between; align-items: flex-start;
-            margin-bottom: 10px;
-        }
-        .tool-card-title { display: flex; align-items: center; gap: 10px; }
-        .tool-card-icon { font-size: 22px; line-height: 1; }
-        .tool-card-name { font-size: 14px; font-weight: 600; }
-
-        .tool-card-status {
-            display: flex; align-items: center; gap: 5px;
-            font-size: 10px; font-weight: 600;
-            text-transform: uppercase; letter-spacing: 0.5px;
-            padding: 3px 8px; border-radius: 10px;
-            background: var(--bg-tertiary);
-            white-space: nowrap;
-        }
-
-        .tool-status-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%; flex-shrink: 0;
-        }
-        .tool-status-dot.active {
-            background: var(--success);
-            box-shadow: 0 0 6px rgba(16,185,129,0.6);
-        }
-        .tool-status-dot.available {
-            background: var(--warning);
-            box-shadow: 0 0 6px rgba(245,158,11,0.4);
-        }
-        .tool-status-dot.disconnected { background: #4a4a5a; }
-
-        .tool-card-desc {
-            color: var(--text-secondary);
-            font-size: 12.5px; line-height: 1.5;
-            margin-bottom: 12px;
-        }
-
-        .tool-card-modules { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
-
-        .module-chip {
-            padding: 2px 9px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            font-size: 10.5px; font-weight: 500;
-            color: var(--text-secondary);
-        }
-        .tool-card.active .module-chip {
-            color: var(--text-primary);
-            border-color: #3a3a4a;
-        }
-
-        .tool-card-footer {
-            display: flex; justify-content: space-between; align-items: center;
-            padding-top: 12px;
-            border-top: 1px solid var(--border);
-        }
-
-        .tool-route-count { font-size: 11px; color: var(--text-secondary); }
-
-        .tool-card-impl {
-            font-size: 9px; color: var(--text-secondary);
-            padding: 2px 7px; background: var(--bg-tertiary);
-            border-radius: 6px; text-transform: uppercase; letter-spacing: 0.3px;
-        }
-        .tool-card-impl.full { color: var(--success); }
-
-        /* Capabilities list */
-        .tool-card-capabilities {
-            list-style: none; padding: 0; margin: 0 0 12px 0;
-        }
-        .tool-card-capabilities li {
-            font-size: 11.5px; color: var(--text-secondary);
-            padding: 3px 0 3px 16px;
-            position: relative; line-height: 1.5;
-        }
-        .tool-card-capabilities li::before {
-            content: ''; position: absolute;
-            left: 0; top: 10px;
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--border);
-        }
-        .tool-card.active .tool-card-capabilities li::before {
-            background: var(--tool-accent, var(--success));
-            box-shadow: 0 0 4px rgba(255,255,255,0.1);
-        }
-        .tool-card.active .tool-card-capabilities li { color: var(--text-primary); }
-
-        /* Setup hint */
-        .tool-card-hint {
-            font-size: 11.5px; color: var(--warning);
-            font-style: italic;
-            margin-bottom: 12px;
-            padding: 6px 10px;
-            background: rgba(245,158,11,0.06);
-            border-radius: 6px;
-            border-left: 2px solid var(--warning);
-        }
-        .tool-card.active .tool-card-hint {
-            color: var(--success);
-            background: rgba(16,185,129,0.06);
-            border-left-color: var(--success);
-        }
-
-        /* Action button in footer */
-        .tool-action-btn {
-            padding: 5px 12px;
-            font-size: 11px; font-weight: 600;
-            border-radius: 6px; border: none;
-            cursor: pointer; font-family: inherit;
-            transition: all 0.2s;
-        }
-        .tool-action-btn.ready {
-            background: var(--tool-accent, var(--accent));
-            color: #fff;
-        }
-        .tool-action-btn.ready:hover { opacity: 0.85; }
-        .tool-action-btn.soon {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-            cursor: default;
-            font-style: italic;
-        }
-
-        /* Coming soon card treatment */
-        .tool-card.coming-soon {
-            opacity: 0.7;
-            border-left-color: var(--border) !important;
-        }
-        .tool-card.coming-soon:hover { opacity: 0.85; }
-
-        /* Toggle switch */
-        .tool-toggle { position: relative; width: 36px; height: 20px; cursor: pointer; display: inline-block; }
-        .tool-toggle input { opacity: 0; width: 0; height: 0; }
-        .tool-toggle-slider {
-            position: absolute; inset: 0;
-            background: var(--bg-tertiary); border: 1px solid var(--border);
-            border-radius: 10px; transition: all 0.25s;
-        }
-        .tool-toggle-slider::before {
-            content: ''; position: absolute;
-            width: 14px; height: 14px; left: 2px; top: 2px;
-            background: var(--text-secondary);
-            border-radius: 50%; transition: all 0.25s;
-        }
-        .tool-toggle input:checked + .tool-toggle-slider {
-            background: var(--success); border-color: var(--success);
-        }
-        .tool-toggle input:checked + .tool-toggle-slider::before {
-            transform: translateX(16px); background: #fff;
-        }
-        .tool-toggle input:disabled + .tool-toggle-slider { opacity: 0.35; cursor: not-allowed; }
-
-        @media (max-width: 1024px) {
-            .integrations-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 640px) {
-            .integrations-grid { grid-template-columns: 1fr; }
-            .integrations-header { flex-direction: column; gap: 12px; align-items: flex-start; }
-        }
-
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-secondary);
-        }
-
-        .empty-state p {
-            margin-bottom: 16px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zoho Capability Workspace</title>
+  <meta name="description" content="Connect one Zoho workspace, discover available services, inspect resources, run supported actions, and generate handoff bundles for your coding agent.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --bg-panel: rgba(255, 255, 255, 0.88);
+      --bg-strong: #ffffff;
+      --text: #132236;
+      --muted: #5d6a7b;
+      --line: rgba(19, 34, 54, 0.12);
+      --accent: #0d9488;
+      --accent-strong: #0f766e;
+      --warn: #c08400;
+      --danger: #c2410c;
+      --ready: #047857;
+      --shadow: 0 24px 60px rgba(23, 33, 56, 0.12);
+      --radius: 22px;
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-body: 'IBM Plex Sans', sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(13, 148, 136, 0.18), transparent 32%),
+        radial-gradient(circle at top right, rgba(15, 118, 110, 0.12), transparent 24%),
+        linear-gradient(180deg, #f8f5ef 0%, #f1ede5 100%);
+      min-height: 100vh;
+    }
+
+    a { color: inherit; }
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    .shell {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding: 16px 20px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.68);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+
+    .brand-kicker {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 24px;
+      margin: 0;
+      line-height: 1.05;
+    }
+
+    .topbar-actions,
+    .stack,
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .stack { flex-wrap: wrap; }
+    .row { justify-content: space-between; }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 11px 16px;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-strong); }
+    .btn-secondary { background: rgba(19, 34, 54, 0.08); color: var(--text); }
+    .btn-ghost { background: transparent; border: 1px solid var(--line); color: var(--text); }
+    .btn-danger { background: rgba(194, 65, 12, 0.12); color: var(--danger); }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--bg-panel);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.3fr 0.9fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .hero-card,
+    .context-card,
+    .service-card,
+    .detail-card,
+    .auth-card,
+    .empty-card,
+    .toast {
+      padding: 24px;
+    }
+
+    .hero-title,
+    .section-title,
+    .auth-title {
+      font-family: var(--font-display);
+      margin: 0 0 10px;
+      line-height: 1.05;
+    }
+
+    .hero-title { font-size: clamp(32px, 4vw, 48px); max-width: 14ch; }
+    .section-title { font-size: 24px; }
+    .auth-title { font-size: 30px; }
+
+    .eyebrow {
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .muted { color: var(--muted); }
+    .stat-grid,
+    .service-grid,
+    .detail-grid,
+    .resource-grid,
+    .auth-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .stat-grid { grid-template-columns: repeat(2, 1fr); margin-top: 18px; }
+    .service-grid { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin-top: 16px; }
+    .detail-grid { grid-template-columns: 1.15fr 0.85fr; margin-top: 24px; }
+    .resource-grid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .auth-grid { grid-template-columns: repeat(2, 1fr); }
+
+    .stat {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.78);
+      border: 1px solid rgba(19,34,54,0.08);
+    }
+
+    .stat-label { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+    .stat-value { font-weight: 600; font-size: 15px; }
+
+    .card-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      background: rgba(13, 148, 136, 0.1);
+      color: var(--accent-strong);
+    }
+
+    .service-card {
+      min-height: 196px;
+      cursor: pointer;
+      transition: 0.18s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .service-card:hover { transform: translateY(-2px); }
+    .service-card.active {
+      border-color: rgba(13, 148, 136, 0.45);
+      box-shadow: 0 28px 64px rgba(13, 148, 136, 0.14);
+    }
+
+    .service-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(145deg, rgba(13, 148, 136, 0.08), transparent 48%);
+      pointer-events: none;
+    }
+
+    .service-top,
+    .service-bottom,
+    .item-list,
+    .doc-list,
+    .endpoint-list {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .service-top { align-items: flex-start; margin-bottom: 14px; }
+    .service-bottom { align-items: center; margin-top: 18px; }
+    .service-name { font-family: var(--font-display); font-size: 24px; margin: 0 0 6px; }
+    .service-meta { font-size: 13px; color: var(--muted); }
+
+    .status-pill {
+      border-radius: 999px;
+      padding: 6px 11px;
+      font-size: 12px;
+      white-space: nowrap;
+      background: rgba(19, 34, 54, 0.08);
+      color: var(--text);
+    }
+
+    .status-pill.ready { background: rgba(4, 120, 87, 0.12); color: var(--ready); }
+    .status-pill.connect_required { background: rgba(192, 132, 0, 0.12); color: var(--warn); }
+    .status-pill.reconnect_required { background: rgba(194, 65, 12, 0.12); color: var(--danger); }
+
+    .label {
+      display: block;
+      margin: 0 0 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .field,
+    .textarea,
+    .select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(19,34,54,0.12);
+      background: rgba(255,255,255,0.84);
+      color: var(--text);
+      outline: none;
+    }
+
+    .field:focus,
+    .textarea:focus,
+    .select:focus {
+      border-color: rgba(13,148,136,0.55);
+      box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+    }
+
+    .textarea { min-height: 140px; resize: vertical; }
+
+    .action-box,
+    .resource-box,
+    .doc-box,
+    .endpoint-box {
+      border: 1px solid rgba(19,34,54,0.1);
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(255,255,255,0.78);
+    }
+
+    .resource-name,
+    .doc-name,
+    .endpoint-name,
+    .action-name {
+      font-weight: 600;
+      margin: 0 0 6px;
+    }
+
+    .endpoint-box code,
+    .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+      word-break: break-word;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+
+    .helper { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+    .auth-shell {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .auth-card {
+      max-width: 960px;
+      width: 100%;
+    }
+
+    .auth-copy { padding-right: 10px; }
+    .auth-form {
+      padding: 20px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.84);
+      border: 1px solid rgba(19,34,54,0.08);
+    }
+
+    .auth-toggle {
+      display: flex;
+      gap: 10px;
+      margin: 18px 0 0;
+    }
+
+    .empty-card { margin-top: 24px; text-align: center; }
+    .hidden { display: none !important; }
+
+    .toast-wrap {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      display: grid;
+      gap: 10px;
+      z-index: 999;
+    }
+
+    .toast {
+      min-width: 260px;
+      border-radius: 18px;
+      border: 1px solid rgba(19,34,54,0.12);
+      background: rgba(255,255,255,0.9);
+      box-shadow: var(--shadow);
+    }
+
+    .toast.error { border-color: rgba(194,65,12,0.3); }
+    .toast.success { border-color: rgba(4,120,87,0.3); }
+
+    @media (max-width: 980px) {
+      .hero,
+      .detail-grid,
+      .auth-grid,
+      .split { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; align-items: flex-start; }
+      .topbar-actions { width: 100%; flex-wrap: wrap; }
+      .topbar-actions > * { flex: 1 1 auto; }
+    }
+  </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav id="navbar" style="display: none;">
-        <div class="container">
-            <div class="nav-content">
-                <a href="/" class="nav-brand" style="text-decoration:none;color:inherit;">1ClickSync</a>
-                <div class="nav-right">
-                    <span class="user-name" id="navUserName"></span>
-                    <button class="btn btn-danger" id="logoutBtn">Logout</button>
-                </div>
-            </div>
+  <div id="authShell" class="auth-shell hidden">
+    <div class="panel auth-card">
+      <div class="auth-grid">
+        <div class="auth-copy">
+          <div class="eyebrow">White-label Zoho assistant</div>
+          <h1 class="auth-title">Connect one Zoho workspace. Discover what the user can actually build.</h1>
+          <p class="muted">This workspace is optimized for developers. After OAuth, you get service inventory, existing resources, supported actions, and a structured handoff bundle with endpoints and docs links for your coding agent.</p>
+          <div class="stat-grid">
+            <div class="stat"><div class="stat-label">Primary flow</div><div class="stat-value">Try free → connect Zoho → inspect services → generate handoff</div></div>
+            <div class="stat"><div class="stat-label">Output</div><div class="stat-value">Prompt + endpoints + docs + project links</div></div>
+            <div class="stat"><div class="stat-label">Workspace model</div><div class="stat-value">One app workspace, one connected Zoho account, many services</div></div>
+            <div class="stat"><div class="stat-label">Managed surfaces</div><div class="stat-value">CRM, Forms, Mail, SalesIQ, Bookings plus legacy services</div></div>
+          </div>
         </div>
-    </nav>
+        <div class="auth-form">
+          <div class="eyebrow" id="authModeLabel">Sign in</div>
+          <h2 class="section-title" id="authHeading">Open your workspace</h2>
+          <div class="split">
+            <div id="registerNameWrap" class="hidden"><label class="label" for="authName">Name</label><input class="field" id="authName"></div>
+            <div id="registerCompanyWrap" class="hidden"><label class="label" for="authCompany">Company</label><input class="field" id="authCompany"></div>
+          </div>
+          <label class="label" for="authEmail">Email</label>
+          <input class="field" id="authEmail" type="email" autocomplete="email">
+          <label class="label" for="authPassword">Password</label>
+          <input class="field" id="authPassword" type="password" autocomplete="current-password">
+          <div class="auth-toggle">
+            <button class="btn btn-primary" id="authSubmitBtn">Sign in</button>
+            <button class="btn btn-ghost" id="authToggleBtn">Need an account?</button>
+          </div>
+          <p class="helper">The dashboard is white-label and optimized around the user app context, not 1ClickSync product marketing.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <!-- Main content -->
-    <main class="container">
-        <!-- Auth view -->
-        <div id="authView" class="auth-container">
-            <div class="auth-box">
-                <div class="auth-header">
-                    <h1>1ClickSync</h1>
-                    <p id="authSubtitle">Sign in to generate Zoho integrations for your apps</p>
-                </div>
+  <div id="appShell" class="hidden">
+    <div class="shell">
+      <div class="topbar">
+        <div>
+          <div class="brand-kicker">Zoho capability workspace</div>
+          <h1 class="brand-title">Connected service inventory, action layer, and agent handoff</h1>
+        </div>
+        <div class="topbar-actions">
+          <select class="select" id="appSelector"></select>
+          <button class="btn btn-secondary" id="createWorkspaceBtn">Create workspace</button>
+          <button class="btn btn-ghost" id="logoutBtn">Log out</button>
+        </div>
+      </div>
 
-                <!-- Google Sign-In -->
-                <a href="/api/auth/google" class="btn-google" id="googleSignInBtn">
-                    <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-                        <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-                        <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-                        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-                    </svg>
-                    Sign in with Google
-                </a>
+      <div id="workspaceEmpty" class="panel empty-card hidden">
+        <div class="eyebrow">Start here</div>
+        <h2 class="section-title">Create the first workspace</h2>
+        <p class="muted">Use one workspace per user app or client environment. The Zoho connection, project links, service inventory, and handoff bundles stay scoped to that workspace.</p>
+        <div class="split" style="max-width:720px;margin:20px auto 0;">
+          <div>
+            <label class="label" for="newAppName">Workspace name</label>
+            <input class="field" id="newAppName" placeholder="Acme client portal">
+          </div>
+          <div>
+            <label class="label" for="newAppDomain">User app URL</label>
+            <input class="field" id="newAppDomain" placeholder="https://app.acme.test">
+          </div>
+        </div>
+        <div style="margin-top:16px;">
+          <button class="btn btn-primary" id="createWorkspacePrimaryBtn">Create workspace</button>
+        </div>
+      </div>
 
-                <div class="auth-divider">
-                    <span>or</span>
-                </div>
-
-                <!-- Login form -->
-                <form id="loginForm" style="display: block;">
-                    <div class="form-group">
-                        <label for="loginEmail">Email</label>
-                        <input type="email" id="loginEmail" required placeholder="you@example.com">
-                    </div>
-                    <div class="form-group">
-                        <label for="loginPassword">Password</label>
-                        <input type="password" id="loginPassword" required placeholder="••••••••">
-                    </div>
-                    <button type="submit" class="btn btn-primary form-submit" id="loginSubmit">Sign in</button>
-                    <div class="toggle-form">
-                        Need a reset link? <button type="button" id="forgotPasswordBtn">Forgot password</button>
-                    </div>
-                    <div class="toggle-form">
-                        Don't have an account? <button type="button" id="switchToRegister">Create one</button>
-                    </div>
-                </form>
-
-                <!-- Register form -->
-                <form id="registerForm" style="display: none;">
-                    <div class="form-group">
-                        <label for="registerName">Full Name</label>
-                        <input type="text" id="registerName" required placeholder="Jane Doe">
-                    </div>
-                    <div class="form-group">
-                        <label for="registerEmail">Email</label>
-                        <input type="email" id="registerEmail" required placeholder="you@example.com">
-                    </div>
-                    <div class="form-group">
-                        <label for="registerPassword">Password</label>
-                        <input type="password" id="registerPassword" required placeholder="••••••••">
-                    </div>
-                    <div class="form-group">
-                        <label for="registerCompany">Company Name</label>
-                        <input type="text" id="registerCompany" required placeholder="Acme Inc.">
-                    </div>
-                    <button type="submit" class="btn btn-primary form-submit" id="registerSubmit">Create account</button>
-                    <div class="toggle-form">
-                        Already have an account? <button type="button" id="switchToLogin">Sign in</button>
-                    </div>
-                </form>
-
-                <!-- Reset password form -->
-                <form id="resetForm" style="display: none;">
-                    <div class="form-group">
-                        <label for="resetPassword">New Password</label>
-                        <input type="password" id="resetPassword" required placeholder="Choose a new password">
-                    </div>
-                    <button type="submit" class="btn btn-primary form-submit" id="resetSubmit">Reset password</button>
-                    <div class="toggle-form">
-                        Back to sign in? <button type="button" id="resetBackToLogin">Return to login</button>
-                    </div>
-                </form>
+      <div id="workspaceMain" class="hidden">
+        <div class="hero">
+          <section class="panel hero-card">
+            <div class="eyebrow">Current workspace</div>
+            <h2 class="hero-title" id="heroTitle">Select a workspace</h2>
+            <p class="muted" id="heroCopy">Connect Zoho once, then inspect services, resources, and handoff artifacts for the user app.</p>
+            <div class="stack" style="margin-top:18px;">
+              <span class="card-tag" id="connectionTag">No Zoho connection</span>
+              <span class="card-tag" id="serviceCountTag">0 services</span>
             </div>
+            <div class="stat-grid">
+              <div class="stat"><div class="stat-label">Zoho datacenter</div><div class="stat-value" id="statDc">Not connected</div></div>
+              <div class="stat"><div class="stat-label">Organization</div><div class="stat-value" id="statOrg">Unknown</div></div>
+              <div class="stat"><div class="stat-label">Connected services</div><div class="stat-value" id="statReady">0 ready</div></div>
+              <div class="stat"><div class="stat-label">Generated routes</div><div class="stat-value" id="statRoutes">0 routes</div></div>
+            </div>
+          </section>
+          <section class="panel hero-card">
+            <div class="eyebrow">Workspace actions</div>
+            <h2 class="section-title">Connect, reconnect, or open the user app context</h2>
+            <p class="muted">Use the Zoho OAuth flow to unlock live capability discovery. Save the user app URL and docs URL so the handoff bundle points your agent to the right implementation surface.</p>
+            <div class="stack" style="margin-top:18px;">
+              <button class="btn btn-primary" id="connectZohoBtn">Connect Zoho</button>
+              <button class="btn btn-secondary" id="reconnectZohoBtn">Reconnect Zoho</button>
+              <button class="btn btn-ghost" id="openAppLinkBtn">Open user app</button>
+            </div>
+            <p class="helper" id="oauthHelper">If new scopes are needed for Mail or another service, reconnecting refreshes the OAuth consent surface.</p>
+          </section>
         </div>
 
-        <!-- Dashboard view -->
-        <div id="dashboardView" class="dashboard">
-            <!-- Welcome section -->
-            <div class="welcome-section">
-                <div class="welcome-header">
-                    <div>
-                        <h1>Welcome back, <span id="dashboardUserName"></span></h1>
-                        <p class="welcome-description" id="welcomeDescription"></p>
-                    </div>
-                    <div class="plan-badge" id="planBadge">Free Plan</div>
-                </div>
+        <section class="panel context-card">
+          <div class="row">
+            <div>
+              <div class="eyebrow">Project context</div>
+              <h2 class="section-title">Link the user app and docs into every handoff bundle</h2>
             </div>
-
-            <!-- App Selector -->
-            <div id="appSelectorContainer" class="container" style="margin-bottom:0;"></div>
-
-            <!-- Legacy Automation section -->
-            <div class="section-header">
-                <h2>Legacy Automation Beta</h2>
+            <button class="btn btn-primary" id="saveContextBtn">Save context</button>
+          </div>
+          <div class="split" style="margin-top:18px;">
+            <div>
+              <label class="label" for="contextAppName">User app name</label>
+              <input class="field" id="contextAppName" placeholder="Acme client portal">
             </div>
-            <div class="templates-grid" id="templatesGrid">
-                <div class="empty-state">
-                    <p>Loading legacy automation templates...</p>
-                </div>
+            <div>
+              <label class="label" for="contextAppUrl">User app URL</label>
+              <input class="field" id="contextAppUrl" placeholder="https://app.acme.test">
             </div>
-
-            <!-- Zoho Integrations Panel -->
-            <div class="integrations-panel" id="integrationsPanel">
-                <div class="integrations-header">
-                    <h2>Zoho Integrations</h2>
-                    <div class="connection-badge" id="integrationConnectionBadge">
-                        <span class="tool-status-dot disconnected" id="integrationStatusDot"></span>
-                        <span id="integrationStatusLabel">Not Connected</span>
-                    </div>
-                </div>
-                <div id="integrationsConnectPrompt" class="integrations-connect-prompt" style="display:none;">
-                    <p>Connect your Zoho account to generate integration code for this project.</p>
-                    <button class="btn btn-primary" id="connectZohoBtn">Connect Zoho Account</button>
-                </div>
-                <div class="integrations-grid" id="integrationsGrid">
-                    <!-- Tool cards rendered by renderIntegrations() -->
-                </div>
+            <div>
+              <label class="label" for="contextDocsUrl">User app docs URL</label>
+              <input class="field" id="contextDocsUrl" placeholder="https://docs.acme.test">
             </div>
-
-            <!-- Generated Routes section -->
-            <div class="section-header" style="margin-top: 40px;">
-                <h2>Generated Routes</h2>
+            <div>
+              <label class="label" for="contextTargetBaseUrl">Target base URL</label>
+              <input class="field" id="contextTargetBaseUrl" placeholder="https://api.acme.test">
             </div>
-            <div class="status-section" id="formsSection">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <p style="color: var(--text-secondary); margin: 0;">Create copy-paste HTML/JS routes with sample requests, responses, and LLM-ready exports.</p>
-                    <button class="btn btn-primary" id="createFormBtn" style="white-space: nowrap;">+ New Route</button>
-                </div>
-                <div id="formsList"></div>
+          </div>
+          <div style="margin-top:14px;">
+            <label class="label" for="contextNotes">Notes for the coding agent</label>
+            <textarea class="textarea" id="contextNotes" placeholder="For example: the user app uses Next.js, route handlers, and server-side token storage."></textarea>
+          </div>
+        </section>
+
+        <section class="panel detail-card" style="margin-top:24px;">
+          <div class="eyebrow">Service dashboard</div>
+          <h2 class="section-title">What the connected workspace can actually use</h2>
+          <p class="muted">Each card shows service readiness, route coverage, and whether the current OAuth grant is enough for discovery and managed actions.</p>
+          <div id="serviceGrid" class="service-grid"></div>
+        </section>
+
+        <div class="detail-grid">
+          <section class="panel detail-card">
+            <div class="row">
+              <div>
+                <div class="eyebrow">Service detail</div>
+                <h2 class="section-title" id="detailTitle">Select a service</h2>
+              </div>
+              <div class="stack">
+                <span class="status-pill" id="detailStatus">No selection</span>
+                <button class="btn btn-secondary" id="refreshServiceBtn">Refresh detail</button>
+              </div>
             </div>
+            <p class="muted" id="detailSummary">Load a service to inspect current resources, references, and supported actions.</p>
+            <div id="resourceGrid" class="resource-grid" style="margin-top:18px;"></div>
+            <div id="docsGrid" class="resource-grid" style="margin-top:18px;"></div>
+          </section>
 
-            <!-- Route Preview -->
-            <div class="section-header" style="margin-top: 40px;">
-                <h2>Route Preview</h2>
+          <section class="panel detail-card">
+            <div class="eyebrow">Action layer</div>
+            <h2 class="section-title">Run supported actions against the connected workspace</h2>
+            <label class="label" for="actionSelect">Action</label>
+            <select class="select" id="actionSelect"></select>
+            <label class="label" for="actionPayload" style="margin-top:14px;">Action payload</label>
+            <textarea class="textarea" id="actionPayload" placeholder="Select an action to load a JSON example."></textarea>
+            <div class="stack" style="margin-top:14px;">
+              <button class="btn btn-primary" id="runActionBtn">Run action</button>
+              <button class="btn btn-ghost" id="loadActionExampleBtn">Load example</button>
             </div>
-            <div class="status-section">
-                <p style="color: var(--text-secondary); margin-bottom: 20px;">Live preview of the generated HTML/JS route starter. Edit the CSS variables in the export to match your product.</p>
-                <div id="ocs-form-cd0a807db8f6d27eadb08f747fdfb985" class="ocs-form-wrapper">
-                  <style>
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 {
-                      --ocs-primary: #3b82f6;
-                      --ocs-bg: #1e1e2e;
-                      --ocs-text: #ffffff;
-                      --ocs-radius: 8px;
-                      --ocs-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-                      --ocs-input-bg: #0a0a0f;
-                      --ocs-input-border: #2a2a3a;
-                      --ocs-shadow: 0 4px 24px rgba(0,0,0,0.3);
-
-                      font-family: var(--ocs-font);
-                      color: var(--ocs-text);
-                      background: var(--ocs-bg);
-                      border-radius: var(--ocs-radius);
-                      box-shadow: var(--ocs-shadow);
-                      max-width: 480px;
-                      padding: 32px;
-                      margin: 0 auto;
-                      box-sizing: border-box;
-                      border: 1px solid var(--ocs-input-border);
-                    }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 .ocs-title {
-                      font-size: 1.25rem;
-                      font-weight: 600;
-                      margin: 0 0 20px 0;
-                    }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 .ocs-field {
-                      margin-bottom: 16px;
-                    }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 label {
-                      display: block;
-                      font-size: 0.875rem;
-                      font-weight: 500;
-                      margin-bottom: 6px;
-                      color: #a1a1a8;
-                    }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 input,
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 textarea,
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 select {
-                      width: 100%;
-                      padding: 10px 12px;
-                      border: 1px solid var(--ocs-input-border);
-                      border-radius: var(--ocs-radius);
-                      background: var(--ocs-input-bg);
-                      font-family: var(--ocs-font);
-                      font-size: 0.9rem;
-                      color: var(--ocs-text);
-                      box-sizing: border-box;
-                      transition: border-color 0.2s;
-                    }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 input::placeholder,
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 textarea::placeholder {
-                      color: #4a4a5a;
-                    }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 input:focus,
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 textarea:focus,
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 select:focus {
-                      outline: none;
-                      border-color: var(--ocs-primary);
-                      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
-                    }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 .ocs-btn {
-                      width: 100%;
-                      padding: 12px;
-                      background: var(--ocs-primary);
-                      color: #fff;
-                      border: none;
-                      border-radius: var(--ocs-radius);
-                      font-family: var(--ocs-font);
-                      font-size: 1rem;
-                      font-weight: 600;
-                      cursor: pointer;
-                      transition: opacity 0.2s;
-                      margin-top: 8px;
-                    }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 .ocs-btn:hover { opacity: 0.9; }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 .ocs-btn:disabled { opacity: 0.6; cursor: wait; }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 .ocs-success {
-                      text-align: center;
-                      padding: 24px;
-                      color: #10b981;
-                      font-weight: 500;
-                    }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 .ocs-error {
-                      color: #ef4444;
-                      font-size: 0.85rem;
-                      margin-top: 8px;
-                    }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 .ocs-powered {
-                      text-align: center;
-                      margin-top: 16px;
-                      font-size: 0.75rem;
-                      color: #4a4a5a;
-                    }
-                    #ocs-form-cd0a807db8f6d27eadb08f747fdfb985 .ocs-powered a { color: #6b7280; text-decoration: none; }
-                  </style>
-
-                  <form id="ocs-formEl-cd0a807db8f6d27eadb08f747fdfb985" novalidate>
-                    <div class="ocs-title">1ClickSync Contact</div>
-                    <div class="ocs-field">
-                      <label for="ocs-first_name">First Name</label>
-                      <input type="text" id="ocs-first_name" name="first_name" placeholder="John" />
-                    </div>
-                    <div class="ocs-field">
-                      <label for="ocs-last_name">Last Name <span style="color:#ef4444">*</span></label>
-                      <input type="text" id="ocs-last_name" name="last_name" required placeholder="Doe" />
-                    </div>
-                    <div class="ocs-field">
-                      <label for="ocs-email">Email <span style="color:#ef4444">*</span></label>
-                      <input type="email" id="ocs-email" name="email" required placeholder="john@example.com" />
-                    </div>
-                    <div class="ocs-field">
-                      <label for="ocs-phone">Phone</label>
-                      <input type="tel" id="ocs-phone" name="phone" placeholder="+1 (555) 000-0000" />
-                    </div>
-                    <div class="ocs-field">
-                      <label for="ocs-company">Company</label>
-                      <input type="text" id="ocs-company" name="company" placeholder="Acme Inc." />
-                    </div>
-                    <div class="ocs-field">
-                      <label for="ocs-message">Message</label>
-                      <textarea id="ocs-message" name="message" rows="3" placeholder="Tell us about your project..."></textarea>
-                    </div>
-                    <button type="submit" class="ocs-btn">Submit</button>
-                    <div class="ocs-error" id="ocs-error-cd0a807db8f6d27eadb08f747fdfb985" style="display:none"></div>
-                    <div class="ocs-powered">Powered by <a href="https://1clicksync.com" target="_blank">1ClickSync</a></div>
-                  </form>
-
-                  <script>
-                  (function(){
-                    var form = document.getElementById('ocs-formEl-cd0a807db8f6d27eadb08f747fdfb985');
-                    var errEl = document.getElementById('ocs-error-cd0a807db8f6d27eadb08f747fdfb985');
-                    var wrapper = document.getElementById('ocs-form-cd0a807db8f6d27eadb08f747fdfb985');
-
-                    form.addEventListener('submit', function(e) {
-                      e.preventDefault();
-                      errEl.style.display = 'none';
-                      var btn = form.querySelector('.ocs-btn');
-                      btn.disabled = true;
-                      btn.textContent = 'Sending...';
-
-                      var data = {};
-                      var inputs = form.querySelectorAll('input, textarea, select');
-                      for (var i = 0; i < inputs.length; i++) {
-                        if (inputs[i].name) data[inputs[i].name] = inputs[i].value;
-                      }
-
-                      fetch('/api/f/cd0a807db8f6d27eadb08f747fdfb985', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                      })
-                      .then(function(r) { return r.json(); })
-                      .then(function(res) {
-                        if (res.success) {
-                          wrapper.innerHTML = '<div class="ocs-success">' + (res.message || 'Thank you! We will be in touch.') + '</div>';
-                        } else {
-                          errEl.textContent = res.error || 'Something went wrong.';
-                          errEl.style.display = 'block';
-                          btn.disabled = false;
-                          btn.textContent = 'Submit';
-                        }
-                      })
-                      .catch(function() {
-                        errEl.textContent = 'Network error. Please try again.';
-                        errEl.style.display = 'block';
-                        btn.disabled = false;
-                        btn.textContent = 'Submit';
-                      });
-                    });
-                  })();
-                  </script>
-                </div>
-            </div>
-
-            <!-- Form Builder Modal -->
-            <div id="formBuilderModal" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center;">
-                <div style="background:var(--bg-secondary); border-radius:12px; padding:32px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; border:1px solid var(--border);">
-                    <h3 style="margin:0 0 20px 0;" id="fbModalTitle">Create Route</h3>
-                    <form id="formBuilderForm">
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label>Zoho Tool</label>
-                            <select id="fbRouteType" class="form-input" style="width:100%;" onchange="onRouteTypeChange(this.value)">
-                                <option value="crm">CRM — Lead/Contact/Deal capture</option>
-                                <option value="desk">Desk — Support tickets</option>
-                                <option value="bookings">Bookings — Appointments</option>
-                                <option value="books">Books — Contacts</option>
-                                <option value="projects">Projects — Tasks</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label>Route Name</label>
-                            <input type="text" id="fbName" value="Contact Form" class="form-input" style="width:100%;" />
-                        </div>
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label>Target Module</label>
-                            <select id="fbModule" class="form-input" style="width:100%;" onchange="if(document.getElementById('fbRouteType').value==='crm') fetchLeadSources(this.value)">
-                                <option value="Leads">Leads</option>
-                                <option value="Contacts">Contacts</option>
-                                <option value="Deals">Deals</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="margin-bottom:16px; display:none;" id="fbBookingsConfigGroup">
-                            <label>Bookings Configuration</label>
-                            <p style="margin:6px 0 12px 0; color:var(--text-secondary); font-size:0.9rem;">Set the Zoho Bookings service and staff IDs this route should create appointments for.</p>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                                <div>
-                                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Service ID</label>
-                                    <input type="text" id="fbBookingServiceId" class="form-input" style="width:100%;" placeholder="e.g. 47501000000012345" />
-                                </div>
-                                <div>
-                                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Staff ID</label>
-                                    <input type="text" id="fbBookingStaffId" class="form-input" style="width:100%;" placeholder="e.g. 47501000000067890" />
-                                </div>
-                            </div>
-                            <div style="margin-top:12px;">
-                                <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Timezone</label>
-                                <input type="text" id="fbBookingTimezone" class="form-input" style="width:100%;" value="UTC" placeholder="e.g. Europe/Zagreb" />
-                            </div>
-                        </div>
-                        <div class="form-group" style="margin-bottom:16px; display:none;" id="fbProjectsConfigGroup">
-                            <label>Projects Configuration</label>
-                            <p style="margin:6px 0 12px 0; color:var(--text-secondary); font-size:0.9rem;">Set the Zoho Projects portal and project IDs this route should create tasks in.</p>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                                <div>
-                                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Portal ID</label>
-                                    <input type="text" id="fbProjectPortalId" class="form-input" style="width:100%;" placeholder="e.g. 736144111" />
-                                </div>
-                                <div>
-                                    <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Project ID</label>
-                                    <input type="text" id="fbProjectId" class="form-input" style="width:100%;" placeholder="e.g. 736144111000000123" />
-                                </div>
-                            </div>
-                            <div style="margin-top:12px;">
-                                <label style="display:block; margin-bottom:6px; font-size:0.85rem; color:var(--text-secondary);">Default Priority</label>
-                                <select id="fbProjectPriority" class="form-input" style="width:100%;">
-                                    <option value="None">None</option>
-                                    <option value="Low">Low</option>
-                                    <option value="Medium">Medium</option>
-                                    <option value="High">High</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group" style="margin-bottom:16px;" id="fbLeadSourceGroup">
-                            <label>Lead Source <span style="color:var(--text-secondary);font-weight:400;font-size:0.85rem;">(tracks which site/form the lead came from)</span></label>
-                            <div style="display:flex;gap:8px;">
-                                <select id="fbLeadSource" class="form-input" style="flex:1;">
-                                    <option value="">Loading lead sources...</option>
-                                </select>
-                                <button type="button" id="fbAddLeadSource" class="btn" style="background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);white-space:nowrap;font-size:0.85rem;">+ New</button>
-                            </div>
-                            <div id="fbNewLeadSourceInput" style="display:none;margin-top:8px;display:none;">
-                                <div style="display:flex;gap:8px;">
-                                    <input type="text" id="fbNewLeadSourceName" class="form-input" style="flex:1;" placeholder="e.g. Website - clientsite.com" />
-                                    <button type="button" id="fbSaveLeadSource" class="btn btn-primary" style="font-size:0.85rem;">Add</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label>Primary Color</label>
-                            <input type="color" id="fbColor" value="#3b82f6" style="height:40px;width:80px;border:none;cursor:pointer;" />
-                        </div>
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label>Button Text</label>
-                            <input type="text" id="fbButtonText" value="Submit" class="form-input" style="width:100%;" />
-                        </div>
-                        <div class="form-group" style="margin-bottom:16px;">
-                            <label>Success Message</label>
-                            <input type="text" id="fbSuccessMsg" value="Thank you! We will be in touch." class="form-input" style="width:100%;" />
-                        </div>
-                        <div style="display:flex; gap:12px; margin-top:24px;">
-                        <button type="submit" class="btn btn-primary" style="flex:1;">Create Route</button>
-                            <button type="button" class="btn" id="fbCancel" style="flex:1; background:var(--bg-tertiary); color:var(--text-primary); border:1px solid var(--border);">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Embed Code Modal -->
-            <div id="embedModal" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.7); align-items:center; justify-content:center;">
-                <div style="background:var(--bg-secondary); border-radius:12px; padding:32px; max-width:700px; width:90%; max-height:80vh; overflow-y:auto; border:1px solid var(--border);">
-                    <h3 style="margin:0 0 8px 0;">Embed Code</h3>
-                    <p style="color:var(--text-secondary); margin:0 0 16px 0;">Paste this HTML into your website. Edit the CSS variables to change styling.</p>
-                    <textarea id="embedCodeArea" readonly style="width:100%; height:300px; background:var(--bg-primary); color:#a5f3fc; border:1px solid var(--border); border-radius:8px; padding:12px; font-family:'Courier New',monospace; font-size:0.8rem; resize:vertical;"></textarea>
-                    <div style="display:flex; gap:12px; margin-top:16px;">
-                        <button class="btn btn-primary" id="copyEmbedBtn" style="flex:1;">Copy to Clipboard</button>
-                        <button class="btn" id="closeEmbedBtn" style="flex:1; background:var(--bg-tertiary); color:var(--text-primary); border:1px solid var(--border);">Close</button>
-                    </div>
-                </div>
-            </div>
+            <p class="helper" id="actionHelper">The action panel uses the same platform endpoints you can hand to your coding agent.</p>
+            <div id="actionResult" class="endpoint-box hidden" style="margin-top:18px;"></div>
+          </section>
         </div>
-    </main>
 
-    <!-- Footer -->
-    <footer>
-        <p>1ClickSync — Zoho integration code for developer-owned apps</p>
-    </footer>
+        <section class="panel detail-card" style="margin-top:24px;">
+          <div class="row">
+            <div>
+              <div class="eyebrow">Prompt + endpoint handoff</div>
+              <h2 class="section-title">Generate the exact bundle to paste into a coding agent</h2>
+            </div>
+            <button class="btn btn-primary" id="generateHandoffBtn">Generate handoff</button>
+          </div>
+          <label class="label" for="handoffGoal" style="margin-top:14px;">Goal</label>
+          <textarea class="textarea" id="handoffGoal" placeholder="Example: build a white-label onboarding form that creates CRM leads and links back to the user app account settings."></textarea>
+          <div id="handoffResult" class="hidden" style="margin-top:18px;">
+            <div class="split">
+              <div class="endpoint-box">
+                <div class="row"><p class="endpoint-name">Prompt</p><button class="btn btn-ghost" id="copyPromptBtn">Copy prompt</button></div>
+                <textarea class="textarea" id="handoffPrompt" style="min-height:320px;"></textarea>
+              </div>
+              <div class="endpoint-box">
+                <div class="row"><p class="endpoint-name">Linked references</p><button class="btn btn-ghost" id="copyRefsBtn">Copy refs JSON</button></div>
+                <textarea class="textarea" id="handoffRefs" style="min-height:320px;"></textarea>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
 
-    <!-- Toast container -->
-    <div class="toast-container" id="toastContainer"></div>
+  <div id="toastWrap" class="toast-wrap"></div>
 
-    <script>
-        // State management
-        const pageParams = new URLSearchParams(window.location.search);
-        const state = {
-            token: localStorage.getItem('token'),
-            user: null,
-            isLoading: false,
-            apps: [],
-            currentAppId: localStorage.getItem('currentAppId') || null,
-            customerId: null  // backward compat alias
-        };
+  <script>
+    const state = {
+      token: localStorage.getItem('token') || '',
+      currentAppId: localStorage.getItem('currentAppId') || '',
+      authMode: 'login',
+      user: null,
+      apps: [],
+      account: null,
+      services: [],
+      activeService: null,
+      details: {},
+      projectContext: null,
+      handoff: null,
+    };
 
-        // Zoho tools configuration
-        const ZOHO_TOOLS_CONFIG = {
-            crm: {
-                name: 'CRM',
-                icon: '\u{1F4CA}',
-                description: 'Lead capture routes, pipeline sync, contact management',
-                modules: ['Leads', 'Contacts', 'Deals', 'Accounts', 'Tasks', 'Events'],
-                capabilities: [
-                    'Generate copy-paste HTML/JS routes for any site',
-                    'Auto-sync submissions to Leads, Contacts, or Deals',
-                    'Track Lead Source per route for attribution',
-                    'Export manifest metadata and LLM integration prompts',
-                ],
-                action: { label: '+ New Route', handler: 'openFormBuilder' },
-                setupHint: 'Generate a CRM route and export the starter code.',
-                ready: true,
-                availability: 'ga',
-            },
-            desk: {
-                name: 'Desk',
-                icon: '\u{1F4AC}',
-                description: 'Support tickets, helpdesk, customer service',
-                modules: ['Tickets', 'Contacts', 'Accounts'],
-                capabilities: [
-                    'Generate support routes that create Desk tickets',
-                    'Return sample payloads and public endpoint examples',
-                    'Reuse the same export flow as CRM routes',
-                ],
-                action: { label: '+ Support Route', handler: 'openRouteBuilder_desk' },
-                setupHint: 'Generate a Desk support route with ready-to-paste code.',
-                ready: true,
-                availability: 'ga',
-            },
-            bookings: {
-                name: 'Bookings',
-                icon: '\u{1F4C5}',
-                description: 'Appointment scheduling, service bookings',
-                modules: ['Appointments', 'Services', 'Staff'],
-                capabilities: [
-                    'Generate booking routes for a selected service and staff member',
-                    'Capture appointment intent with ready-to-paste HTML and JS',
-                    'Store service, staff, and timezone config server-side',
-                ],
-                action: { label: '+ Booking Route', handler: 'openRouteBuilder_bookings' },
-                setupHint: 'Configure a service ID and staff ID, then generate a live booking route.',
-                ready: true,
-                availability: 'ga',
-            },
-            salesiq: {
-                name: 'SalesIQ',
-                icon: '\u{1F514}',
-                description: 'Live chat widget and visitor engagement',
-                modules: ['Widget', 'Visitors', 'Chats'],
-                capabilities: [
-                    'Generate a copy-paste SalesIQ widget snippet',
-                    'Return setup instructions for framework adaptation',
-                    'Keep chat embed separate from form-route logic',
-                ],
-                action: { label: 'Get Widget Code', handler: 'showSalesIQExport' },
-                setupHint: 'Generate a SalesIQ widget starter and replace the widget code placeholder if needed.',
-                ready: true,
-                availability: 'ga',
-            },
-            books: {
-                name: 'Books',
-                icon: '\u{1F4B0}',
-                description: 'Contact capture for Zoho Books',
-                modules: ['Contacts'],
-                capabilities: [
-                    'Generate Books contact routes with sample payloads',
-                    'Use a single contact-focused export flow',
-                    'Invoice generation remains beta-only',
-                ],
-                action: { label: '+ Contact Route', handler: 'openRouteBuilder_books' },
-                setupHint: 'Generate a Books contact route. Invoice routes stay beta until implemented.',
-                ready: true,
-                availability: 'ga',
-            },
-            projects: {
-                name: 'Projects',
-                icon: '\u{1F4C1}',
-                description: 'Project management, task tracking',
-                modules: ['Tasks'],
-                capabilities: [
-                    'Generate task-creation routes for a target portal and project',
-                    'Capture task details with exported HTML and JS starters',
-                    'Store portal, project, and default priority config server-side',
-                ],
-                action: { label: '+ Task Route', handler: 'openRouteBuilder_projects' },
-                setupHint: 'Configure a portal ID and project ID, then generate a live task route.',
-                ready: true,
-                availability: 'ga',
-            },
-        };
+    const byId = (id) => document.getElementById(id);
 
-        // DOM elements
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const resetForm = document.getElementById('resetForm');
-        const authView = document.getElementById('authView');
-        const dashboardView = document.getElementById('dashboardView');
-        const navbar = document.getElementById('navbar');
-        const logoutBtn = document.getElementById('logoutBtn');
-        const toastContainer = document.getElementById('toastContainer');
+    async function api(path, options = {}) {
+      const headers = Object.assign({}, options.headers || {});
+      if (state.token) headers.Authorization = `Bearer ${state.token}`;
+      if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
+      const response = await fetch(path, Object.assign({}, options, {
+        headers,
+        body: options.body ? JSON.stringify(options.body) : undefined,
+      }));
+      const text = await response.text();
+      const data = text ? JSON.parse(text) : null;
+      if (!response.ok) throw new Error(data && data.error ? data.error : `Request failed (${response.status})`);
+      return data;
+    }
 
-        // Pick up token from Google OAuth redirect
-        (function handleOAuthReturn() {
-            const oauthToken = pageParams.get('token');
-            if (oauthToken) {
-                state.token = oauthToken;
-                localStorage.setItem('token', oauthToken);
-                // Clean URL
-                window.history.replaceState({}, '', '/app');
-            }
-        })();
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = value == null ? '' : String(value);
+      return div.innerHTML;
+    }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            setupEventListeners();
-            if (pageParams.get('reset_token')) {
-                showResetView();
-            } else if (state.token) {
-                fetchCurrentUser();
-            } else {
-                showAuthView();
-            }
+    function showToast(message, type = 'error') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<strong>${type === 'success' ? 'Done' : 'Notice'}</strong><div style="margin-top:6px;">${escapeHtml(message)}</div>`;
+      byId('toastWrap').appendChild(toast);
+      setTimeout(() => toast.remove(), 3600);
+    }
+
+    function setAuthMode(mode) {
+      state.authMode = mode;
+      const register = mode === 'register';
+      byId('registerNameWrap').classList.toggle('hidden', !register);
+      byId('registerCompanyWrap').classList.toggle('hidden', !register);
+      byId('authModeLabel').textContent = register ? 'Create account' : 'Sign in';
+      byId('authHeading').textContent = register ? 'Create a new workspace account' : 'Open your workspace';
+      byId('authSubmitBtn').textContent = register ? 'Create account' : 'Sign in';
+      byId('authToggleBtn').textContent = register ? 'Already have an account?' : 'Need an account?';
+    }
+
+    function statusLabel(status) {
+      if (status === 'ready') return 'Ready';
+      if (status === 'reconnect_required') return 'Reconnect required';
+      if (status === 'connect_required') return 'Connect Zoho';
+      return status || 'Unknown';
+    }
+
+    function renderAuth() {
+      byId('authShell').classList.remove('hidden');
+      byId('appShell').classList.add('hidden');
+      setAuthMode(state.authMode);
+    }
+
+    function renderAppShell() {
+      byId('authShell').classList.add('hidden');
+      byId('appShell').classList.remove('hidden');
+    }
+
+    async function bootstrap() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('connected') === 'true') showToast('Zoho connected to the current workspace.', 'success');
+      if (params.get('error')) showToast(`OAuth returned: ${params.get('error')}`);
+      if (!state.token) return renderAuth();
+      try {
+        const me = await api('/api/auth/me');
+        state.user = me.user;
+        renderAppShell();
+        await loadApps();
+      } catch (error) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('currentAppId');
+        state.token = '';
+        renderAuth();
+      }
+    }
+
+    async function loadApps() {
+      state.apps = await api('/api/apps');
+      renderAppSelector();
+      if (!state.apps.length) {
+        byId('workspaceEmpty').classList.remove('hidden');
+        byId('workspaceMain').classList.add('hidden');
+        return;
+      }
+      byId('workspaceEmpty').classList.add('hidden');
+      byId('workspaceMain').classList.remove('hidden');
+      if (!state.currentAppId || !state.apps.find((app) => app.id === state.currentAppId)) {
+        state.currentAppId = state.apps[0].id;
+        localStorage.setItem('currentAppId', state.currentAppId);
+      }
+      await loadWorkspace();
+    }
+
+    function renderAppSelector() {
+      if (!state.apps.length) {
+        byId('appSelector').innerHTML = '<option value="">No workspaces yet</option>';
+        return;
+      }
+      byId('appSelector').innerHTML = state.apps.map((app) => `<option value="${app.id}" ${app.id === state.currentAppId ? 'selected' : ''}>${escapeHtml(app.name)}</option>`).join('');
+    }
+
+    async function loadWorkspace() {
+      const appRecord = state.apps.find((app) => app.id === state.currentAppId);
+      if (!appRecord) return;
+      state.account = await api(`/api/zoho/account?app_id=${state.currentAppId}`);
+      state.projectContext = (await api(`/api/project-context?app_id=${state.currentAppId}`)).projectContext;
+      state.services = (await api(`/api/zoho/services?app_id=${state.currentAppId}`)).services;
+      state.details = {};
+      renderOverview(appRecord);
+      renderProjectContext();
+      renderServices();
+      const params = new URLSearchParams(window.location.search);
+      const requestedService = params.get('service');
+      const nextService = requestedService && state.services.find((service) => service.id === requestedService)
+        ? requestedService
+        : (state.activeService && state.services.find((service) => service.id === state.activeService)
+          ? state.activeService
+          : (state.services[0] ? state.services[0].id : null));
+      if (nextService) {
+        await selectService(nextService);
+      } else {
+        renderDetailPlaceholder();
+      }
+    }
+
+    function renderOverview(appRecord) {
+      const readyCount = state.services.filter((service) => service.status === 'ready').length;
+      const routeCount = state.services.reduce((sum, service) => sum + (service.routeCount || 0), 0);
+      byId('heroTitle').textContent = appRecord.name;
+      byId('heroCopy').textContent = appRecord.domain
+        ? `This workspace is linked to ${appRecord.domain}. Connect Zoho once, then inspect and manage service capabilities for that app surface.`
+        : 'Link the user app URL below so every generated handoff points your agent to the right implementation surface.';
+      byId('connectionTag').textContent = state.account.zoho.connected ? 'Zoho connected' : 'Zoho not connected';
+      byId('serviceCountTag').textContent = `${state.services.length} services discovered`;
+      byId('statDc').textContent = state.account.zoho.dc || 'Not connected';
+      byId('statOrg').textContent = state.account.zoho.org_id || 'Unknown';
+      byId('statReady').textContent = `${readyCount} ready`;
+      byId('statRoutes').textContent = `${routeCount} routes`;
+      byId('openAppLinkBtn').disabled = !(state.projectContext && state.projectContext.appUrl);
+    }
+
+    function renderProjectContext() {
+      const context = state.projectContext || {};
+      byId('contextAppName').value = context.appName || '';
+      byId('contextAppUrl').value = context.appUrl || '';
+      byId('contextDocsUrl').value = context.appDocsUrl || '';
+      byId('contextTargetBaseUrl').value = context.targetBaseUrl || '';
+      byId('contextNotes').value = context.notes || '';
+    }
+
+    function renderServices() {
+      byId('serviceGrid').innerHTML = state.services.map((service) => `
+        <article class="panel service-card ${state.activeService === service.id ? 'active' : ''}" data-service-id="${service.id}">
+          <div class="service-top">
+            <div>
+              <h3 class="service-name">${escapeHtml(service.name)}</h3>
+              <div class="service-meta">${escapeHtml(service.summary)}</div>
+            </div>
+            <span class="status-pill ${service.status}">${escapeHtml(statusLabel(service.status))}</span>
+          </div>
+          <div class="service-meta">Capability level: ${escapeHtml(service.capabilityLevel)}${service.firstTier ? ' · first tier' : ''}</div>
+          <div class="service-bottom">
+            <span class="card-tag">${service.routeCount || 0} route${service.routeCount === 1 ? '' : 's'}</span>
+            <button class="btn btn-ghost">Inspect</button>
+          </div>
+        </article>
+      `).join('');
+      Array.from(document.querySelectorAll('[data-service-id]')).forEach((node) => {
+        node.addEventListener('click', () => selectService(node.getAttribute('data-service-id')));
+      });
+    }
+
+    async function selectService(serviceId) {
+      state.activeService = serviceId;
+      renderServices();
+      if (!state.details[serviceId]) {
+        const [resources, actions, references] = await Promise.all([
+          api(`/api/zoho/services/${serviceId}/resources?app_id=${state.currentAppId}`),
+          api(`/api/zoho/services/${serviceId}/actions?app_id=${state.currentAppId}`),
+          api(`/api/zoho/services/${serviceId}/references?app_id=${state.currentAppId}`),
+        ]);
+        state.details[serviceId] = { resources, actions, references };
+      }
+      renderServiceDetail();
+    }
+
+    function renderDetailPlaceholder() {
+      byId('detailTitle').textContent = 'Select a service';
+      byId('detailSummary').textContent = 'Load a service to inspect resources, available actions, and endpoint references.';
+      byId('detailStatus').className = 'status-pill';
+      byId('detailStatus').textContent = 'No selection';
+      byId('resourceGrid').innerHTML = '';
+      byId('docsGrid').innerHTML = '';
+      byId('actionSelect').innerHTML = '<option value="">No actions loaded</option>';
+      byId('actionPayload').value = '';
+      byId('actionResult').classList.add('hidden');
+    }
+
+    function renderServiceDetail() {
+      const service = state.services.find((entry) => entry.id === state.activeService);
+      const detail = state.details[state.activeService];
+      if (!service || !detail) return renderDetailPlaceholder();
+      byId('detailTitle').textContent = `${service.name} detail`;
+      byId('detailSummary').textContent = service.summary;
+      byId('detailStatus').className = `status-pill ${service.status}`;
+      byId('detailStatus').textContent = statusLabel(service.status);
+      const resources = detail.resources.resources || [];
+      byId('resourceGrid').innerHTML = resources.map((resource) => `
+        <div class="resource-box">
+          <p class="resource-name">${escapeHtml(resource.name || resource.type)}</p>
+          <p class="muted">${escapeHtml(resource.description || resource.status || '')}</p>
+          ${resource.status ? `<div class="helper">Status: ${escapeHtml(resource.status)}</div>` : ''}
+        </div>
+      `).join('') || '<div class="resource-box"><p class="resource-name">No live resources yet</p><p class="muted">This service has not returned any resources for the current workspace.</p></div>';
+      byId('docsGrid').innerHTML = (detail.references.documentationLinks || []).map((doc) => `
+        <a class="doc-box" href="${escapeHtml(doc.url)}" target="_blank" rel="noreferrer">
+          <p class="doc-name">${escapeHtml(doc.label)}</p>
+          <p class="muted">${escapeHtml(doc.source)}</p>
+        </a>
+      `).join('');
+      renderActionDetail(service, detail.actions.actions || []);
+    }
+
+    function renderActionDetail(service, actions) {
+      if (!actions.length) {
+        byId('actionSelect').innerHTML = '<option value="">No managed actions for this service</option>';
+        byId('actionPayload').value = '';
+        byId('actionHelper').textContent = 'This service is currently discovery-only. Use the handoff bundle to drive implementation from your agent.';
+        return;
+      }
+      byId('actionSelect').innerHTML = actions.map((action, index) => `<option value="${escapeHtml(action.id)}" ${index === 0 ? 'selected' : ''}>${escapeHtml(action.label)}${action.available ? '' : ' · blocked'}</option>`).join('');
+      loadCurrentActionExample();
+    }
+
+    function currentAction() {
+      const detail = state.details[state.activeService];
+      if (!detail || !detail.actions || !detail.actions.actions) return null;
+      const actionId = byId('actionSelect').value;
+      return detail.actions.actions.find((entry) => entry.id === actionId) || null;
+    }
+
+    function loadCurrentActionExample() {
+      const action = currentAction();
+      if (!action) {
+        byId('actionPayload').value = '';
+        return;
+      }
+      byId('actionPayload').value = JSON.stringify(action.bodyExample || { app_id: state.currentAppId }, null, 2);
+      byId('actionHelper').textContent = action.available
+        ? action.description
+        : `${action.description} ${action.reason || ''}`.trim();
+    }
+
+    async function runCurrentAction() {
+      const action = currentAction();
+      if (!action) return showToast('Select an action first.');
+      if (!action.available) return showToast(action.reason || 'This action is currently blocked.');
+      try {
+        const payload = JSON.parse(byId('actionPayload').value || '{}');
+        payload.app_id = state.currentAppId;
+        const result = await api(`/api/zoho/services/${state.activeService}/actions/${action.id}`, { method: 'POST', body: payload });
+        const panel = byId('actionResult');
+        panel.classList.remove('hidden');
+        panel.innerHTML = `<p class="endpoint-name">Action result</p><pre class="code">${escapeHtml(JSON.stringify(result, null, 2))}</pre>`;
+        showToast(`${action.label} completed.`, 'success');
+        state.details[state.activeService] = null;
+        await selectService(state.activeService);
+      } catch (error) {
+        showToast(error.message);
+      }
+    }
+
+    async function generateHandoff() {
+      if (!state.activeService) return showToast('Select a service first.');
+      try {
+        const goal = byId('handoffGoal').value.trim() || `Build the next ${state.activeService} capability for the user app.`;
+        state.handoff = await api('/api/zoho/handoff-bundle', {
+          method: 'POST',
+          body: { app_id: state.currentAppId, service: state.activeService, goal },
         });
-
-        // Event listeners
-        function setupEventListeners() {
-            loginForm.addEventListener('submit', handleLogin);
-            registerForm.addEventListener('submit', handleRegister);
-            resetForm.addEventListener('submit', handleResetPassword);
-            document.getElementById('switchToRegister').addEventListener('click', (e) => {
-                e.preventDefault();
-                showAuthScreen('register');
-            });
-            document.getElementById('switchToLogin').addEventListener('click', (e) => {
-                e.preventDefault();
-                showAuthScreen('login');
-            });
-            document.getElementById('resetBackToLogin').addEventListener('click', (e) => {
-                e.preventDefault();
-                window.history.replaceState({}, '', '/app');
-                showAuthScreen('login');
-            });
-            document.getElementById('forgotPasswordBtn').addEventListener('click', handleForgotPassword);
-            logoutBtn.addEventListener('click', handleLogout);
-        }
-
-        function showAuthScreen(screen) {
-            loginForm.style.display = screen === 'login' ? 'block' : 'none';
-            registerForm.style.display = screen === 'register' ? 'block' : 'none';
-            resetForm.style.display = screen === 'reset' ? 'block' : 'none';
-
-            document.getElementById('authSubtitle').textContent =
-                screen === 'register'
-                    ? 'Create a project and generate Zoho integrations'
-                    : screen === 'reset'
-                        ? 'Choose a new password for your account'
-                        : 'Sign in to generate Zoho integrations for your apps';
-        }
-
-        function showResetView() {
-            clearAuth();
-            showAuthView();
-            showAuthScreen('reset');
-        }
-
-        // Auth handlers
-        async function handleLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-
-            try {
-                setLoading(true);
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-
-                if (!response.ok) {
-                    const err = await response.json().catch(() => ({}));
-                    throw new Error(err.error || 'Login failed');
-                }
-
-                const data = await response.json();
-                state.token = data.token;
-                localStorage.setItem('token', data.token);
-                showToast('Successfully signed in', 'success');
-                await fetchCurrentUser();
-            } catch (error) {
-                showToast(error.message || 'Login failed', 'error');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        async function handleRegister(e) {
-            e.preventDefault();
-            const name = document.getElementById('registerName').value;
-            const email = document.getElementById('registerEmail').value;
-            const password = document.getElementById('registerPassword').value;
-            const company = document.getElementById('registerCompany').value;
-
-            try {
-                setLoading(true);
-                const response = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, company })
-                });
-
-                if (!response.ok) {
-                    const err = await response.json().catch(() => ({}));
-                    throw new Error(err.error || 'Registration failed');
-                }
-
-                const data = await response.json();
-                state.token = data.token;
-                localStorage.setItem('token', data.token);
-                showToast('Account created successfully', 'success');
-                await fetchCurrentUser();
-            } catch (error) {
-                showToast(error.message || 'Registration failed', 'error');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        async function handleForgotPassword() {
-            const email = window.prompt('Enter the email address for your 1ClickSync account:');
-            if (!email) return;
-
-            try {
-                const response = await fetch('/api/auth/forgot-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                if (!response.ok) throw new Error('Failed to send reset email');
-
-                const data = await response.json();
-                showToast(data.message || 'Reset link sent if the email exists', 'success');
-            } catch (error) {
-                showToast(error.message || 'Failed to send reset email', 'error');
-            }
-        }
-
-        async function handleResetPassword(e) {
-            e.preventDefault();
-            const token = pageParams.get('reset_token');
-            const newPassword = document.getElementById('resetPassword').value;
-
-            if (!token) {
-                showToast('Reset token missing from URL', 'error');
-                return;
-            }
-
-            try {
-                setLoading(true);
-                const response = await fetch('/api/auth/reset-password', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token, newPassword })
-                });
-
-                if (!response.ok) {
-                    const err = await response.json().catch(() => ({}));
-                    throw new Error(err.error || 'Failed to reset password');
-                }
-
-                showToast('Password reset successfully. You can sign in now.', 'success');
-                window.history.replaceState({}, '', '/app');
-                document.getElementById('resetPassword').value = '';
-                showAuthScreen('login');
-            } catch (error) {
-                showToast(error.message || 'Failed to reset password', 'error');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        async function fetchCurrentUser() {
-            try {
-                const response = await fetch('/api/auth/me', {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        clearAuth();
-                        return;
-                    }
-                    throw new Error('Failed to fetch user');
-                }
-
-                const userData = await response.json();
-                state.user = userData.user;
-                showDashboard();
-                await fetchApps();
-                await fetchTemplates();
-                await fetchForms();
-                try { await checkZohoConnection(); } catch(e) { /* ok - will connect later */ }
-            } catch (error) {
-                showToast(error.message, 'error');
-                clearAuth();
-            }
-        }
-
-        async function fetchTemplates() {
-            try {
-                const response = await fetch('/api/templates', {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                if (!response.ok) throw new Error('Failed to fetch templates');
-
-                const templates = await response.json();
-                renderTemplates(templates);
-            } catch (error) {
-                showToast(error.message, 'error');
-                document.getElementById('templatesGrid').innerHTML = '<div class="empty-state"><p>Failed to load templates</p></div>';
-            }
-        }
-
-        // UI updates
-        function showDashboard() {
-            authView.style.display = 'none';
-            dashboardView.classList.add('active');
-            navbar.style.display = 'block';
-
-            const userName = state.user.name || 'User';
-            document.getElementById('dashboardUserName').textContent = userName;
-            document.getElementById('navUserName').textContent = userName;
-            document.getElementById('welcomeDescription').textContent = `Generating Zoho integrations for ${state.user.company || 'your next project'}`;
-            const plan = (state.user.plan || 'free').toUpperCase();
-            document.getElementById('planBadge').textContent = `${plan} PLAN`;
-        }
-
-        function showAuthView() {
-            authView.style.display = 'flex';
-            dashboardView.classList.remove('active');
-            navbar.style.display = 'none';
-            showAuthScreen('login');
-        }
-
-        function renderTemplates(templates) {
-            const grid = document.getElementById('templatesGrid');
-
-            if (!templates || templates.length === 0) {
-                grid.innerHTML = '<div class="empty-state"><p>No legacy templates published yet.</p></div>';
-                return;
-            }
-
-            grid.innerHTML = templates.map(template => `
-                <div class="template-card">
-                    <div class="template-name">${escapeHtml(template.name)}</div>
-                    <div class="template-description">${escapeHtml(template.description)}</div>
-                    <div style="display:inline-flex;align-items:center;gap:6px;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--warning);margin-bottom:12px;">Legacy beta</div>
-                    <div class="template-steps">
-                        <span class="template-steps-count">${template.step_count || 0} steps</span>
-                        <button type="button" disabled title="Legacy automation is API-only for now">Read Only</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function handleLogout() {
-            clearAuth();
-            showAuthView();
-            showToast('Logged out successfully', 'success');
-        }
-
-        // ── Project Management ─────────────────────
-        async function fetchApps() {
-            try {
-                const response = await fetch('/api/apps', {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                if (!response.ok) return;
-                state.apps = await response.json();
-
-                // If no projects exist, create a default one
-                if (state.apps.length === 0) {
-                    await createDefaultApp();
-                    return;
-                }
-
-                // Restore last selected app or pick first
-                if (state.currentAppId && state.apps.find(a => a.id === state.currentAppId)) {
-                    // keep current
-                } else {
-                    state.currentAppId = state.apps[0].id;
-                    localStorage.setItem('currentAppId', state.currentAppId);
-                }
-                state.currentAppId = state.currentAppId; // backward compat
-
-                renderAppSelector();
-            } catch (e) { console.error('fetchApps:', e); }
-        }
-
-        async function createDefaultApp() {
-            try {
-                const response = await fetch('/api/apps', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${state.token}`,
-                    },
-                    body: JSON.stringify({
-                        name: state.user.company || state.user.name || 'My App',
-                        business_type: 'saas',
-                        zoho_tools: ['crm'],
-                    }),
-                });
-                const app = await response.json();
-                state.apps = [app];
-                state.currentAppId = app.id;
-                state.currentAppId = app.id;
-                localStorage.setItem('currentAppId', app.id);
-
-                renderAppSelector();
-            } catch (e) {
-                showToast('Failed to create default project', 'error');
-            }
-        }
-
-        function renderAppSelector() {
-            const container = document.getElementById('appSelectorContainer');
-            if (!container) return;
-
-            const currentApp = state.apps.find(a => a.id === state.currentAppId);
-
-            container.innerHTML = `
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;">
-                    <label style="font-size:0.85rem;color:var(--text-secondary);white-space:nowrap;">Current Project:</label>
-                    <select id="appSelector" style="flex:1;padding:8px 12px;background:var(--bg-tertiary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;font-size:14px;font-family:inherit;">
-                        ${state.apps.map(a => `<option value="${a.id}" ${a.id === state.currentAppId ? 'selected' : ''}>${escapeHtml(a.name)}${a.zoho_connected ? ' ✓' : ''}</option>`).join('')}
-                    </select>
-                    <button class="btn btn-secondary" onclick="showCreateAppModal()" style="font-size:0.85rem;padding:6px 12px;white-space:nowrap;">+ New Project</button>
-                    <button class="btn btn-secondary" onclick="showManifest()" style="font-size:0.85rem;padding:6px 12px;white-space:nowrap;">Manifest JSON</button>
-                    <button class="btn btn-secondary" onclick="showPrompt()" style="font-size:0.85rem;padding:6px 12px;white-space:nowrap;">LLM Prompt</button>
-                </div>
-            `;
-
-            document.getElementById('appSelector').addEventListener('change', async (e) => {
-                state.currentAppId = e.target.value;
-                localStorage.setItem('currentAppId', state.currentAppId);
-                // Refresh integrations + forms for selected app
-                await checkZohoConnection();
-                await fetchForms();
-            });
-        }
-
-        async function showCreateAppModal() {
-            const name = prompt('Project name (e.g. "Acme SaaS", "Client Portfolio"):');
-            if (!name) return;
-
-            try {
-                const response = await fetch('/api/apps', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${state.token}`,
-                    },
-                    body: JSON.stringify({ name, business_type: 'saas', zoho_tools: ['crm'] }),
-                });
-                if (!response.ok) throw new Error('Failed to create project');
-
-                const app = await response.json();
-                showToast(`Project "${app.name}" created`, 'success');
-                await fetchApps();
-                // Switch to new app
-                state.currentAppId = app.id;
-                state.currentAppId = app.id;
-                localStorage.setItem('currentAppId', app.id);
-                renderAppSelector();
-                checkZohoConnection();
-                fetchForms();
-            } catch (e) {
-                showToast(e.message, 'error');
-            }
-        }
-
-        async function showManifest() {
-            if (!state.currentAppId) return showToast('Select a project first', 'error');
-            try {
-                const resp = await fetch(`/api/apps/${state.currentAppId}/manifest`, {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                const manifest = await resp.json();
-                const json = JSON.stringify(manifest, null, 2);
-
-                // Show in embed modal
-                document.getElementById('embedCodeArea').value = json;
-                document.getElementById('embedModal').style.display = 'flex';
-            } catch (e) { showToast('Failed to load manifest', 'error'); }
-        }
-
-        async function showPrompt() {
-            if (!state.currentAppId) return showToast('Select a project first', 'error');
-            try {
-                const resp = await fetch(`/api/apps/${state.currentAppId}/prompt`, {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                const prompt = await resp.text();
-
-                document.getElementById('embedCodeArea').value = prompt;
-                document.getElementById('embedModal').style.display = 'flex';
-            } catch (e) { showToast('Failed to load prompt', 'error'); }
-        }
-
-        // Backward compat: ensureCustomer now returns currentAppId
-        async function ensureCustomer() {
-            if (state.currentAppId) return state.currentAppId;
-            await fetchApps();
-            return state.currentAppId;
-        }
-
-        async function handleConnectZoho() {
-            if (!state.token || !state.user) {
-                showToast('Please sign in first', 'error');
-                return;
-            }
-
-            const btn = document.getElementById('connectZohoBtn');
-            btn.disabled = true;
-            btn.textContent = 'Connecting...';
-
-            try {
-                const appId = await ensureCustomer();
-                // Fetch the Zoho auth URL via authenticated API call
-                const resp = await fetch(`/api/auth/zoho?app_id=${appId}&dc=com`, {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                if (!resp.ok) {
-                    const err = await resp.json().catch(() => ({}));
-                    throw new Error(err.error || 'Failed to get Zoho auth URL');
-                }
-                const { url } = await resp.json();
-                // Redirect browser to Zoho consent screen
-                window.location.href = url;
-            } catch (error) {
-                showToast(error.message || 'Failed to start Zoho connection', 'error');
-                btn.disabled = false;
-                btn.textContent = 'Connect Zoho Account';
-            }
-        }
-
-        async function checkZohoConnection() {
-            await renderIntegrations();
-        }
-
-        async function fetchAppDetail() {
-            if (!state.currentAppId || !state.token) return null;
-            try {
-                const resp = await fetch(`/api/apps/${state.currentAppId}`, {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                return resp.ok ? await resp.json() : null;
-            } catch (e) { return null; }
-        }
-
-        async function renderIntegrations() {
-            const grid = document.getElementById('integrationsGrid');
-            const prompt = document.getElementById('integrationsConnectPrompt');
-            const statusDot = document.getElementById('integrationStatusDot');
-            const statusLabel = document.getElementById('integrationStatusLabel');
-            if (!grid || !state.currentAppId) return;
-
-            // Parallel fetch connection + app detail
-            const [connData, appDetail] = await Promise.all([
-                fetch(`/api/connection/${state.currentAppId}`, {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                }).then(r => r.ok ? r.json() : { connected: false }).catch(() => ({ connected: false })),
-                fetchAppDetail()
-            ]);
-
-            const isConnected = connData.connected;
-            const enabledTools = Array.isArray(appDetail?.zoho_tools) ? appDetail.zoho_tools : ['crm'];
-            const routes = appDetail?.routes || [];
-
-            // Update connection badge
-            statusDot.className = 'tool-status-dot ' + (isConnected ? 'active' : 'disconnected');
-            statusLabel.textContent = isConnected
-                ? `Connected (${(connData.dc || 'com').toUpperCase()})`
-                : 'Not Connected';
-
-            // Show connect prompt if not connected
-            if (prompt) prompt.style.display = isConnected ? 'none' : 'block';
-
-            // Count routes per tool
-            const routesByTool = {};
-            for (const r of routes) {
-                const routeKey = r.route_type || 'crm';
-                routesByTool[routeKey] = (routesByTool[routeKey] || 0) + 1;
-            }
-
-            // Render tool cards
-            grid.innerHTML = Object.entries(ZOHO_TOOLS_CONFIG).map(([key, tool]) => {
-                const isEnabled = enabledTools.includes(key);
-                const isActive = isConnected && isEnabled;
-                const isReady = tool.ready;
-                const availability = tool.availability || (isReady ? 'ga' : 'beta');
-                const isBeta = availability === 'beta';
-                const comingSoon = availability !== 'ga';
-
-                // Card state classes
-                let cardClass = isActive ? 'active' : (isConnected ? 'available' : '');
-                if (comingSoon) cardClass += ' coming-soon';
-
-                const dotClass = isActive ? 'active' : (isConnected && isReady ? 'available' : 'disconnected');
-                const statusText = comingSoon ? (isBeta ? 'Beta' : 'Coming Soon') : (isActive ? 'Active' : (isConnected ? 'Available' : 'Connect'));
-                const rc = routesByTool[key] || 0;
-
-                // Toggle: disabled if not connected OR if tool is not ready
-                const toggleDisabled = !isConnected || comingSoon;
-
-                // Action button
-                const actionBtnClass = isReady && isActive ? 'ready' : 'soon';
-                const actionLabel = tool.action.label;
-                const actionHandler = tool.action.handler && isActive
-                    ? `onclick="${tool.action.handler}()"`
-                    : '';
-
-                // Hint text
-                let hintText = '';
-                if (isActive && isReady) {
-                    hintText = tool.setupHint;
-                } else if (isConnected && isReady && !isEnabled) {
-                    hintText = 'Toggle on to enable this integration.';
-                } else if (!isConnected && isReady) {
-                    hintText = 'Connect Zoho above to get started.';
-                } else if (comingSoon) {
-                    hintText = tool.setupHint;
-                }
-
-                return `
-                    <div class="tool-card ${cardClass}" data-tool="${key}">
-                        <div class="tool-card-header">
-                            <div class="tool-card-title">
-                                <span class="tool-card-icon">${tool.icon}</span>
-                                <span class="tool-card-name">Zoho ${tool.name}</span>
-                            </div>
-                            <div class="tool-card-status">
-                                <span class="tool-status-dot ${dotClass}"></span>
-                                ${statusText}
-                            </div>
-                        </div>
-                        <div class="tool-card-desc">${tool.description}</div>
-                        <ul class="tool-card-capabilities">
-                            ${tool.capabilities.map(c => `<li>${c}</li>`).join('')}
-                        </ul>
-                        ${hintText ? `<div class="tool-card-hint">${hintText}</div>` : ''}
-                        <div class="tool-card-modules">
-                            ${tool.modules.map(m => `<span class="module-chip">${m}</span>`).join('')}
-                        </div>
-                        <div class="tool-card-footer">
-                            <div style="display:flex;align-items:center;gap:10px;">
-                                <label class="tool-toggle" title="${toggleDisabled ? (comingSoon ? (isBeta ? 'Beta integration' : 'Coming soon') : 'Connect Zoho first') : (isEnabled ? 'Disable' : 'Enable')}">
-                                    <input type="checkbox" ${isEnabled && !comingSoon ? 'checked' : ''} ${toggleDisabled ? 'disabled' : ''}
-                                           onchange="toggleTool('${key}', this.checked)">
-                                    <span class="tool-toggle-slider"></span>
-                                </label>
-                                ${rc > 0 ? `<span class="tool-route-count">${rc} route${rc > 1 ? 's' : ''}</span>` : ''}
-                            </div>
-                            <button class="tool-action-btn ${actionBtnClass}" ${actionHandler} ${!actionHandler ? 'disabled' : ''}>
-                                ${actionLabel}
-                            </button>
-                        </div>
-                    </div>`;
-            }).join('');
-        }
-
-        async function toggleTool(toolKey, enable) {
-            if (!state.currentAppId || !state.token) return;
-
-            const currentApp = state.apps.find(a => a.id === state.currentAppId);
-            if (!currentApp) return;
-
-            let tools = Array.isArray(currentApp.zoho_tools) ? [...currentApp.zoho_tools] : ['crm'];
-
-            if (enable && !tools.includes(toolKey)) {
-                tools.push(toolKey);
-            } else if (!enable) {
-                tools = tools.filter(t => t !== toolKey);
-                if (tools.length === 0) {
-                    tools = ['crm'];
-                    showToast('At least one tool must be enabled', 'error');
-                    renderIntegrations();
-                    return;
-                }
-            }
-
-            try {
-                const resp = await fetch(`/api/apps/${state.currentAppId}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
-                    body: JSON.stringify({ zoho_tools: tools }),
-                });
-                if (!resp.ok) throw new Error('Failed to update tools');
-
-                const updated = await resp.json();
-                const idx = state.apps.findIndex(a => a.id === state.currentAppId);
-                if (idx !== -1) state.apps[idx].zoho_tools = updated.zoho_tools;
-
-                showToast(enable ? `${ZOHO_TOOLS_CONFIG[toolKey]?.name || toolKey} enabled` : `${ZOHO_TOOLS_CONFIG[toolKey]?.name || toolKey} disabled`, 'success');
-                renderIntegrations();
-            } catch (e) {
-                showToast(e.message || 'Failed to toggle tool', 'error');
-                renderIntegrations();
-            }
-        }
-
-        // Connect Zoho button — event delegation (button rendered dynamically)
-        document.addEventListener('click', (e) => {
-            if (e.target && e.target.id === 'connectZohoBtn') handleConnectZoho();
+        byId('handoffResult').classList.remove('hidden');
+        byId('handoffPrompt').value = state.handoff.prompt;
+        byId('handoffRefs').value = JSON.stringify({
+          apiEndpoints: state.handoff.apiEndpoints,
+          documentationLinks: state.handoff.documentationLinks,
+          dashboardLink: state.handoff.dashboardLink,
+          userAppLink: state.handoff.userAppLink,
+          userAppDocsLink: state.handoff.userAppDocsLink,
+          availableResources: state.handoff.availableResources,
+          availableActions: state.handoff.availableActions,
+        }, null, 2);
+        showToast('Handoff bundle generated.', 'success');
+      } catch (error) {
+        showToast(error.message);
+      }
+    }
+
+    async function createWorkspace(fromPrimary = false) {
+      const name = (fromPrimary ? byId('newAppName') : prompt('Workspace name?'));
+      const domain = fromPrimary ? byId('newAppDomain').value.trim() : '';
+      const workspaceName = typeof name === 'string' ? name.trim() : name.value.trim();
+      if (!workspaceName) return showToast('Workspace name is required.');
+      try {
+        const created = await api('/api/apps', {
+          method: 'POST',
+          body: {
+            name: workspaceName,
+            domain: domain || undefined,
+            business_type: 'saas',
+            zoho_tools: ['crm', 'desk', 'bookings', 'salesiq', 'books', 'projects'],
+          },
         });
+        state.currentAppId = created.id;
+        localStorage.setItem('currentAppId', state.currentAppId);
+        showToast('Workspace created.', 'success');
+        await loadApps();
+      } catch (error) {
+        showToast(error.message);
+      }
+    }
 
-        // Check for query-string status after redirects
-        if (pageParams.get('connected') === 'true') {
-            showToast('Zoho account connected successfully!', 'success');
-            window.history.replaceState({}, '', '/app');
-            if (state.token) checkZohoConnection();
-        } else if (pageParams.get('checkout') === 'success') {
-            showToast('Billing updated successfully.', 'success');
-            window.history.replaceState({}, '', '/app');
-        } else if (pageParams.get('checkout') === 'cancel') {
-            showToast('Checkout canceled.', 'error');
-            window.history.replaceState({}, '', '/app');
-        } else if (pageParams.get('error')) {
-            showToast(`Connection failed: ${pageParams.get('error')}`, 'error');
-            window.history.replaceState({}, '', '/app');
-        }
+    async function connectZoho() {
+      if (!state.currentAppId) return showToast('Create or select a workspace first.');
+      try {
+        const response = await api(`/api/auth/zoho?app_id=${state.currentAppId}`);
+        window.location.href = response.url;
+      } catch (error) {
+        showToast(error.message);
+      }
+    }
 
-        // ── Generated Routes ─────────────────────────
-        async function fetchForms() {
-            if (!state.currentAppId) return;
-            try {
-                const response = await fetch('/api/forms?app_id=' + encodeURIComponent(state.currentAppId), {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                if (!response.ok) return;
-                const forms = await response.json();
-                renderForms(forms);
-            } catch (e) { /* silent */ }
-        }
-
-        function renderForms(forms) {
-            const el = document.getElementById('formsList');
-            if (!forms || forms.length === 0) {
-                el.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:16px;">No generated routes yet. Create one to get HTML/JS, request samples, and an exportable prompt.</p>';
-                return;
-            }
-            el.innerHTML = forms.map(f => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg-tertiary);border-radius:8px;margin-bottom:8px;border:1px solid var(--border);">
-                    <div>
-                        <strong>${escapeHtml(f.name)}</strong>
-                        <span style="color:var(--text-secondary);margin-left:8px;font-size:0.85rem;">${(f.route_type || 'crm').toUpperCase()}</span>
-                        <span style="color:var(--text-secondary);margin-left:4px;font-size:0.85rem;">→ ${f.target_module}</span>
-                        <span style="color:var(--text-secondary);margin-left:8px;font-size:0.85rem;">${f.submissions_count} submissions</span>
-                    </div>
-                    <div style="display:flex;gap:8px;align-items:center;">
-                        <button class="btn" onclick="showIntegrationExport('${f.id}')" style="font-size:0.85rem;padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Get Export</button>
-                        <button class="btn" onclick="editForm('${f.id}')" style="font-size:0.85rem;padding:6px 12px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:6px;cursor:pointer;">Edit</button>
-                        <button class="btn" onclick="toggleFormActive('${f.id}', ${!f.is_active})" style="font-size:0.85rem;padding:6px 10px;border-radius:6px;background:${f.is_active ? '#065f46' : '#7f1d1d'};color:#fff;border:none;cursor:pointer;">${f.is_active ? 'Active' : 'Inactive'}</button>
-                        <button class="btn" onclick="deleteForm('${f.id}', '${escapeHtml(f.name)}')" style="font-size:0.85rem;padding:6px 10px;background:transparent;color:var(--error);border:1px solid var(--error);border-radius:6px;cursor:pointer;">Delete</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function showIntegrationExport(integrationId) {
-            try {
-                const response = await fetch(`/api/apps/${state.currentAppId}/exports/${integrationId}?target=html-js`, {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                if (!response.ok) throw new Error('Failed to load export');
-                const data = await response.json();
-                document.getElementById('embedCodeArea').value = data.content || data.snippet || '';
-                const modal = document.getElementById('embedModal');
-                modal.style.display = 'flex';
-            } catch (e) {
-                showToast(e.message, 'error');
-            }
-        }
-
-        async function showSalesIQExport() {
-            if (!state.currentAppId) return showToast('Select a project first', 'error');
-            return showIntegrationExport('salesiq-widget');
-        }
-
-        // ── Edit form ────────────────────────────────
-        let editingFormId = null;
-
-        async function editForm(formId) {
-            try {
-                const resp = await fetch('/api/forms/' + formId, {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                if (!resp.ok) throw new Error('Failed to load route');
-                const form = resp.ok ? await resp.json() : null;
-                if (!form) return;
-
-                editingFormId = formId;
-                const routeType = form.route_type || 'crm';
-                document.getElementById('fbRouteType').value = routeType;
-                onRouteTypeChange(routeType);
-                document.getElementById('fbName').value = form.name || '';
-                document.getElementById('fbModule').value = form.target_module || 'Leads';
-                const style = form.style_config || {};
-                document.getElementById('fbColor').value = style.primaryColor || '#3b82f6';
-                document.getElementById('fbButtonText').value = style.buttonText || 'Submit';
-                document.getElementById('fbSuccessMsg').value = style.successMessage || 'Thank you! We will be in touch.';
-                document.getElementById('fbBookingServiceId').value = style.service_id || '';
-                document.getElementById('fbBookingStaffId').value = style.staff_id || '';
-                document.getElementById('fbBookingTimezone').value = style.timezone || 'UTC';
-                document.getElementById('fbProjectPortalId').value = style.portalId || '';
-                document.getElementById('fbProjectId').value = style.projectId || '';
-                document.getElementById('fbProjectPriority').value = style.defaultPriority || 'None';
-
-                // Load lead sources for the module, then select the current one
-                if (routeType === 'crm') {
-                    await fetchLeadSources(form.target_module);
-                    document.getElementById('fbLeadSource').value = form.lead_source || '';
-                }
-
-                document.getElementById('formBuilderModal').style.display = 'flex';
-            } catch (e) {
-                showToast(e.message, 'error');
-            }
-        }
-
-        async function deleteForm(formId, formName) {
-            if (!confirm(`Delete route "${formName}"? This cannot be undone.`)) return;
-            try {
-                const resp = await fetch('/api/forms/' + formId, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                if (!resp.ok) throw new Error('Failed to delete');
-                showToast('Route deleted', 'success');
-                fetchForms();
-            } catch (e) {
-                showToast(e.message, 'error');
-            }
-        }
-
-        async function toggleFormActive(formId, newState) {
-            try {
-                const resp = await fetch('/api/forms/' + formId, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
-                    body: JSON.stringify({ is_active: newState })
-                });
-                if (!resp.ok) throw new Error('Failed to update');
-                showToast(newState ? 'Route activated' : 'Route deactivated', 'success');
-                fetchForms();
-            } catch (e) {
-                showToast(e.message, 'error');
-            }
-        }
-
-        // ── Lead Source state ─────────────────────────
-        let leadSourceFieldId = null;
-
-        async function fetchLeadSources(module) {
-            module = module || document.getElementById('fbModule').value || 'Leads';
-            if (!state.currentAppId || !state.token) return;
-            const select = document.getElementById('fbLeadSource');
-            select.innerHTML = '<option value="">Loading...</option>';
-            try {
-                const resp = await fetch(`/api/lead-sources/${state.currentAppId}?module=${module}`, {
-                    headers: { 'Authorization': `Bearer ${state.token}` }
-                });
-                if (!resp.ok) throw new Error('Failed to fetch');
-                const data = await resp.json();
-                leadSourceFieldId = data.field_id;
-                select.innerHTML = '<option value="">Select lead source...</option>' +
-                    data.values.map(v => `<option value="${escapeHtml(v.display_value)}">${escapeHtml(v.display_value)}</option>`).join('');
-            } catch (e) {
-                select.innerHTML = '<option value="">Could not load (connect Zoho first)</option>';
-            }
-        }
-
-        // Module options per route type
-        const ROUTE_TYPE_MODULES = {
-            crm: [['Leads', 'Leads'], ['Contacts', 'Contacts'], ['Deals', 'Deals']],
-            desk: [['Tickets', 'Tickets']],
-            bookings: [['Appointments', 'Appointments']],
-            books: [['Contacts', 'Contacts']],
-            projects: [['Tasks', 'Tasks']],
-        };
-
-        const ROUTE_TYPE_DEFAULTS = {
-            crm: { name: 'Contact Form', module: 'Leads', button: 'Submit' },
-            desk: { name: 'Support Form', module: 'Tickets', button: 'Submit Ticket' },
-            bookings: { name: 'Booking Form', module: 'Appointments', button: 'Book Now' },
-            books: { name: 'Contact Form', module: 'Contacts', button: 'Submit' },
-            projects: { name: 'Task Form', module: 'Tasks', button: 'Create Task' },
-        };
-
-        function setIntegrationConfigVisibility(routeType) {
-            document.getElementById('fbBookingsConfigGroup').style.display = routeType === 'bookings' ? 'block' : 'none';
-            document.getElementById('fbProjectsConfigGroup').style.display = routeType === 'projects' ? 'block' : 'none';
-        }
-
-        function onRouteTypeChange(routeType) {
-            const modules = ROUTE_TYPE_MODULES[routeType] || ROUTE_TYPE_MODULES.crm;
-            const defaults = ROUTE_TYPE_DEFAULTS[routeType] || ROUTE_TYPE_DEFAULTS.crm;
-            const moduleSelect = document.getElementById('fbModule');
-            const leadSourceGroup = document.getElementById('fbLeadSourceGroup');
-
-            // Update module options
-            moduleSelect.innerHTML = modules.map(([val, label]) => `<option value="${val}">${label}</option>`).join('');
-            moduleSelect.value = defaults.module;
-
-            // Update defaults
-            document.getElementById('fbName').value = defaults.name;
-            document.getElementById('fbButtonText').value = defaults.button;
-            if (routeType === 'bookings' && !document.getElementById('fbBookingTimezone').value) {
-                document.getElementById('fbBookingTimezone').value = 'UTC';
-            }
-            if (routeType === 'projects') {
-                document.getElementById('fbProjectPriority').value = 'None';
-            }
-
-            // Lead source only relevant for CRM
-            if (leadSourceGroup) {
-                leadSourceGroup.style.display = routeType === 'crm' ? 'block' : 'none';
-            }
-
-            setIntegrationConfigVisibility(routeType);
-
-            // Fetch lead sources only for CRM
-            if (routeType === 'crm') fetchLeadSources();
-        }
-
-        // Open form builder for a specific route type
-        function openFormBuilder() { openRouteBuilder('crm'); }
-        function openRouteBuilder_desk() { openRouteBuilder('desk'); }
-        function openRouteBuilder_bookings() { openRouteBuilder('bookings'); }
-        function openRouteBuilder_books() { openRouteBuilder('books'); }
-        function openRouteBuilder_projects() { openRouteBuilder('projects'); }
-
-        function collectRouteIntegrationConfig(routeType) {
-            if (routeType === 'bookings') {
-                const serviceId = document.getElementById('fbBookingServiceId').value.trim();
-                const staffId = document.getElementById('fbBookingStaffId').value.trim();
-                const timezone = document.getElementById('fbBookingTimezone').value.trim() || 'UTC';
-
-                if (!serviceId || !staffId) {
-                    throw new Error('Bookings routes require both a service ID and a staff ID');
-                }
-
-                return {
-                    service_id: serviceId,
-                    staff_id: staffId,
-                    timezone,
-                };
-            }
-
-            if (routeType === 'projects') {
-                const portalId = document.getElementById('fbProjectPortalId').value.trim();
-                const projectId = document.getElementById('fbProjectId').value.trim();
-                const defaultPriority = document.getElementById('fbProjectPriority').value || 'None';
-
-                if (!portalId || !projectId) {
-                    throw new Error('Projects routes require both a portal ID and a project ID');
-                }
-
-                return {
-                    portalId,
-                    projectId,
-                    defaultPriority,
-                };
-            }
-
-            return {};
-        }
-
-        function openRouteBuilder(routeType) {
-            editingFormId = null;
-            document.getElementById('fbRouteType').value = routeType;
-            onRouteTypeChange(routeType);
-            document.getElementById('fbColor').value = '#3b82f6';
-            document.getElementById('fbSuccessMsg').value = 'Thank you! We will be in touch.';
-            document.getElementById('fbBookingServiceId').value = '';
-            document.getElementById('fbBookingStaffId').value = '';
-            document.getElementById('fbBookingTimezone').value = 'UTC';
-            document.getElementById('fbProjectPortalId').value = '';
-            document.getElementById('fbProjectId').value = '';
-            document.getElementById('fbProjectPriority').value = 'None';
-            document.getElementById('fbModalTitle').textContent =
-                routeType === 'crm' ? 'Create CRM Route' :
-                routeType === 'desk' ? 'Create Support Route' :
-                routeType === 'bookings' ? 'Create Booking Route' :
-                routeType === 'books' ? 'Create Books Route' :
-                routeType === 'projects' ? 'Create Projects Route' : 'Create Route';
-            document.getElementById('formBuilderModal').style.display = 'flex';
-        }
-
-        // Modal event listeners
-        document.getElementById('createFormBtn')?.addEventListener('click', () => {
-            openRouteBuilder('crm');
+    async function saveContext() {
+      try {
+        const result = await api('/api/project-context', {
+          method: 'PUT',
+          body: {
+            app_id: state.currentAppId,
+            app_name: byId('contextAppName').value.trim() || null,
+            app_url: byId('contextAppUrl').value.trim() || null,
+            app_docs_url: byId('contextDocsUrl').value.trim() || null,
+            target_base_url: byId('contextTargetBaseUrl').value.trim() || null,
+            notes: byId('contextNotes').value.trim() || null,
+          },
         });
-        document.getElementById('fbCancel')?.addEventListener('click', () => {
-            editingFormId = null;
-            document.getElementById('formBuilderModal').style.display = 'none';
-            document.getElementById('fbNewLeadSourceInput').style.display = 'none';
-        });
-        document.getElementById('closeEmbedBtn')?.addEventListener('click', () => {
-            document.getElementById('embedModal').style.display = 'none';
-        });
-        document.getElementById('copyEmbedBtn')?.addEventListener('click', () => {
-            const area = document.getElementById('embedCodeArea');
-            area.select();
-            navigator.clipboard.writeText(area.value).then(() => showToast('Copied!', 'success'));
-        });
+        state.projectContext = result.projectContext;
+        renderOverview(state.apps.find((app) => app.id === state.currentAppId));
+        showToast('Project context saved.', 'success');
+      } catch (error) {
+        showToast(error.message);
+      }
+    }
 
-        // Show/hide new lead source input
-        document.getElementById('fbAddLeadSource')?.addEventListener('click', () => {
-            const input = document.getElementById('fbNewLeadSourceInput');
-            input.style.display = input.style.display === 'none' ? 'block' : 'none';
-            if (input.style.display === 'block') {
-                document.getElementById('fbNewLeadSourceName').focus();
+    function openUserApp() {
+      if (!state.projectContext || !state.projectContext.appUrl) return showToast('Save the user app URL first.');
+      window.open(state.projectContext.appUrl, '_blank', 'noopener');
+    }
+
+    async function submitAuth() {
+      const email = byId('authEmail').value.trim();
+      const password = byId('authPassword').value;
+      if (!email || !password) return showToast('Email and password are required.');
+      try {
+        const payload = state.authMode === 'register'
+          ? {
+              name: byId('authName').value.trim(),
+              company: byId('authCompany').value.trim() || undefined,
+              email,
+              password,
             }
-        });
+          : { email, password };
+        const endpoint = state.authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
+        const result = await api(endpoint, { method: 'POST', body: payload });
+        state.token = result.token;
+        state.user = result.user;
+        localStorage.setItem('token', result.token);
+        renderAppShell();
+        await loadApps();
+      } catch (error) {
+        showToast(error.message);
+      }
+    }
 
-        // Save new lead source to Zoho CRM
-        document.getElementById('fbSaveLeadSource')?.addEventListener('click', async () => {
-            const name = document.getElementById('fbNewLeadSourceName').value.trim();
-            if (!name) { showToast('Enter a lead source name', 'error'); return; }
-            if (!leadSourceFieldId) { showToast('Lead source field not loaded', 'error'); return; }
+    function logout() {
+      state.token = '';
+      state.user = null;
+      state.apps = [];
+      state.currentAppId = '';
+      localStorage.removeItem('token');
+      localStorage.removeItem('currentAppId');
+      renderAuth();
+    }
 
-            try {
-                const resp = await fetch(`/api/lead-sources/${state.currentAppId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.token}` },
-                    body: JSON.stringify({ field_id: leadSourceFieldId, display_value: name, module: document.getElementById('fbModule').value }),
-                });
-                if (!resp.ok) throw new Error('Failed to add');
-                showToast('Lead source added to Zoho CRM!', 'success');
-                document.getElementById('fbNewLeadSourceName').value = '';
-                document.getElementById('fbNewLeadSourceInput').style.display = 'none';
-                // Refresh dropdown and select the new value
-                await fetchLeadSources();
-                document.getElementById('fbLeadSource').value = name;
-            } catch (e) {
-                showToast('Failed to add lead source to CRM', 'error');
-            }
-        });
+    function copyFrom(id) {
+      const value = byId(id).value;
+      navigator.clipboard.writeText(value).then(() => showToast('Copied to clipboard.', 'success'));
+    }
 
-        document.getElementById('formBuilderForm')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const routeType = document.getElementById('fbRouteType').value;
-            const leadSource = document.getElementById('fbLeadSource').value;
-            let integrationConfig = {};
+    byId('authSubmitBtn').addEventListener('click', submitAuth);
+    byId('authToggleBtn').addEventListener('click', () => setAuthMode(state.authMode === 'login' ? 'register' : 'login'));
+    byId('logoutBtn').addEventListener('click', logout);
+    byId('appSelector').addEventListener('change', async (event) => {
+      state.currentAppId = event.target.value;
+      localStorage.setItem('currentAppId', state.currentAppId);
+      await loadWorkspace();
+    });
+    byId('createWorkspaceBtn').addEventListener('click', () => createWorkspace(false));
+    byId('createWorkspacePrimaryBtn').addEventListener('click', () => createWorkspace(true));
+    byId('connectZohoBtn').addEventListener('click', connectZoho);
+    byId('reconnectZohoBtn').addEventListener('click', connectZoho);
+    byId('openAppLinkBtn').addEventListener('click', openUserApp);
+    byId('saveContextBtn').addEventListener('click', saveContext);
+    byId('refreshServiceBtn').addEventListener('click', async () => {
+      if (!state.activeService) return showToast('Select a service first.');
+      state.details[state.activeService] = null;
+      await selectService(state.activeService);
+      showToast('Service detail refreshed.', 'success');
+    });
+    byId('actionSelect').addEventListener('change', loadCurrentActionExample);
+    byId('loadActionExampleBtn').addEventListener('click', loadCurrentActionExample);
+    byId('runActionBtn').addEventListener('click', runCurrentAction);
+    byId('generateHandoffBtn').addEventListener('click', generateHandoff);
+    byId('copyPromptBtn').addEventListener('click', () => copyFrom('handoffPrompt'));
+    byId('copyRefsBtn').addEventListener('click', () => copyFrom('handoffRefs'));
 
-            // Lead source only required for CRM routes
-            if (routeType === 'crm' && !leadSource) {
-                showToast('Select a Lead Source to track where leads come from', 'error');
-                return;
-            }
-
-            try {
-                integrationConfig = collectRouteIntegrationConfig(routeType);
-            } catch (err) {
-                showToast(err.message, 'error');
-                return;
-            }
-
-            // Get field presets based on route type
-            const FIELD_PRESETS_JS = {
-                crm: [
-                    { name: 'first_name', label: 'First Name', type: 'text', required: false, zoho_field: 'First_Name' },
-                    { name: 'last_name', label: 'Last Name', type: 'text', required: true, zoho_field: 'Last_Name' },
-                    { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'Email' },
-                    { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'Phone' },
-                    { name: 'company', label: 'Company', type: 'text', required: false, zoho_field: 'Company' },
-                    { name: 'message', label: 'Message', type: 'textarea', required: false, zoho_field: 'Description' },
-                ],
-                desk: [
-                    { name: 'subject', label: 'Subject', type: 'text', required: true, zoho_field: 'subject' },
-                    { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'email' },
-                    { name: 'name', label: 'Name', type: 'text', required: false, zoho_field: 'contactName' },
-                    { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'phone' },
-                    { name: 'description', label: 'Description', type: 'textarea', required: true, zoho_field: 'description' },
-                ],
-                bookings: [
-                    { name: 'name', label: 'Full Name', type: 'text', required: true, zoho_field: 'customer_name' },
-                    { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'customer_email' },
-                    { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'customer_phone' },
-                    { name: 'preferred_date', label: 'Preferred Date', type: 'date', required: true, zoho_field: 'from_time' },
-                    { name: 'preferred_time', label: 'Preferred Time', type: 'time', required: true, zoho_field: 'time_slot' },
-                    { name: 'notes', label: 'Notes', type: 'textarea', required: false, zoho_field: 'additional_fields' },
-                ],
-                books: [
-                    { name: 'contact_name', label: 'Contact Name', type: 'text', required: true, zoho_field: 'contact_name' },
-                    { name: 'email', label: 'Email', type: 'email', required: true, zoho_field: 'email' },
-                    { name: 'company', label: 'Company', type: 'text', required: false, zoho_field: 'company_name' },
-                    { name: 'phone', label: 'Phone', type: 'tel', required: false, zoho_field: 'phone' },
-                ],
-                projects: [
-                    { name: 'task_name', label: 'Task Name', type: 'text', required: true, zoho_field: 'name' },
-                    { name: 'description', label: 'Description', type: 'textarea', required: false, zoho_field: 'description' },
-                    { name: 'priority', label: 'Priority', type: 'select', required: false, zoho_field: 'priority', options: ['None', 'Low', 'Medium', 'High'] },
-                    { name: 'due_date', label: 'Due Date', type: 'date', required: false, zoho_field: 'end_date' },
-                ],
-            };
-
-            const body = {
-                app_id: state.currentAppId || null,
-                route_type: routeType,
-                name: document.getElementById('fbName').value,
-                target_module: document.getElementById('fbModule').value,
-                lead_source: routeType === 'crm' ? leadSource : undefined,
-                fields: FIELD_PRESETS_JS[routeType] || FIELD_PRESETS_JS.crm,
-                style: {
-                    primaryColor: document.getElementById('fbColor').value,
-                    buttonText: document.getElementById('fbButtonText').value,
-                    successMessage: document.getElementById('fbSuccessMsg').value,
-                    ...integrationConfig,
-                },
-            };
-
-            if (!body.app_id) {
-                showToast('Create a project first to manage routes', 'error');
-                return;
-            }
-
-            try {
-                const isEdit = !!editingFormId;
-                const url = isEdit ? '/api/forms/' + editingFormId : '/api/forms';
-                const method = isEdit ? 'PATCH' : 'POST';
-
-                const response = await fetch(url, {
-                    method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${state.token}`,
-                    },
-                    body: JSON.stringify(body),
-                });
-                if (!response.ok) {
-                    const err = await response.json().catch(() => ({}));
-                    throw new Error(err.error || `Failed to ${isEdit ? 'update' : 'create'} route`);
-                }
-                const data = await response.json();
-                document.getElementById('formBuilderModal').style.display = 'none';
-                showToast(isEdit ? 'Route updated!' : 'Route created!', 'success');
-                editingFormId = null;
-                const integrationId = data.form?.id || data.id;
-                if (integrationId) {
-                    await showIntegrationExport(integrationId);
-                }
-                fetchForms();
-            } catch (e) {
-                showToast(e.message, 'error');
-            }
-        });
-
-        function clearAuth() {
-            state.token = null;
-            state.user = null;
-            state.currentAppId = null;
-            localStorage.removeItem('token');
-            localStorage.removeItem('currentAppId');
-        }
-
-        // Utilities
-        function showToast(message, type = 'error') {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            toastContainer.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.animation = 'slideIn 0.3s ease reverse';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-        function setLoading(isLoading) {
-            state.isLoading = isLoading;
-            const submitBtns = document.querySelectorAll('.form-submit');
-            submitBtns.forEach(btn => {
-                btn.disabled = isLoading;
-                btn.textContent = isLoading
-                    ? 'Loading...'
-                    : btn.id === 'loginSubmit'
-                        ? 'Sign in'
-                        : btn.id === 'resetSubmit'
-                            ? 'Reset password'
-                            : 'Create account';
-            });
-        }
-    </script>
+    bootstrap();
+  </script>
 </body>
 </html>

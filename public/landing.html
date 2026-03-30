@@ -1,594 +1,719 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1ClickSync — Generate Zoho Integration Code</title>
-    <meta name="description" content="Generate copy-paste HTML/JS, prompts, and manifests for Zoho CRM, Desk, Books, and SalesIQ integrations. Built for developers and agencies.">
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --zoho-red: #E42527;
-            --zoho-green: #089949;
-            --zoho-blue: #226DB4;
-            --zoho-yellow: #F9B21D;
-            --bg: #ffffff;
-            --bg-light: #f5f7fa;
-            --bg-dark: #1a1a2e;
-            --text: #333333;
-            --text-dim: #666666;
-            --text-light: #999999;
-            --border: #e5e7eb;
-            --radius: 8px;
-            --font: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            --mono: 'Source Code Pro', monospace;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zoho Capability Workspace</title>
+  <meta name="description" content="Connect one Zoho account, discover available services, inspect existing resources, and generate agent-ready handoff bundles with API endpoints and documentation links.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f3efe5;
+      --panel: rgba(255, 255, 255, 0.82);
+      --panel-strong: #ffffff;
+      --ink: #1f2a21;
+      --muted: #566257;
+      --line: rgba(31, 42, 33, 0.12);
+      --accent: #1f8f5f;
+      --accent-2: #0b3d2e;
+      --gold: #cc9b2f;
+      --shadow: 0 24px 60px rgba(20, 37, 27, 0.12);
+      --radius: 24px;
+      --max: 1180px;
+    }
 
-        /* ── NAV ──────────────────────────── */
-        nav {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-            background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border); padding: 14px 0;
-        }
-        .nav-inner {
-            max-width: 1140px; margin: 0 auto; padding: 0 24px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .logo { font-weight: 900; font-size: 20px; color: var(--text); text-decoration: none; letter-spacing: -0.5px; }
-        .logo span { color: var(--zoho-blue); }
-        .nav-links { display: flex; gap: 28px; align-items: center; }
-        .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 700; transition: color 0.2s; }
-        .nav-links a:hover { color: var(--zoho-blue); }
-        .nav-cta {
-            background: var(--zoho-blue) !important; color: #fff !important;
-            padding: 9px 22px; border-radius: 6px; font-weight: 700; font-size: 13px;
-        }
-        .nav-cta:hover { background: #1a5a9e !important; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: 'IBM Plex Sans', sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(204, 155, 47, 0.16), transparent 28%),
+        radial-gradient(circle at 85% 20%, rgba(31, 143, 95, 0.14), transparent 22%),
+        linear-gradient(180deg, #fbf7ef 0%, #f1ebdf 48%, #f8f4ea 100%);
+    }
 
-        /* ── ZOHO RIBBON ──────────────────── */
-        .zoho-ribbon {
-            background: linear-gradient(135deg, var(--zoho-red), var(--zoho-yellow), var(--zoho-green), var(--zoho-blue));
-            height: 4px; width: 100%;
-        }
+    a { color: inherit; text-decoration: none; }
+    .shell { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
 
-        /* ── SECTION HELPERS ──────────────── */
-        .section { padding: 100px 0; }
-        .section-inner { max-width: 1140px; margin: 0 auto; padding: 0 24px; }
-        .section-label {
-            display: inline-block; font-size: 11px; font-weight: 900;
-            text-transform: uppercase; letter-spacing: 3px; color: var(--zoho-blue);
-            margin-bottom: 12px;
-        }
-        .section-title {
-            font-size: clamp(28px, 4vw, 42px); font-weight: 900;
-            letter-spacing: -1px; color: var(--text); margin-bottom: 14px; line-height: 1.15;
-        }
-        .section-sub { font-size: 17px; color: var(--text-dim); max-width: 540px; margin-bottom: 48px; }
-        .text-center { text-align: center; }
-        .mx-auto { margin-left: auto; margin-right: auto; }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(16px);
+      background: rgba(251, 247, 239, 0.72);
+      border-bottom: 1px solid rgba(31, 42, 33, 0.08);
+    }
 
-        /* ── HERO ─────────────────────────── */
-        .hero {
-            padding: 140px 0 80px; position: relative; overflow: hidden;
-            background: linear-gradient(180deg, #f0f4ff 0%, #ffffff 100%);
-        }
-        .hero-inner {
-            max-width: 1140px; margin: 0 auto; padding: 0 24px;
-            display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center;
-        }
-        .hero-badge {
-            display: inline-flex; align-items: center; gap: 6px;
-            background: #eef4ff; border: 1px solid #c7d9f5; border-radius: 999px;
-            padding: 5px 14px; font-size: 12px; font-weight: 700; color: var(--zoho-blue);
-            margin-bottom: 20px;
-        }
-        .hero-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--zoho-green); }
-        .hero h1 {
-            font-size: clamp(36px, 5vw, 54px); font-weight: 900;
-            line-height: 1.1; letter-spacing: -1.5px; color: var(--text); margin-bottom: 20px;
-        }
-        .hero h1 .accent { color: var(--zoho-blue); }
-        .hero-sub { font-size: 18px; color: var(--text-dim); line-height: 1.7; margin-bottom: 32px; }
-        .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-        .btn {
-            display: inline-flex; align-items: center; gap: 6px; padding: 13px 26px;
-            border-radius: 6px; font-weight: 700; font-size: 14px; text-decoration: none;
-            transition: all 0.2s; border: none; cursor: pointer; font-family: var(--font);
-        }
-        .btn-blue { background: var(--zoho-blue); color: #fff; }
-        .btn-blue:hover { background: #1a5a9e; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(34,109,180,0.3); }
-        .btn-outline { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
-        .btn-outline:hover { border-color: var(--zoho-blue); color: var(--zoho-blue); }
-        .btn-red { background: var(--zoho-red); color: #fff; }
-        .btn-red:hover { background: #c41f21; }
-        .btn-green { background: var(--zoho-green); color: #fff; }
-        .btn-green:hover { background: #067a3b; }
+    .topbar-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 76px;
+      gap: 16px;
+    }
 
-        /* Hero visual */
-        .hero-visual {
-            background: var(--bg-dark); border-radius: 12px; overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15); border: 1px solid #2a2a3e;
-        }
-        .code-header {
-            display: flex; align-items: center; gap: 8px;
-            padding: 12px 18px; border-bottom: 1px solid #2a2a3e;
-        }
-        .code-dot { width: 10px; height: 10px; border-radius: 50%; }
-        .code-dot:nth-child(1) { background: var(--zoho-red); }
-        .code-dot:nth-child(2) { background: var(--zoho-yellow); }
-        .code-dot:nth-child(3) { background: var(--zoho-green); }
-        .code-title { margin-left: 12px; font-size: 12px; color: #888; font-family: var(--mono); }
-        .code-body { padding: 20px; font-family: var(--mono); font-size: 12.5px; line-height: 1.9; color: #94a3b8; }
-        .code-body .kw { color: #c084fc; }
-        .code-body .str { color: #34d399; }
-        .code-body .tag { color: #60a5fa; }
-        .code-body .attr { color: var(--zoho-yellow); }
-        .code-body .cmt { color: #475569; font-style: italic; }
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
 
-        /* ── ZOHO ONE PITCH ───────────────── */
-        .zoho-section { background: var(--bg-light); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        .zoho-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
-        .zoho-apps {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-        }
-        .zoho-app {
-            background: #fff; border: 1px solid var(--border); border-radius: 8px;
-            padding: 14px; text-align: center; font-size: 12px; font-weight: 700;
-            color: var(--text-dim); transition: all 0.2s;
-        }
-        .zoho-app:hover { border-color: var(--zoho-blue); color: var(--zoho-blue); transform: translateY(-2px); }
-        .zoho-app-icon { font-size: 24px; margin-bottom: 6px; display: block; }
-        .zoho-cta-box {
-            background: linear-gradient(135deg, #fff5f5, #fff9e6, #f0fff4, #eef4ff);
-            border: 2px solid var(--zoho-blue); border-radius: 12px;
-            padding: 28px 32px; margin-top: 32px;
-            display: flex; justify-content: space-between; align-items: center; gap: 20px;
-        }
-        .zoho-cta-box p { font-size: 15px; font-weight: 700; color: var(--text); }
-        .zoho-cta-box .sub { font-size: 13px; font-weight: 400; color: var(--text-dim); margin-top: 2px; }
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+      color: #fff;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 10px 24px rgba(11, 61, 46, 0.24);
+      font-weight: 700;
+    }
 
-        /* ── METRICS ──────────────────────── */
-        .metrics { border-bottom: 1px solid var(--border); padding: 48px 0; background: #fff; }
-        .metrics-inner {
-            max-width: 1140px; margin: 0 auto; padding: 0 24px;
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; text-align: center;
-        }
-        .metric-num { font-size: 40px; font-weight: 900; color: var(--zoho-blue); }
-        .metric-label { font-size: 13px; color: var(--text-dim); margin-top: 2px; font-weight: 700; }
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
 
-        /* ── FEATURES ─────────────────────── */
-        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .feature-card {
-            background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
-            padding: 28px; transition: all 0.3s;
-        }
-        .feature-card:hover { border-color: var(--zoho-blue); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
-        .feature-icon {
-            width: 44px; height: 44px; border-radius: 8px; display: flex;
-            align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px;
-        }
-        .fi-red { background: #fef2f2; color: var(--zoho-red); }
-        .fi-blue { background: #eef4ff; color: var(--zoho-blue); }
-        .fi-green { background: #f0fdf4; color: var(--zoho-green); }
-        .fi-yellow { background: #fffbeb; color: #b45309; }
-        .feature-card h3 { font-size: 16px; font-weight: 900; margin-bottom: 8px; }
-        .feature-card p { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; }
+    .hero {
+      padding: 56px 0 36px;
+    }
 
-        /* ── HOW IT WORKS ─────────────────── */
-        .how { background: var(--bg-light); border-top: 1px solid var(--border); }
-        .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
-        .step { position: relative; }
-        .step-num {
-            font-size: 56px; font-weight: 900; color: rgba(34,109,180,0.08);
-            line-height: 1; margin-bottom: -20px;
-        }
-        .step-content { position: relative; z-index: 1; }
-        .step-content h3 { font-size: 18px; font-weight: 900; margin-bottom: 10px; }
-        .step-content p { font-size: 14px; color: var(--text-dim); line-height: 1.7; }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 28px;
+      align-items: stretch;
+    }
 
-        /* ── PRICING HINT ─────────────────── */
-        .pricing-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 48px; }
-        .price-card {
-            background: #fff; border: 1.5px solid var(--border); border-radius: 10px;
-            padding: 32px; text-align: center; transition: all 0.2s;
-        }
-        .price-card.featured { border-color: var(--zoho-blue); box-shadow: 0 4px 20px rgba(34,109,180,0.12); }
-        .price-card h3 { font-size: 18px; font-weight: 900; margin-bottom: 4px; }
-        .price-amount { font-size: 36px; font-weight: 900; color: var(--zoho-blue); margin: 12px 0; }
-        .price-amount span { font-size: 14px; color: var(--text-dim); font-weight: 400; }
-        .price-card ul { list-style: none; text-align: left; margin: 20px 0; }
-        .price-card li { font-size: 13.5px; color: var(--text-dim); padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
-        .price-card li::before { content: '\2713'; color: var(--zoho-green); margin-right: 8px; font-weight: 900; }
+    .hero-copy,
+    .hero-card,
+    .section-card,
+    .service-card,
+    .handoff-card,
+    .cta-card {
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      backdrop-filter: blur(16px);
+    }
 
-        /* ── CONTACT ──────────────────────── */
-        .contact-inner {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start;
-        }
-        .contact-detail {
-            display: flex; align-items: center; gap: 14px;
-            padding: 14px 0; border-top: 1px solid var(--border);
-        }
-        .contact-icon {
-            width: 38px; height: 38px; border-radius: 8px; display: flex;
-            align-items: center; justify-content: center; font-size: 16px;
-            background: #eef4ff; color: var(--zoho-blue); flex-shrink: 0;
-        }
-        .contact-label { font-size: 11px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
-        .contact-value { font-size: 14px; font-weight: 700; }
+    .hero-copy {
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
 
-        /* ── FOOTER ───────────────────────── */
-        footer { border-top: 1px solid var(--border); padding: 40px 0; background: var(--bg-light); }
-        .footer-inner {
-            max-width: 1140px; margin: 0 auto; padding: 0 24px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        footer p { font-size: 13px; color: var(--text-light); }
-        footer a { color: var(--zoho-blue); text-decoration: none; font-weight: 700; }
+    .hero-copy::after {
+      content: '';
+      position: absolute;
+      inset: auto -70px -120px auto;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(31, 143, 95, 0.22), transparent 72%);
+    }
 
-        /* ── RESPONSIVE ───────────────────── */
-        @media (max-width: 900px) {
-            .hero-inner, .zoho-grid, .contact-inner { grid-template-columns: 1fr; gap: 40px; }
-            .features-grid, .steps, .pricing-cards { grid-template-columns: 1fr; }
-            .metrics-inner { grid-template-columns: repeat(2, 1fr); }
-            .nav-links a:not(.nav-cta) { display: none; }
-            .zoho-apps { grid-template-columns: repeat(3, 1fr); }
-        }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(11, 61, 46, 0.08);
+      color: var(--accent-2);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
 
-        /* ── ANIMATIONS ───────────────────── */
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .hero-text { animation: fadeUp 0.7s ease-out; }
-        .hero-visual { animation: fadeUp 0.7s ease-out 0.15s both; }
-    </style>
+    h1, h2, h3 {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: -0.03em;
+    }
+
+    h1 {
+      margin-top: 18px;
+      font-size: clamp(2.6rem, 5vw, 4.7rem);
+      line-height: 0.95;
+      max-width: 10ch;
+    }
+
+    .hero-copy p {
+      margin: 20px 0 0;
+      max-width: 60ch;
+      font-size: 1.02rem;
+      line-height: 1.72;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 0 20px;
+      border-radius: 999px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+      color: #fff;
+      box-shadow: 0 14px 30px rgba(11, 61, 46, 0.22);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.6);
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .meta-chip {
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .hero-card {
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(244, 249, 245, 0.92));
+    }
+
+    .mini-panel {
+      background: #fcfbf7;
+      border: 1px solid rgba(31, 42, 33, 0.08);
+      border-radius: 20px;
+      padding: 18px;
+    }
+
+    .mini-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .mini-stat {
+      padding: 14px;
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid rgba(31, 42, 33, 0.08);
+    }
+
+    .mini-stat strong {
+      display: block;
+      font-size: 1.45rem;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .mini-stat span {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .flow-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .flow-item {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 12px 0;
+      border-top: 1px solid rgba(31, 42, 33, 0.08);
+    }
+
+    .flow-item:first-child { border-top: 0; padding-top: 0; }
+
+    .flow-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 12px;
+      background: rgba(31, 143, 95, 0.12);
+      color: var(--accent-2);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .section {
+      padding: 22px 0;
+    }
+
+    .section-card {
+      padding: 30px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+
+    .section-head p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      max-width: 62ch;
+      line-height: 1.7;
+    }
+
+    .service-grid,
+    .handoff-grid,
+    .benefit-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .service-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .benefit-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .handoff-grid {
+      grid-template-columns: 1.1fr 0.9fr;
+    }
+
+    .service-card,
+    .handoff-card,
+    .cta-card {
+      padding: 22px;
+      background: rgba(255,255,255,0.78);
+    }
+
+    .service-card h3,
+    .handoff-card h3,
+    .cta-card h3 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+
+    .service-card p,
+    .handoff-card p,
+    .cta-card p,
+    .benefit-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.68;
+    }
+
+    .service-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: rgba(11, 61, 46, 0.08);
+      color: var(--accent-2);
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+
+    .benefit-card {
+      padding: 20px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(31, 42, 33, 0.08);
+    }
+
+    .benefit-card strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .codeblock {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      background: #0f1a14;
+      color: #d7f2e4;
+      font: 0.88rem/1.7 'IBM Plex Sans', sans-serif;
+      overflow: auto;
+    }
+
+    .codeblock .muted { color: #89a794; }
+    .codeblock .gold { color: #f7cb71; }
+    .codeblock .green { color: #80d3aa; }
+
+    .cta-card {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background: linear-gradient(135deg, rgba(11, 61, 46, 0.94), rgba(31, 143, 95, 0.9));
+      color: #fff;
+    }
+
+    .cta-card p { color: rgba(255, 255, 255, 0.82); }
+
+    .footer {
+      padding: 34px 0 48px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      border-top: 1px solid rgba(31, 42, 33, 0.08);
+      padding-top: 22px;
+    }
+
+    @media (max-width: 1040px) {
+      .hero-grid,
+      .handoff-grid,
+      .service-grid,
+      .benefit-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .topbar-inner,
+      .section-head,
+      .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .nav {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .hero-copy,
+      .hero-card,
+      .section-card,
+      .service-card,
+      .handoff-card,
+      .cta-card {
+        padding: 22px;
+      }
+
+      .mini-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
-
-<!-- Zoho-style color ribbon -->
-<div class="zoho-ribbon"></div>
-
-<!-- ═══ NAV ═══ -->
-<nav>
-    <div class="nav-inner">
-        <a href="/" class="logo">1Click<span>Sync</span></a>
-        <div class="nav-links">
-            <a href="#zoho-one">Why Zoho</a>
-            <a href="#features">Features</a>
-            <a href="#how">How It Works</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#contact">Contact</a>
-            <a href="/app" class="nav-cta">Open App</a>
-        </div>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark">Z</span>
+        <span>Zoho Capability Workspace</span>
+      </a>
+      <nav class="nav">
+        <a href="#services">Services</a>
+        <a href="#handoff">Handoff Bundle</a>
+        <a href="#security">Isolation</a>
+        <a class="btn btn-primary" href="/app">Try Free</a>
+      </nav>
     </div>
-</nav>
+  </header>
 
-<!-- ═══ HERO ═══ -->
-<section class="hero">
-    <div class="hero-inner">
-        <div class="hero-text">
-            <div class="hero-badge">For developers who ship</div>
-            <h1>Generate <span class="accent">Zoho integrations</span><br>for every app you ship.</h1>
-            <p class="hero-sub">
-                Connect a Zoho account, choose the integration you need, and get copy-paste
-                HTML/JS, sample requests, a machine-readable manifest, and an LLM prompt.
-                Start with CRM, Desk, Books contacts, or a SalesIQ widget without building
-                the integration layer from scratch.
+  <main>
+    <section class="hero">
+      <div class="shell hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow">Developer-first Zoho workspace</div>
+          <h1>Connect once. Discover everything. Hand it to your agent.</h1>
+          <p>
+            Connect a single Zoho account, inspect every service that account can access, review existing resources,
+            and generate a structured handoff bundle with prompts, API endpoints, official docs, and links back into your app.
+          </p>
+          <p>
+            The product experience is built for the developer who owns the destination app. The platform handles OAuth isolation,
+            service discovery, and action wiring so the user can move faster across CRM, Forms, Mail, SalesIQ, Bookings, and more.
+          </p>
+          <div class="actions">
+            <a class="btn btn-primary" href="/app">Try Free</a>
+            <a class="btn btn-secondary" href="#handoff">See the handoff bundle</a>
+          </div>
+          <div class="meta-row">
+            <div class="meta-chip">1 user -> 1 isolated Zoho account</div>
+            <div class="meta-chip">Multiple Zoho services under one workspace</div>
+            <div class="meta-chip">Prompt + endpoints + docs + app links</div>
+          </div>
+        </div>
+
+        <aside class="hero-card">
+          <div class="mini-panel">
+            <div class="mini-label">Connected workspace</div>
+            <div class="mini-grid">
+              <div class="mini-stat">
+                <strong>8+</strong>
+                <span>discovered services</span>
+              </div>
+              <div class="mini-stat">
+                <strong>1</strong>
+                <span>project context per app workspace</span>
+              </div>
+              <div class="mini-stat">
+                <strong>5</strong>
+                <span>first-tier managed services</span>
+              </div>
+              <div class="mini-stat">
+                <strong>0</strong>
+                <span>manual endpoint hunting</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mini-panel">
+            <div class="mini-label">Post-connect flow</div>
+            <div class="flow-list">
+              <div class="flow-item">
+                <div class="flow-number">1</div>
+                <div>
+                  <strong>Authorize Zoho</strong>
+                  <div>Detect datacenter, validate scopes, and keep credentials isolated to the signed-in user.</div>
+                </div>
+              </div>
+              <div class="flow-item">
+                <div class="flow-number">2</div>
+                <div>
+                  <strong>Inspect services</strong>
+                  <div>Show entitlement state, existing resources, supported actions, and any permission gaps.</div>
+                </div>
+              </div>
+              <div class="flow-item">
+                <div class="flow-number">3</div>
+                <div>
+                  <strong>Generate handoff</strong>
+                  <div>Return the exact prompt, endpoints, documentation links, and user-app references needed by a coding agent.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="services">
+      <div class="shell section-card">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Service dashboard</div>
+            <h2>Start with the services developers reach for first</h2>
+            <p>
+              The workspace treats CRM, Forms, Mail, SalesIQ, and Bookings as the primary managed experiences, while still surfacing any other Zoho apps the connected account can reach in read-only or partial-action mode.
             </p>
-            <div class="hero-actions">
-                <a href="/app" class="btn btn-blue">Get Started Free &rarr;</a>
-                <a href="#how" class="btn btn-outline">See how it works</a>
-            </div>
+          </div>
         </div>
-        <div class="hero-visual">
-            <div class="code-header">
-                <div class="code-dot"></div><div class="code-dot"></div><div class="code-dot"></div>
-                <span class="code-title">integration-export.html</span>
+
+        <div class="service-grid">
+          <article class="service-card">
+            <h3>CRM</h3>
+            <p>Inspect modules, existing records, and route templates. Generate prompts and endpoint references for form capture, contact flows, and record creation.</p>
+            <div class="service-meta">
+              <span class="pill">records</span>
+              <span class="pill">modules</span>
+              <span class="pill">create actions</span>
             </div>
-            <div class="code-body">
-<span class="cmt">&lt;!-- Copy-paste into your app shell --&gt;</span>
-<span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="str">"ocs-form-..."</span><span class="tag">&gt;</span>
-
-  <span class="cmt">&lt;!-- Style tokens --&gt;</span>
-  <span class="kw">--ocs-primary</span>: <span class="str">#3b82f6</span>;
-  <span class="kw">--ocs-bg</span>:      <span class="str">#ffffff</span>;
-
-  <span class="cmt">&lt;!-- Generated public route --&gt;</span>
-  <span class="tag">fetch</span>(<span class="str">'/api/f/...'</span>, {
-    <span class="attr">email</span>: <span class="str">"developer@example.com"</span>
-  })
-
-<span class="tag">&lt;/div&gt;</span>
+          </article>
+          <article class="service-card">
+            <h3>Forms</h3>
+            <p>Build new route-backed forms or review existing route definitions already configured for the connected Zoho workspace.</p>
+            <div class="service-meta">
+              <span class="pill">route creation</span>
+              <span class="pill">field presets</span>
             </div>
+          </article>
+          <article class="service-card">
+            <h3>Mail</h3>
+            <p>Discover organizations, domains, and mailbox capabilities available to the signed-in user so setup work can be handed to an agent with the right context.</p>
+            <div class="service-meta">
+              <span class="pill">orgs</span>
+              <span class="pill">domains</span>
+              <span class="pill">read scopes</span>
+            </div>
+          </article>
+          <article class="service-card">
+            <h3>SalesIQ</h3>
+            <p>Expose widget setup references and generate embed handoff instructions that can be adapted into the user&apos;s own app shell.</p>
+            <div class="service-meta">
+              <span class="pill">widget export</span>
+              <span class="pill">handoff prompt</span>
+            </div>
+          </article>
+          <article class="service-card">
+            <h3>Bookings</h3>
+            <p>Inspect services and staff, then generate appointment creation references and task-specific prompts for custom scheduling flows.</p>
+            <div class="service-meta">
+              <span class="pill">services</span>
+              <span class="pill">staff</span>
+              <span class="pill">appointments</span>
+            </div>
+          </article>
+          <article class="service-card">
+            <h3>Everything else</h3>
+            <p>Desk, Books, Projects, and additional Zoho apps appear in the same workspace with entitlement and capability states instead of being hidden behind separate flows.</p>
+            <div class="service-meta">
+              <span class="pill">discovery first</span>
+              <span class="pill">graceful fallback</span>
+            </div>
+          </article>
         </div>
-    </div>
-</section>
+      </div>
+    </section>
 
-<!-- ═══ METRICS ═══ -->
-<section class="metrics">
-    <div class="metrics-inner">
-        <div><div class="metric-num">4</div><div class="metric-label">GA Zoho exports</div></div>
-        <div><div class="metric-num">1</div><div class="metric-label">Prompt per project</div></div>
-        <div><div class="metric-num">1</div><div class="metric-label">Manifest per project</div></div>
-        <div><div class="metric-num">&infin;</div><div class="metric-label">Apps and sites supported</div></div>
-    </div>
-</section>
-
-<!-- ═══ WHY ZOHO ONE ═══ -->
-<section class="section zoho-section" id="zoho-one">
-    <div class="section-inner">
-        <div class="zoho-grid">
-            <div>
-        <div class="section-label">Why Zoho</div>
-        <h2 class="section-title">You ship the product.<br>Zoho powers the ops stack.</h2>
-                <p style="font-size:16px;color:var(--text-dim);line-height:1.8;margin-bottom:24px;">
-                    Zoho One is a suite of <strong>50+ integrated business apps</strong> &mdash; CRM, email,
-                    invoicing, project management, analytics, helpdesk, and more.
-                    One login, one bill, one ecosystem.
-                </p>
-                <p style="font-size:16px;color:var(--text-dim);line-height:1.8;margin-bottom:24px;">
-                    As a developer or agency, you still need CRM capture, support routing,
-                    finance contacts, and chat widgets. Zoho handles those systems, but
-                    the integration work usually slows shipping down.
-                </p>
-                <p style="font-size:16px;color:var(--text);line-height:1.8;font-weight:700;">
-                    1ClickSync is the bridge &mdash; it generates the integration starter so your
-                    app can talk to Zoho faster, with exports you can hand to an LLM or ship directly.
-                </p>
-                <div class="zoho-cta-box">
-                    <div>
-                        <p>Don't have Zoho One yet?</p>
-                        <p class="sub">Try the full suite free. All 50+ apps included.</p>
-                    </div>
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="btn btn-red" style="white-space:nowrap;">Try Zoho One Free &rarr;</a>
-                </div>
-            </div>
-            <div>
-                <div class="zoho-apps">
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="zoho-app"><span class="zoho-app-icon">&#x1F4CA;</span>CRM</a>
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="zoho-app"><span class="zoho-app-icon">&#x2709;</span>Mail</a>
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="zoho-app"><span class="zoho-app-icon">&#x1F4B0;</span>Books</a>
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="zoho-app"><span class="zoho-app-icon">&#x1F4DD;</span>Invoice</a>
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="zoho-app"><span class="zoho-app-icon">&#x1F4C1;</span>Projects</a>
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="zoho-app"><span class="zoho-app-icon">&#x1F4AC;</span>Desk</a>
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="zoho-app"><span class="zoho-app-icon">&#x1F4C8;</span>Analytics</a>
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="zoho-app"><span class="zoho-app-icon">&#x26A1;</span>Flow</a>
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="zoho-app"><span class="zoho-app-icon">&#x1F4E6;</span>Inventory</a>
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="zoho-app"><span class="zoho-app-icon">&#x1F465;</span>People</a>
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="zoho-app"><span class="zoho-app-icon">&#x1F4CB;</span>Forms</a>
-                    <a href="https://go.zoho.com/wDt" target="_blank" class="zoho-app"><span class="zoho-app-icon">&#x2795;</span>50+ more</a>
-                </div>
-            </div>
+    <section class="section" id="handoff">
+      <div class="shell handoff-grid">
+        <div class="handoff-card">
+          <div class="eyebrow">Agent handoff bundle</div>
+          <h2>Prompt, endpoints, docs, and app links in one response</h2>
+          <p>
+            Each handoff bundle is scoped to a specific service and goal. The workspace filters the returned endpoints by service, permissions, and the action the user is trying to implement.
+          </p>
+          <div class="codeblock">
+            <div><span class="muted">service:</span> <span class="gold">"crm"</span></div>
+            <div><span class="muted">goal:</span> <span class="gold">"Create a route-backed lead intake flow"</span></div>
+            <div><span class="muted">prompt:</span> <span class="green">"Use the connected Zoho CRM workspace context below..."</span></div>
+            <div><span class="muted">apiEndpoints:</span> [<span class="gold">POST /api/zoho/services/crm/actions/create-route</span>, <span class="gold">POST /crm/v8/Leads</span>]</div>
+            <div><span class="muted">documentationLinks:</span> [<span class="gold">CRM API docs</span>, <span class="gold">Scopes reference</span>]</div>
+            <div><span class="muted">dashboardLink:</span> <span class="gold">/app?service=crm</span></div>
+            <div><span class="muted">userAppLink:</span> <span class="gold">https://your-app.example</span></div>
+            <div><span class="muted">userAppDocsLink:</span> <span class="gold">https://docs.your-app.example</span></div>
+          </div>
         </div>
-    </div>
-</section>
 
-<!-- ═══ FEATURES ═══ -->
-<section class="section" id="features">
-    <div class="section-inner">
-        <div class="section-label">Features</div>
-        <h2 class="section-title">Generate the boring integration layer fast</h2>
-        <p class="section-sub">Use one project to generate Zoho route exports, widget snippets, prompts, and machine-readable manifests for every app you maintain.</p>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon fi-blue">&#x2699;</div>
-                <h3>HTML/JS Exports</h3>
-                <p>Generate copy-paste starters for CRM, Desk, Books contacts, and SalesIQ. Paste them into static HTML, a CMS, or your app shell.</p>
+        <div class="cta-card">
+          <div class="eyebrow" style="background: rgba(255,255,255,0.12); color: #fff;">Project context</div>
+          <h3>Attach the destination app before you generate the handoff</h3>
+          <p>
+            Save the app name, app URL, docs URL, and target base URL once. Those references are attached automatically whenever the user asks for a prompt bundle.
+          </p>
+          <div class="benefit-grid" style="grid-template-columns: 1fr;">
+            <div class="benefit-card" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.14); color: #fff;">
+              <strong>Why it matters</strong>
+              <p style="color: rgba(255,255,255,0.82);">The agent gets both sides of the integration: what exists in Zoho and where the user wants it implemented.</p>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-green">&#x21C4;</div>
-                <h3>Route + Payload Samples</h3>
-                <p>Each generated export includes a public route, sample request body, and sample response so you can wire it into your app without guessing.</p>
+            <div class="benefit-card" style="background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.14); color: #fff;">
+              <strong>What the user pastes</strong>
+              <p style="color: rgba(255,255,255,0.82);">A ready-to-run context bundle instead of a vague “set up Zoho CRM for my app” request.</p>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-red">&#x1F3AF;</div>
-                <h3>LLM-Ready Prompt</h3>
-                <p>Every project gets a prompt you can paste into ChatGPT, Cursor, or Claude to adapt the generated export for your framework.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-yellow">&#x1F3A8;</div>
-                <h3>Manifest JSON</h3>
-                <p>Use the project manifest when you want machine-readable metadata about endpoints, fields, target modules, and supported exports.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-green">&#x1F512;</div>
-                <h3>Encrypted Tokens</h3>
-                <p>OAuth tokens are AES-256-GCM encrypted at rest. Automatic refresh keeps your connection alive without re-auth.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-blue">&#x1F310;</div>
-                <h3>All Zoho Datacenters</h3>
-                <p>Works with .com, .eu, .in, .com.au, .jp &mdash; auto-detects the right one from your OAuth response. Global by default.</p>
-            </div>
+          </div>
+          <a class="btn btn-secondary" href="/app" style="align-self: flex-start; background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.2); color: #fff;">Open the workspace</a>
         </div>
-    </div>
-</section>
+      </div>
+    </section>
 
-<!-- ═══ HOW IT WORKS ═══ -->
-<section class="section how" id="how">
-    <div class="section-inner">
-        <div class="section-label">How It Works</div>
-        <h2 class="section-title">Three steps. Export and ship.</h2>
-        <p class="section-sub">Connect once, generate code, and adapt it to any app you own or build for clients.</p>
-        <div class="steps">
-            <div class="step">
-                <div class="step-num">01</div>
-                <div class="step-content">
-                    <h3>Connect Zoho</h3>
-                    <p>One OAuth click. We detect your datacenter, encrypt your tokens, and unlock export generation for supported Zoho tools. <a href="https://go.zoho.com/wDt" target="_blank" style="color:var(--zoho-blue);font-weight:700;">Need Zoho? Try free &rarr;</a></p>
-                </div>
-            </div>
-            <div class="step">
-                <div class="step-num">02</div>
-                <div class="step-content">
-                    <h3>Choose the Integration</h3>
-                    <p>Pick CRM, Desk, Books contacts, or SalesIQ. Configure the target, then export the starter route or widget snippet.</p>
-                </div>
-            </div>
-            <div class="step">
-                <div class="step-num">03</div>
-                <div class="step-content">
-                    <h3>Paste, Adapt, Ship</h3>
-                    <p>Use the generated HTML/JS directly, or hand the prompt and manifest to an LLM to adapt the integration to React, Next.js, or your backend.</p>
-                </div>
-            </div>
+    <section class="section" id="security">
+      <div class="shell section-card">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Isolation and trust</div>
+            <h2>OAuth and capability data stay scoped to the current user</h2>
+            <p>
+              The workspace is designed around one connected Zoho account per product user. That constraint keeps the data model clear, the entitlement story understandable, and the generated handoff context isolated.
+            </p>
+          </div>
         </div>
-    </div>
-</section>
-
-<!-- ═══ PRICING ═══ -->
-<section class="section" id="pricing">
-    <div class="section-inner text-center">
-        <div class="section-label">Pricing</div>
-        <h2 class="section-title" style="max-width:500px;" class="mx-auto">Simple pricing.<br>Start free, scale when ready.</h2>
-        <div class="pricing-cards">
-            <div class="price-card">
-                <h3>Free</h3>
-                <div class="price-amount">$0<span>/mo</span></div>
-                <ul>
-                    <li>1 project</li>
-                    <li>3 generated routes</li>
-                    <li>Manifest + prompt exports</li>
-                    <li>SalesIQ widget starter</li>
-                </ul>
-                <a href="/app" class="btn btn-outline" style="width:100%;justify-content:center;">Start Free</a>
-            </div>
-            <div class="price-card featured">
-                <h3>Starter</h3>
-                <div class="price-amount">$19<span>/mo</span></div>
-                <ul>
-                    <li>5 projects</li>
-                    <li>50 generated routes</li>
-                    <li>Desk + Books exports</li>
-                    <li>Priority support</li>
-                </ul>
-                <a href="/app" class="btn btn-blue" style="width:100%;justify-content:center;">Get Starter</a>
-            </div>
-            <div class="price-card">
-                <h3>Pro</h3>
-                <div class="price-amount">$49<span>/mo</span></div>
-                <ul>
-                    <li>Unlimited projects</li>
-                    <li>Unlimited generated routes</li>
-                    <li>All supported Zoho exports</li>
-                    <li>Custom integrations</li>
-                </ul>
-                <a href="/app" class="btn btn-outline" style="width:100%;justify-content:center;">Go Pro</a>
-            </div>
+        <div class="benefit-grid">
+          <div class="benefit-card">
+            <strong>Isolated credentials</strong>
+            <p>Each user&apos;s OAuth token set and discovered service state are scoped to that user&apos;s workspace only.</p>
+          </div>
+          <div class="benefit-card">
+            <strong>Graceful degradation</strong>
+            <p>If a service is unavailable because of subscription or scopes, the dashboard shows it explicitly instead of failing late.</p>
+          </div>
+          <div class="benefit-card">
+            <strong>Manage what is possible</strong>
+            <p>Supported write actions are exposed through a normalized action layer and blocked clearly when permissions do not allow them.</p>
+          </div>
+          <div class="benefit-card">
+            <strong>Developer-first output</strong>
+            <p>The product returns implementation context for the user&apos;s own app, not product-branded snippets that compete with the user&apos;s interface.</p>
+          </div>
         </div>
-    </div>
-</section>
+      </div>
+    </section>
 
-<!-- ═══ CONTACT ═══ -->
-<section class="section" id="contact">
-    <div class="section-inner">
-        <div class="contact-inner">
-            <div>
-                <div class="section-label">Contact Us</div>
-                <h2 class="section-title">Start your<br>next integration today.</h2>
-                <p style="font-size:16px;color:var(--text-dim);line-height:1.7;margin-bottom:32px;">
-                    Questions? Need a custom export flow for your agency or product team?
-                    This form feeds directly into our Zoho CRM &mdash; proof that the generated
-                    route model works. We respond within 24 hours.
-                </p>
-                <div class="contact-detail">
-                    <div class="contact-icon">&#x2709;</div>
-                    <div><div class="contact-label">Email</div><div class="contact-value">support@1clicksync.com</div></div>
-                </div>
-                <div class="contact-detail">
-                    <div class="contact-icon">&#x1F310;</div>
-                    <div><div class="contact-label">App</div><div class="contact-value">1clicksync.com/app</div></div>
-                </div>
-                <div class="contact-detail">
-                    <div class="contact-icon">&#x26A1;</div>
-                    <div><div class="contact-label">Response Time</div><div class="contact-value">Within 24 hours</div></div>
-                </div>
-            </div>
-
-            <!-- Embedded 1ClickSync form -->
-            <div>
-<div id="ocs-form-e7b482b4a619f92325305beba551aa0a" class="ocs-form-wrapper">
-  <style>
-    #ocs-form-e7b482b4a619f92325305beba551aa0a {
-      --ocs-primary: #226DB4; --ocs-bg: #ffffff; --ocs-text: #333333;
-      --ocs-radius: 8px; --ocs-font: 'Lato', sans-serif;
-      --ocs-input-bg: #f5f7fa; --ocs-input-border: #e5e7eb;
-      --ocs-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      font-family: var(--ocs-font); color: var(--ocs-text); background: var(--ocs-bg);
-      border-radius: var(--ocs-radius); box-shadow: var(--ocs-shadow);
-      max-width: 480px; padding: 32px; margin: 0 auto; box-sizing: border-box;
-      border: 1px solid #e5e7eb;
-    }
-    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-title { font-size: 1.25rem; font-weight: 900; margin: 0 0 20px 0; }
-    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-field { margin-bottom: 16px; }
-    #ocs-form-e7b482b4a619f92325305beba551aa0a label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; color: #666; }
-    #ocs-form-e7b482b4a619f92325305beba551aa0a input,
-    #ocs-form-e7b482b4a619f92325305beba551aa0a textarea {
-      width: 100%; padding: 10px 12px; border: 1px solid var(--ocs-input-border);
-      border-radius: var(--ocs-radius); background: var(--ocs-input-bg);
-      font-family: var(--ocs-font); font-size: 0.9rem; color: var(--ocs-text);
-      box-sizing: border-box; transition: border-color 0.2s;
-    }
-    #ocs-form-e7b482b4a619f92325305beba551aa0a input:focus,
-    #ocs-form-e7b482b4a619f92325305beba551aa0a textarea:focus {
-      outline: none; border-color: var(--ocs-primary); box-shadow: 0 0 0 3px rgba(34,109,180,0.12);
-    }
-    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-btn {
-      width: 100%; padding: 12px; background: var(--ocs-primary); color: #fff;
-      border: none; border-radius: var(--ocs-radius); font-family: var(--ocs-font);
-      font-size: 1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; margin-top: 8px;
-    }
-    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-btn:hover { opacity: 0.9; }
-    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-btn:disabled { opacity: 0.6; cursor: wait; }
-    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-success { text-align: center; padding: 24px; color: #089949; font-weight: 700; }
-    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-error { color: #E42527; font-size: 0.85rem; margin-top: 8px; }
-    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-powered { text-align: center; margin-top: 16px; font-size: 0.75rem; color: #999; }
-    #ocs-form-e7b482b4a619f92325305beba551aa0a .ocs-powered a { color: #226DB4; text-decoration: none; font-weight: 700; }
-  </style>
-  <form id="ocs-formEl-e7b482b4a619f92325305beba551aa0a" novalidate>
-    <div class="ocs-title">Get in Touch</div>
-    <div class="ocs-field"><label>First Name</label><input type="text" name="first_name" placeholder="John" /></div>
-    <div class="ocs-field"><label>Last Name <span style="color:#E42527">*</span></label><input type="text" name="last_name" required placeholder="Doe" /></div>
-    <div class="ocs-field"><label>Email <span style="color:#E42527">*</span></label><input type="email" name="email" required placeholder="john@company.com" /></div>
-    <div class="ocs-field"><label>Phone</label><input type="tel" name="phone" placeholder="+1 (555) 000-0000" /></div>
-    <div class="ocs-field"><label>Company</label><input type="text" name="company" placeholder="Acme Inc." /></div>
-    <div class="ocs-field"><label>Message</label><textarea name="message" rows="3" placeholder="Tell us about your project..."></textarea></div>
-    <button type="submit" class="ocs-btn">Send Message</button>
-    <div class="ocs-error" id="ocs-error-e7b482b4a619f92325305beba551aa0a" style="display:none"></div>
-    <div class="ocs-powered">Powered by <a href="https://1clicksync.com" target="_blank">1ClickSync</a></div>
-  </form>
-  <script>
-  (function(){
-    var form = document.getElementById('ocs-formEl-e7b482b4a619f92325305beba551aa0a');
-    var errEl = document.getElementById('ocs-error-e7b482b4a619f92325305beba551aa0a');
-    var wrapper = document.getElementById('ocs-form-e7b482b4a619f92325305beba551aa0a');
-    form.addEventListener('submit', function(e) {
-      e.preventDefault(); errEl.style.display = 'none';
-      var btn = form.querySelector('.ocs-btn'); btn.disabled = true; btn.textContent = 'Sending...';
-      var data = {}; var inputs = form.querySelectorAll('input, textarea');
-      for (var i = 0; i < inputs.length; i++) { if (inputs[i].name) data[inputs[i].name] = inputs[i].value; }
-      fetch('/api/f/e7b482b4a619f92325305beba551aa0a', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
-      }).then(function(r) { return r.json(); }).then(function(res) {
-        if (res.success) { wrapper.innerHTML = '<div class="ocs-success">Thank you! We\'ll be in touch within 24 hours.</div>'; }
-        else { errEl.textContent = res.error || 'Something went wrong.'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Send Message'; }
-      }).catch(function() { errEl.textContent = 'Network error. Please try again.'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Send Message'; });
-    });
-  })();
-  </script>
-</div>
-            </div>
+    <section class="section">
+      <div class="shell">
+        <div class="cta-card">
+          <div class="eyebrow" style="background: rgba(255,255,255,0.12); color: #fff;">Start here</div>
+          <h3>Try free, connect Zoho, and generate your first handoff bundle</h3>
+          <p>
+            The fastest path is still simple: create a workspace, connect Zoho, inspect available services, then generate the exact prompt and endpoint reference your coding agent needs.
+          </p>
+          <div class="actions">
+            <a class="btn btn-primary" href="/app" style="background: #fff; color: var(--accent-2);">Try Free</a>
+            <a class="btn btn-secondary" href="#services" style="background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); color: #fff;">Review supported services</a>
+          </div>
         </div>
-    </div>
-</section>
+      </div>
+    </section>
+  </main>
 
-<!-- ═══ FOOTER ═══ -->
-<footer>
-    <div class="footer-inner">
-        <p>&copy; 2026 <a href="/">1ClickSync</a>. Generate Zoho integration code for your apps.</p>
-        <p>Need a Zoho account first? <a href="https://go.zoho.com/wDt" target="_blank">Try Zoho One free &rarr;</a></p>
+  <footer class="footer">
+    <div class="shell footer-inner">
+      <div>Zoho capability discovery, action routing, and agent handoff for developer-owned apps.</div>
+      <div><a href="/app">Open workspace</a></div>
     </div>
-</footer>
-
+  </footer>
 </body>
 </html>

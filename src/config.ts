@@ -14,22 +14,18 @@ const envSchema = z.object({
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   PORT: z.coerce.number().default(3000),
-  // Email (optional)
   SMTP_URL: z.string().optional(),
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
-  // Google OAuth (optional)
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   GOOGLE_REDIRECT_URI: z.string().optional(),
-  // Reverse proxy
   TRUST_PROXY: z.coerce.boolean().default(false),
 });
 
-// Validate early — crash with clear messages if config is wrong
 let parsedEnv: z.infer<typeof envSchema>;
 try {
   parsedEnv = envSchema.parse(process.env);
@@ -44,11 +40,8 @@ try {
 }
 
 export const env = parsedEnv;
-
-// JWT secret: use dedicated JWT_SECRET or fall back to SESSION_SECRET
 export const jwtSecret = env.JWT_SECRET || env.SESSION_SECRET;
 
-// Zoho datacenter endpoints — all supported tools
 export const ZOHO_DC = {
   com: {
     accounts: 'https://accounts.zoho.com',
@@ -59,6 +52,7 @@ export const ZOHO_DC = {
     books: 'https://www.zohoapis.com',
     projects: 'https://projectsapi.zoho.com',
     forms: 'https://forms.zoho.com',
+    mail: 'https://mail.zoho.com',
   },
   eu: {
     accounts: 'https://accounts.zoho.eu',
@@ -69,6 +63,7 @@ export const ZOHO_DC = {
     books: 'https://www.zohoapis.eu',
     projects: 'https://projectsapi.zoho.eu',
     forms: 'https://forms.zoho.eu',
+    mail: 'https://mail.zoho.eu',
   },
   in: {
     accounts: 'https://accounts.zoho.in',
@@ -79,6 +74,7 @@ export const ZOHO_DC = {
     books: 'https://www.zohoapis.in',
     projects: 'https://projectsapi.zoho.in',
     forms: 'https://forms.zoho.in',
+    mail: 'https://mail.zoho.in',
   },
   'com.au': {
     accounts: 'https://accounts.zoho.com.au',
@@ -89,6 +85,7 @@ export const ZOHO_DC = {
     books: 'https://www.zohoapis.com.au',
     projects: 'https://projectsapi.zoho.com.au',
     forms: 'https://forms.zoho.com.au',
+    mail: 'https://mail.zoho.com.au',
   },
   jp: {
     accounts: 'https://accounts.zoho.jp',
@@ -99,15 +96,14 @@ export const ZOHO_DC = {
     books: 'https://www.zohoapis.jp',
     projects: 'https://projectsapi.zoho.jp',
     forms: 'https://forms.zoho.jp',
+    mail: 'https://mail.zoho.jp',
   },
 } as const;
 
 export type ZohoDC = keyof typeof ZOHO_DC;
-export type ZohoApp = 'crm' | 'desk' | 'bookings' | 'salesiq' | 'books' | 'projects' | 'forms';
+export type ZohoApp = 'crm' | 'desk' | 'bookings' | 'salesiq' | 'books' | 'projects' | 'forms' | 'mail';
 
-// All scopes requested in a single OAuth flow — covers all Zoho tools
 export const ZOHO_SCOPES = [
-  // CRM
   'ZohoCRM.modules.ALL',
   'ZohoCRM.settings.ALL',
   'ZohoCRM.settings.fields.ALL',
@@ -115,23 +111,21 @@ export const ZOHO_SCOPES = [
   'ZohoCRM.settings.pipeline.ALL',
   'ZohoCRM.org.READ',
   'ZohoCRM.notifications.ALL',
-  // Desk
   'Desk.tickets.ALL',
   'Desk.contacts.ALL',
   'Desk.basic.ALL',
   'Desk.settings.ALL',
-  // Bookings
   'ZohoBookings.data.ALL',
-  // SalesIQ
   'SalesIQ.portals.ALL',
   'SalesIQ.visitors.ALL',
   'SalesIQ.conversations.ALL',
-  // Books
   'ZohoBooks.invoices.ALL',
   'ZohoBooks.contacts.ALL',
   'ZohoBooks.settings.ALL',
-  // Projects
   'ZohoProjects.projects.ALL',
   'ZohoProjects.tasks.ALL',
   'ZohoProjects.portals.ALL',
+  'ZohoMail.accounts.ALL',
+  'ZohoMail.organization.accounts.READ',
+  'ZohoMail.organization.domains.READ',
 ] as const;
