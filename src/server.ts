@@ -11,6 +11,7 @@ import { loadTemplates } from './templates/loader';
 import { scheduleMaintenanceJobs } from './queue/setup';
 import { authPlugin } from './auth';
 import { passwordResetPlugin } from './auth/password-reset';
+import { googleAuthPlugin } from './auth/google';
 import { securityPlugin } from './security';
 import { billingPlugin } from './billing';
 import { formsPlugin } from './api/forms';
@@ -103,6 +104,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
   // ── Auth ──────────────────────────────────────────
   await app.register(authPlugin);
   await app.register(passwordResetPlugin);
+  await app.register(googleAuthPlugin);
 
   // ── Billing ───────────────────────────────────────
   if (env.STRIPE_SECRET_KEY) {

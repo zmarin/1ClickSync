@@ -51,7 +51,13 @@ export async function authPlugin(app: FastifyInstance) {
       [body.email.toLowerCase()]
     );
     
-    if (!user || !(await bcrypt.compare(body.password, user.password_hash))) {
+    if (!user) {
+      return reply.status(401).send({ error: 'Invalid email or password' });
+    }
+    if (!user.password_hash) {
+      return reply.status(401).send({ error: 'This account uses Google sign-in. Please use the Google button.' });
+    }
+    if (!(await bcrypt.compare(body.password, user.password_hash))) {
       return reply.status(401).send({ error: 'Invalid email or password' });
     }
 
