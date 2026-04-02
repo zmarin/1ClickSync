@@ -500,6 +500,12 @@
             <button class="btn btn-primary" id="authSubmitBtn">Sign in</button>
             <button class="btn btn-ghost" id="authToggleBtn">Need an account?</button>
           </div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:14px;color:var(--muted);font-size:11px;">
+            <div style="flex:1;height:1px;background:var(--line);"></div>
+            <span>or</span>
+            <div style="flex:1;height:1px;background:var(--line);"></div>
+          </div>
+          <button class="btn btn-ghost" id="googleAuthBtn" style="margin-top:14px;width:100%;">Continue with Google</button>
           <p class="helper">The UI is organized around workflow steps: workspace, app context, Zoho connection, service selection, action, then handoff.</p>
         </div>
       </div>
@@ -566,7 +572,8 @@
             </div>
             <div style="display:flex;align-items:center;gap:8px;">
               <span class="status-badge" id="connectionBadge">Status</span>
-              <button class="btn btn-ghost" id="reconnectZohoBtn" style="font-size:10px;padding:6px 10px;">Reconnect</button>
+              <button class="btn btn-ghost" id="serviceConnectBtn" style="font-size:10px;padding:6px 10px;">Connect service</button>
+              <button class="btn btn-ghost" id="serviceDisconnectBtn" style="font-size:10px;padding:6px 10px;display:none;">Disconnect</button>
             </div>
           </div>
         </div>
@@ -603,6 +610,36 @@
           </div>
         </div>
 
+        <div class="main-card hidden" id="crmSourcePanel">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <p class="main-card-title" style="margin:0;">CRM Source Attribution</p>
+            <span class="tag" id="crmOwnershipTag">hybrid</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <label class="label" for="crmModuleSelect">Module</label>
+              <select class="select" id="crmModuleSelect"></select>
+            </div>
+            <div>
+              <label class="label" for="crmLayoutSelect">Layout</label>
+              <select class="select" id="crmLayoutSelect"></select>
+            </div>
+          </div>
+          <div style="margin-top:10px;">
+            <label class="label" for="crmLeadSourceSelect">Available lead sources</label>
+            <select class="select" id="crmLeadSourceSelect"></select>
+          </div>
+          <div style="margin-top:10px;">
+            <label class="label" for="crmLeadSourceInput">Add lead source</label>
+            <div style="display:flex;gap:8px;">
+              <input class="field" id="crmLeadSourceInput" placeholder="Website A">
+              <button class="btn btn-primary" id="addLeadSourceBtn" style="font-size:10px;padding:8px 14px;">Add</button>
+            </div>
+          </div>
+          <div class="tag-list" id="crmLeadSourceList" style="margin-top:10px;"></div>
+          <p class="helper" id="crmFieldMapPreview">Select a CRM route target and keep a fixed Lead_Source per website.</p>
+        </div>
+
         <!-- Docs card -->
         <div class="main-card" id="docsCard">
           <p class="main-card-title">Documentation</p>
@@ -634,6 +671,12 @@
         <!-- Handoff card -->
         <div class="main-card">
           <p class="main-card-title">Generate Handoff Bundle</p>
+          <label class="label" for="handoffMode">Prompt mode</label>
+          <select class="select" id="handoffMode" style="margin-bottom:10px;">
+            <option value="build-custom-route">Build custom route/embed</option>
+            <option value="augment-native">Augment native Zoho setup</option>
+            <option value="work-from-config" selected>Work from saved studio config</option>
+          </select>
           <label class="label" for="handoffGoal">Goal</label>
           <textarea class="textarea" id="handoffGoal" placeholder="Build a white-label CRM onboarding form..." style="min-height:60px;"></textarea>
           <div style="margin-top:10px;">
@@ -707,6 +750,26 @@
       toast.innerHTML = `<strong>${type === 'success' ? 'Done' : 'Notice'}</strong><div style="margin-top:6px;">${escapeHtml(message)}</div>`;
       byId('toastWrap').appendChild(toast);
       setTimeout(() => toast.remove(), 3600);
+    }
+
+    function persistSessionToken(token) {
+      state.token = token || '';
+      if (state.token) {
+        localStorage.setItem('token', state.token);
+      } else {
+        localStorage.removeItem('token');
+      }
+    }
+
+    function consumeTokenParam(params) {
+      const tokenFromQuery = params.get('token');
+      if (!tokenFromQuery) return false;
+      persistSessionToken(tokenFromQuery);
+      params.delete('token');
+      const nextQuery = params.toString();
+      const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`;
+      window.history.replaceState({}, document.title, nextUrl);
+      return true;
     }
 
     function setAuthMode(mode) {
@@ -784,6 +847,8 @@
 
     async function bootstrap() {
       const params = new URLSearchParams(window.location.search);
+      const consumedGoogleToken = consumeTokenParam(params);
+      if (consumedGoogleToken) showToast('Signed in with Google.', 'success');
       if (params.get('connected') === 'true') showToast('Zoho connected to the current workspace.', 'success');
       if (params.get('error')) showToast(`OAuth returned: ${params.get('error')}`);
       if (!state.token) return renderAuth();
@@ -793,9 +858,8 @@
         renderAppShell();
         await loadApps();
       } catch (error) {
-        localStorage.removeItem('token');
+        persistSessionToken('');
         localStorage.removeItem('currentAppId');
-        state.token = '';
         renderAuth();
       }
     }
@@ -864,6 +928,10 @@
       byId('contextNotes').value = context.notes || '';
     }
 
+    function activeServiceConnection() {
+      return state.account && state.account.services && state.activeService ? state.account.services[state.activeService] : null;
+    }
+
     async function selectService(serviceId) {
       state.activeService = serviceId;
       const appRecord = state.apps.find((app) => app.id === state.currentAppId);
@@ -886,16 +954,20 @@
       const detail = state.details[state.activeService];
       const appRecord = state.apps.find((app) => app.id === state.currentAppId);
       if (!service || !detail) return;
+      const serviceConnection = activeServiceConnection() || { connected: false, status: 'connect_required', dc: null, orgId: null, source: 'none' };
 
       byId('breadcrumb').textContent = `${appRecord ? appRecord.name : 'Account'} \u203A ${service.name}`;
       byId('serviceTitle').textContent = service.name;
-      byId('serviceMeta').textContent = `${state.account.zoho.dc || 'No DC'} \u2022 Org ${state.account.zoho.org_id || 'unknown'}`;
+      byId('serviceMeta').textContent = `${serviceConnection.dc || 'No DC'} \u2022 Org ${serviceConnection.orgId || 'unknown'} \u2022 ${serviceConnection.source}`;
 
-      const connected = state.account.zoho.connected;
       const badge = byId('connectionBadge');
-      badge.textContent = connected ? 'Connected' : 'Not connected';
-      badge.className = `status-badge ${connected ? 'connected' : 'disconnected'}`;
-      byId('reconnectZohoBtn').style.display = (service.status === 'reconnect_required' || !connected) ? '' : 'none';
+      badge.textContent = statusLabel(service.status);
+      badge.className = `status-badge ${serviceConnection.connected ? 'connected' : 'disconnected'}`;
+      const connectBtn = byId('serviceConnectBtn');
+      const disconnectBtn = byId('serviceDisconnectBtn');
+      connectBtn.style.display = service.id === 'forms' || service.status === 'ready' ? 'none' : '';
+      connectBtn.textContent = service.status === 'reconnect_required' ? 'Reconnect service' : 'Connect service';
+      disconnectBtn.style.display = service.id !== 'forms' && serviceConnection.source === 'service' ? '' : 'none';
 
       renderProjectContext();
 
@@ -903,6 +975,7 @@
       byId('resourceGrid').innerHTML = resources.length
         ? resources.map((r) => `<span class="tag">${escapeHtml(r.name || r.type)}</span>`).join('')
         : '<span class="tag">No live resources yet</span>';
+      renderCrmSourcePanel(resources, detail.resources.savedConfig || {}, service);
 
       const docs = detail.references.documentationLinks || [];
       const docsCard = byId('docsCard');
@@ -916,6 +989,39 @@
       }
 
       renderActionDetail(detail.actions.actions || []);
+    }
+
+    function renderCrmSourcePanel(resources, savedConfig, service) {
+      const panel = byId('crmSourcePanel');
+      if (!service || service.id !== 'crm') {
+        panel.classList.add('hidden');
+        return;
+      }
+
+      panel.classList.remove('hidden');
+      const modules = resources.filter((resource) => resource.type === 'module');
+      const layouts = resources.filter((resource) => resource.type === 'layout');
+      const leadSources = resources.filter((resource) => resource.type === 'lead_source');
+      const routes = resources.filter((resource) => resource.type === 'route');
+
+      byId('crmOwnershipTag').textContent = savedConfig.ownership || service.ownership || 'hybrid';
+      byId('crmModuleSelect').innerHTML = modules.length
+        ? modules.map((module) => `<option value="${escapeHtml(module.name)}" ${module.name === (savedConfig.targetModule || 'Leads') ? 'selected' : ''}>${escapeHtml(module.name)}</option>`).join('')
+        : '<option value="Leads">Leads</option>';
+      byId('crmLayoutSelect').innerHTML = layouts.length
+        ? layouts.map((layout) => `<option value="${escapeHtml(layout.id || layout.name)}" ${layout.id === savedConfig.layoutId ? 'selected' : ''}>${escapeHtml(layout.name)}</option>`).join('')
+        : '<option value="">No layout discovered</option>';
+      byId('crmLeadSourceSelect').innerHTML = leadSources.length
+        ? leadSources.map((leadSource) => `<option value="${escapeHtml(leadSource.name)}" ${leadSource.name === savedConfig.leadSource ? 'selected' : ''}>${escapeHtml(leadSource.name)}</option>`).join('')
+        : '<option value="">No lead sources discovered</option>';
+      byId('crmLeadSourceList').innerHTML = leadSources.length
+        ? leadSources.map((leadSource) => `<span class="tag">${escapeHtml(leadSource.name)}</span>`).join('')
+        : '<span class="tag">No lead sources loaded</span>';
+
+      const fieldMapping = savedConfig.fieldMapping ? Object.entries(savedConfig.fieldMapping).map(([key, value]) => `${key} -> ${value}`).join(', ') : 'No saved field map yet.';
+      byId('crmFieldMapPreview').textContent = routes.length
+        ? `${routes.length} CRM route(s) saved. ${savedConfig.leadSource ? `Default source: ${savedConfig.leadSource}. ` : ''}${fieldMapping}`
+        : `No CRM routes saved yet. ${fieldMapping}`;
     }
 
     function renderActionDetail(actions) {
@@ -970,9 +1076,10 @@
       if (!state.activeService) return showToast('Select a service first.');
       try {
         const goal = byId('handoffGoal').value.trim() || `Build the next ${state.activeService} capability for the user app.`;
+        const mode = byId('handoffMode').value;
         state.handoff = await api('/api/zoho/handoff-bundle', {
           method: 'POST',
-          body: { app_id: state.currentAppId, service: state.activeService, goal },
+          body: { app_id: state.currentAppId, service: state.activeService, goal, mode },
         });
         byId('handoffResult').classList.remove('hidden');
         byId('handoffPrompt').value = state.handoff.prompt;
@@ -1010,17 +1117,53 @@
         byId('newAppName').value = '';
         byId('newAppDomain').value = '';
         showToast('Workspace created. Redirecting to Zoho OAuth...', 'success');
-        await connectZoho();
+        await connectZoho('crm');
       } catch (error) {
         showToast(error.message);
       }
     }
 
-    async function connectZoho() {
+    async function connectZoho(serviceId = state.activeService || 'crm') {
       if (!state.currentAppId) return showToast('Create or select a workspace first.');
       try {
-        const response = await api(`/api/auth/zoho?app_id=${state.currentAppId}`);
+        const response = await api(`/api/auth/zoho/service?app_id=${state.currentAppId}&service=${serviceId}`);
         window.location.href = response.url;
+      } catch (error) {
+        showToast(error.message);
+      }
+    }
+
+    async function disconnectZoho(serviceId = state.activeService) {
+      if (!state.currentAppId || !serviceId) return showToast('Select a service first.');
+      try {
+        await api(`/api/auth/zoho/service?app_id=${state.currentAppId}&service=${serviceId}`, {
+          method: 'DELETE',
+        });
+        state.details[serviceId] = null;
+        await loadWorkspace();
+        showToast('Service disconnected.', 'success');
+      } catch (error) {
+        showToast(error.message);
+      }
+    }
+
+    async function addLeadSource() {
+      if (state.activeService !== 'crm') return showToast('Select CRM first.');
+      const displayValue = byId('crmLeadSourceInput').value.trim();
+      if (!displayValue) return showToast('Enter a lead source value first.');
+      try {
+        await api('/api/zoho/services/crm/actions/add-lead-source', {
+          method: 'POST',
+          body: {
+            app_id: state.currentAppId,
+            module: byId('crmModuleSelect').value || 'Leads',
+            display_value: displayValue,
+          },
+        });
+        byId('crmLeadSourceInput').value = '';
+        state.details.crm = null;
+        await selectService('crm');
+        showToast('Lead source added.', 'success');
       } catch (error) {
         showToast(error.message);
       }
@@ -1066,9 +1209,8 @@
           : { email, password };
         const endpoint = state.authMode === 'register' ? '/api/auth/register' : '/api/auth/login';
         const result = await api(endpoint, { method: 'POST', body: payload });
-        state.token = result.token;
+        persistSessionToken(result.token);
         state.user = result.user;
-        localStorage.setItem('token', result.token);
         renderAppShell();
         await loadApps();
       } catch (error) {
@@ -1076,12 +1218,15 @@
       }
     }
 
+    function startGoogleAuth() {
+      window.location.href = '/api/auth/google';
+    }
+
     function logout() {
-      state.token = '';
+      persistSessionToken('');
       state.user = null;
       state.apps = [];
       state.currentAppId = '';
-      localStorage.removeItem('token');
       localStorage.removeItem('currentAppId');
       renderAuth();
     }
@@ -1093,6 +1238,7 @@
 
     byId('authSubmitBtn').addEventListener('click', submitAuth);
     byId('authToggleBtn').addEventListener('click', () => setAuthMode(state.authMode === 'login' ? 'register' : 'login'));
+    byId('googleAuthBtn').addEventListener('click', startGoogleAuth);
     byId('logoutBtn').addEventListener('click', logout);
     byId('addAccountBtn').addEventListener('click', () => {
       hideAllMainPanels();
@@ -1114,7 +1260,9 @@
     byId('createWorkspacePrimaryBtn').addEventListener('click', async () => {
       await createWorkspace();
     });
-    byId('reconnectZohoBtn').addEventListener('click', connectZoho);
+    byId('serviceConnectBtn').addEventListener('click', () => connectZoho(state.activeService || 'crm'));
+    byId('serviceDisconnectBtn').addEventListener('click', () => disconnectZoho(state.activeService));
+    byId('addLeadSourceBtn').addEventListener('click', addLeadSource);
     byId('openAppLinkBtn').addEventListener('click', openUserApp);
     byId('saveContextBtn').addEventListener('click', saveContext);
     byId('refreshServiceBtn').addEventListener('click', async () => {

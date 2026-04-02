@@ -1,0 +1,109 @@
+<h2>Final Design: Two-Panel Sidebar with Zoho Light Theme</h2>
+<p class="subtitle">Review the design summary below. Respond in the terminal to approve or request changes.</p>
+
+<div class="section">
+  <h3>Layout Structure</h3>
+  <div class="mockup">
+    <div class="mockup-header">App Shell Layout</div>
+    <div class="mockup-body">
+      <div style="display:flex;height:380px;background:#FAFBFC;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:11px;color:#333;border-radius:4px;overflow:hidden;">
+        <!-- Icon bar -->
+        <div style="width:56px;background:#F7F8FA;border-right:1px solid #e0e3eb;padding:12px 0;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div style="width:38px;height:38px;background:#DC4C3E;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;box-shadow:0 2px 4px rgba(220,76,62,0.3);">ZM</div>
+          <div style="width:38px;height:38px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#888;font-size:10px;font-weight:600;border:1px solid #e0e3eb;">ZO</div>
+          <div style="margin-top:auto;margin-bottom:8px;width:38px;height:38px;border:2px dashed #ccc;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#999;font-size:18px;">+</div>
+        </div>
+        <!-- Service panel -->
+        <div style="width:170px;background:#fff;border-right:1px solid #e0e3eb;flex-shrink:0;">
+          <div style="padding:14px 16px 8px;color:#DC4C3E;font-size:12px;font-weight:700;border-bottom:1px solid #f0f2f5;">ZMCOR</div>
+          <div style="padding:9px 16px;background:#FFF5F4;color:#DC4C3E;font-size:11px;font-weight:600;border-left:3px solid #DC4C3E;display:flex;align-items:center;gap:6px;">
+            <span style="width:6px;height:6px;background:#4CAF50;border-radius:50%;display:inline-block;"></span>CRM
+          </div>
+          <div style="padding:9px 16px;color:#555;font-size:11px;border-left:3px solid transparent;display:flex;align-items:center;gap:6px;">
+            <span style="width:6px;height:6px;background:#4CAF50;border-radius:50%;display:inline-block;"></span>Desk
+          </div>
+          <div style="padding:9px 16px;color:#555;font-size:11px;border-left:3px solid transparent;display:flex;align-items:center;gap:6px;">
+            <span style="width:6px;height:6px;background:#4CAF50;border-radius:50%;display:inline-block;"></span>Bookings
+          </div>
+          <div style="padding:9px 16px;color:#555;font-size:11px;border-left:3px solid transparent;display:flex;align-items:center;gap:6px;">
+            <span style="width:6px;height:6px;background:#FFC107;border-radius:50%;display:inline-block;"></span>Mail
+          </div>
+          <div style="padding:9px 16px;color:#999;font-size:11px;border-left:3px solid transparent;display:flex;align-items:center;gap:6px;">
+            <span style="width:6px;height:6px;background:#ccc;border-radius:50%;display:inline-block;"></span>SalesIQ
+          </div>
+          <div style="border-top:1px solid #f0f2f5;margin-top:8px;padding:12px 16px;">
+            <div style="color:#DC4C3E;font-size:10px;font-weight:500;">⚙ Settings</div>
+          </div>
+        </div>
+        <!-- Main panel -->
+        <div style="flex:1;padding:20px;background:#FAFBFC;overflow-y:auto;">
+          <!-- Breadcrumb -->
+          <div style="color:#999;font-size:10px;margin-bottom:12px;">ZMCOR &rsaquo; CRM</div>
+          <!-- Connection status -->
+          <div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:12px;border:1px solid #e0e3eb;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div>
+                <div style="font-size:13px;font-weight:700;color:#333;">Zoho CRM</div>
+                <div style="font-size:10px;color:#888;margin-top:2px;">DC: eu &bull; Org: 882736451</div>
+              </div>
+              <span style="background:#E8F5E9;color:#2E7D32;font-size:9px;padding:3px 10px;border-radius:10px;font-weight:600;">Connected</span>
+            </div>
+          </div>
+          <!-- Step 2: User App Context -->
+          <div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:12px;border:1px solid #e0e3eb;">
+            <div style="font-size:11px;font-weight:600;color:#555;margin-bottom:8px;">Your App Context</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div style="background:#f5f5f5;padding:6px 10px;border-radius:4px;font-size:10px;color:#555;">App Name: My SaaS</div>
+              <div style="background:#f5f5f5;padding:6px 10px;border-radius:4px;font-size:10px;color:#555;">URL: https://app.example.com</div>
+            </div>
+          </div>
+          <!-- Step 5: Resources -->
+          <div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:12px;border:1px solid #e0e3eb;">
+            <div style="font-size:11px;font-weight:600;color:#555;margin-bottom:8px;">Resources</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <span style="background:#f5f5f5;padding:4px 10px;border-radius:4px;font-size:10px;color:#555;">Leads</span>
+              <span style="background:#f5f5f5;padding:4px 10px;border-radius:4px;font-size:10px;color:#555;">Contacts</span>
+              <span style="background:#f5f5f5;padding:4px 10px;border-radius:4px;font-size:10px;color:#555;">Deals</span>
+              <span style="background:#f5f5f5;padding:4px 10px;border-radius:4px;font-size:10px;color:#555;">Accounts</span>
+            </div>
+          </div>
+          <!-- Step 5: Actions -->
+          <div style="background:#fff;border-radius:8px;padding:14px;margin-bottom:12px;border:1px solid #e0e3eb;">
+            <div style="font-size:11px;font-weight:600;color:#555;margin-bottom:8px;">Actions</div>
+            <div style="display:flex;gap:8px;">
+              <button style="background:#DC4C3E;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:10px;font-weight:500;cursor:pointer;">Create Route</button>
+              <button style="background:#fff;color:#DC4C3E;border:1px solid #DC4C3E;padding:6px 14px;border-radius:6px;font-size:10px;font-weight:500;cursor:pointer;">Generate Handoff</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Empty State (New User)</h3>
+  <div class="mockup">
+    <div class="mockup-header">First Login — No Accounts</div>
+    <div class="mockup-body">
+      <div style="display:flex;height:250px;background:#FAFBFC;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:11px;color:#333;border-radius:4px;overflow:hidden;">
+        <!-- Icon bar - empty -->
+        <div style="width:56px;background:#F7F8FA;border-right:1px solid #e0e3eb;padding:12px 0;flex-shrink:0;display:flex;flex-direction:column;align-items:center;">
+          <div style="position:relative;">
+            <div style="width:38px;height:38px;border:2px dashed #DC4C3E;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#DC4C3E;font-size:18px;animation:pulse 2s infinite;">+</div>
+          </div>
+          <div style="color:#DC4C3E;font-size:7px;text-align:center;margin-top:4px;font-weight:600;">Connect</div>
+        </div>
+        <!-- Main panel - onboarding -->
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;background:#FAFBFC;">
+          <div style="text-align:center;max-width:340px;">
+            <div style="font-size:28px;margin-bottom:12px;">🔗</div>
+            <div style="font-size:16px;font-weight:700;color:#333;margin-bottom:6px;">Connect your first Zoho account</div>
+            <div style="font-size:11px;color:#888;margin-bottom:16px;">Link a Zoho workspace to discover services, manage routes, and generate agent handoff bundles.</div>
+            <button style="background:#DC4C3E;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">+ Connect Zoho Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

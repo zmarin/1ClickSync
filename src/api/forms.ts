@@ -5,6 +5,7 @@ import { query, queryOne } from '../db';
 import { authenticate } from '../auth';
 import { crmApi, deskApi, bookingsApi, booksApi, projectsApi, ZohoApiError } from '../zoho/client';
 import { env } from '../config';
+import { getAccessToken } from '../zoho/oauth';
 
 // ── Schemas ─────────────────────────────────────────
 const formStyleSchema = z.object({
@@ -21,6 +22,11 @@ const formStyleSchema = z.object({
   portalId: z.string().optional(),
   projectId: z.string().optional(),
   defaultPriority: z.enum(['None', 'Low', 'Medium', 'High']).optional(),
+  layoutId: z.string().optional(),
+  layoutName: z.string().optional(),
+  configHome: z.string().optional(),
+  ownership: z.string().optional(),
+  promptDefaults: z.record(z.any()).optional(),
 }).default({});
 
 const createFormSchema = z.object({
@@ -312,10 +318,13 @@ export async function formsPlugin(app: FastifyInstance) {
     const appId = form.app_id || form.customer_id;
     const routeType = form.route_type || 'crm';
 
-    const tokens = await queryOne(
-      'SELECT id FROM zoho_tokens WHERE (app_id = $1 OR customer_id = $1) AND is_valid = TRUE',
-      [appId]
-    );
+    let connectionAvailable = false;
+    try {
+      await getAccessToken(appId, routeType as any);
+      connectionAvailable = true;
+    } catch {
+      connectionAvailable = false;
+    }
 
     // Map form fields → Zoho fields using field_mapping
     const fieldMapping = form.field_mapping as Record<string, string>;
@@ -335,7 +344,7 @@ export async function formsPlugin(app: FastifyInstance) {
     const [submission] = await query(
       `INSERT INTO form_submissions (form_id, app_id, customer_id, payload, ip_address, status)
        VALUES ($1, $2, $2, $3, $4, $5) RETURNING id`,
-      [form.id, appId, JSON.stringify(submittedData), request.ip, tokens ? 'processing' : 'queued']
+      [form.id, appId, JSON.stringify(submittedData), request.ip, connectionAvailable ? 'processing' : 'queued']
     );
 
     await query(
@@ -344,7 +353,7 @@ export async function formsPlugin(app: FastifyInstance) {
     );
 
     // If Zoho is connected, dispatch to the appropriate tool
-    if (tokens) {
+    if (connectionAvailable) {
       try {
         const result = await dispatchToZoho(routeType, appId, form, mappedData, submittedData);
         const recordId = result.data?.[0]?.details?.id || result.data?.[0]?.id

@@ -1,13 +1,19 @@
 import { FastifyInstance } from 'fastify';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
-import { env } from '../config';
+import { env, ZOHO_SCOPES, ZOHO_SERVICE_SCOPES, ZOHO_STUDIO_SERVICES, type ZohoApp } from '../config';
 import { query, queryOne, withTransaction } from '../db';
 import { authenticate } from '../auth';
-import { getAuthorizationUrl, exchangeCodeForTokens, storeTokens } from '../zoho/oauth';
+import {
+  exchangeCodeForTokens,
+  getAuthorizationUrl,
+  getServiceAuthorizationUrl,
+  revokeServiceTokens,
+  storeServiceTokens,
+  storeTokens,
+} from '../zoho/oauth';
 import { enqueueSetupJob } from '../queue/setup';
 import { getTemplate, resolveTemplate, generateIdempotencyKeys, listTemplates } from '../templates/loader';
-import { ZOHO_SCOPES } from '../config';
 
 // ── Validation schemas ──────────────────────────────
 const setupStartSchema = z.object({
@@ -27,13 +33,33 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
   // ── OAuth: Start connection (authenticated) ───────
   // Now accepts app_id instead of customer_id
   app.get('/api/auth/zoho', { preHandler: [authenticate] }, async (request, reply) => {
-    const { app_id, dc } = request.query as { app_id?: string; customer_id?: string; dc?: string };
+    const { app_id, dc, service } = request.query as { app_id?: string; customer_id?: string; dc?: string; service?: ZohoApp };
 
     // Support both app_id and customer_id for backward compat
     const appId = app_id || (request.query as any).customer_id;
 
     if (!appId) {
       return reply.status(400).send({ error: 'app_id required' });
+    }
+    if (!(await ensureOwnedApp(appId, (request as any).userId))) {
+      return reply.status(404).send({ error: 'App not found' });
+    }
+
+    if (service) {
+      const selectedService = z.enum(ZOHO_STUDIO_SERVICES).parse(service);
+      const state = Buffer.from(JSON.stringify({
+        app_id: appId,
+        customer_id: appId,
+        user_id: (request as any).userId,
+        service: selectedService,
+        ts: Date.now(),
+      })).toString('base64url');
+
+      return reply.send({
+        service: selectedService,
+        scopes: [...ZOHO_SERVICE_SCOPES[selectedService]],
+        url: getServiceAuthorizationUrl(state, selectedService, (dc as any) || 'com'),
+      });
     }
 
     const state = Buffer.from(JSON.stringify({
@@ -45,6 +71,32 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
     const authUrl = getAuthorizationUrl(state, (dc as any) || 'com');
     return reply.send({ url: authUrl });
+  });
+
+  app.get('/api/auth/zoho/service', { preHandler: [authenticate] }, async (request, reply) => {
+    const queryParams = z.object({
+      app_id: z.string().uuid(),
+      service: z.enum(ZOHO_STUDIO_SERVICES),
+      dc: z.string().optional(),
+    }).parse(request.query);
+
+    if (!(await ensureOwnedApp(queryParams.app_id, (request as any).userId))) {
+      return reply.status(404).send({ error: 'App not found' });
+    }
+
+    const state = Buffer.from(JSON.stringify({
+      app_id: queryParams.app_id,
+      customer_id: queryParams.app_id,
+      user_id: (request as any).userId,
+      service: queryParams.service,
+      ts: Date.now(),
+    })).toString('base64url');
+
+    return reply.send({
+      service: queryParams.service,
+      scopes: [...ZOHO_SERVICE_SCOPES[queryParams.service]],
+      url: getServiceAuthorizationUrl(state, queryParams.service, (queryParams.dc as any) || 'com'),
+    });
   });
 
   // ── OAuth: Callback from Zoho (public — redirect) ─
@@ -66,6 +118,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
       const stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
       // Support both app_id and customer_id from state
       const appId = stateData.app_id || stateData.customer_id;
+      const service = stateData.service as ZohoApp | undefined;
 
       // Verify the app exists
       const appRecord = await queryOne('SELECT * FROM apps WHERE id = $1', [appId]);
@@ -79,19 +132,40 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
       const tokens = await exchangeCodeForTokens(code);
 
-      const orgResponse = await fetch(
-        `https://www.zohoapis.${tokens.dc}/crm/v6/org`,
-        { headers: { Authorization: `Zoho-oauthtoken ${tokens.accessToken}` } }
-      );
-      const orgData = await orgResponse.json() as any;
-      const orgId = orgData.org?.[0]?.id || orgData.data?.[0]?.id || 'unknown';
+      let orgId: string | null = null;
+      if (!service || service === 'crm') {
+        try {
+          const orgResponse = await fetch(
+            `https://www.zohoapis.${tokens.dc}/crm/v6/org`,
+            { headers: { Authorization: `Zoho-oauthtoken ${tokens.accessToken}` } }
+          );
+          const orgData = await orgResponse.json() as any;
+          orgId = orgData.org?.[0]?.id || orgData.data?.[0]?.id || null;
+        } catch {
+          orgId = null;
+        }
+      }
+
+      if (service) {
+        await storeServiceTokens(
+          appId,
+          service,
+          tokens.accessToken,
+          tokens.refreshToken,
+          tokens.dc,
+          orgId,
+          tokens.expiresIn,
+          [...ZOHO_SERVICE_SCOPES[service]]
+        );
+        return reply.redirect(`${env.APP_URL}/app?connected=true&service=${service}`);
+      }
 
       await storeTokens(
         appId,
         tokens.accessToken,
         tokens.refreshToken,
         tokens.dc,
-        orgId,
+        orgId || 'unknown',
         tokens.expiresIn,
         [...ZOHO_SCOPES]
       );
@@ -101,6 +175,20 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
       request.log.error({ err: err.message }, 'Token exchange failed');
       return reply.redirect(`${env.APP_URL}/app?error=token_exchange_failed`);
     }
+  });
+
+  app.delete('/api/auth/zoho/service', { preHandler: [authenticate] }, async (request, reply) => {
+    const queryParams = z.object({
+      app_id: z.string().uuid(),
+      service: z.enum(ZOHO_STUDIO_SERVICES),
+    }).parse(request.query);
+
+    if (!(await ensureOwnedApp(queryParams.app_id, (request as any).userId))) {
+      return reply.status(404).send({ error: 'App not found' });
+    }
+
+    await revokeServiceTokens(queryParams.app_id, queryParams.service);
+    return { success: true, service: queryParams.service };
   });
 
   // ── Templates: List (authenticated) ───────────────
@@ -285,4 +373,11 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
       scopes: tokens.scopes,
     };
   });
+}
+
+async function ensureOwnedApp(appId: string, userId: string): Promise<boolean> {
+  const appRecord = await queryOne('SELECT id FROM apps WHERE id = $1 AND user_id = $2', [appId, userId]);
+  if (appRecord) return true;
+  const customer = await queryOne('SELECT id FROM customers WHERE id = $1 AND user_id = $2', [appId, userId]);
+  return Boolean(customer);
 }

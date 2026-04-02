@@ -113,6 +113,17 @@ export function getIntegrationConfig(form: any): Record<string, string> | undefi
   const style = getFormStyle(form);
   const tool = form.route_type || 'crm';
 
+  if (tool === 'crm') {
+    const config: Record<string, string> = {};
+    if (form.lead_source) config.lead_source = String(form.lead_source);
+    if (style.layoutId) config.layoutId = String(style.layoutId);
+    if (style.layoutName) config.layoutName = String(style.layoutName);
+    if (style.configHome) config.configHome = String(style.configHome);
+    if (style.ownership) config.ownership = String(style.ownership);
+    if (style.promptDefaults) config.promptDefaults = JSON.stringify(style.promptDefaults);
+    return Object.keys(config).length > 0 ? config : undefined;
+  }
+
   if (tool === 'bookings') {
     const config: Record<string, string> = {};
     if (style.service_id) config.service_id = String(style.service_id);

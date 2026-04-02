@@ -31,7 +31,7 @@ export async function zohoApi<T = any>(options: ApiCallOptions): Promise<ZohoApi
   const startTime = Date.now();
 
   // Get fresh token + DC info
-  const { token, dc, orgId } = await getAccessToken(appId);
+  const { token, dc, orgId } = await getAccessToken(appId, app);
 
   // Build the full URL based on app and datacenter
   const baseUrl = ZOHO_DC[dc][app];
@@ -43,7 +43,7 @@ export async function zohoApi<T = any>(options: ApiCallOptions): Promise<ZohoApi
   };
 
   // CRM API v6 needs orgid header for multi-org accounts
-  if (app === 'crm') {
+  if (app === 'crm' && orgId) {
     headers['X-CRM-ORG'] = orgId;
   }
 
@@ -84,6 +84,14 @@ export async function zohoApi<T = any>(options: ApiCallOptions): Promise<ZohoApi
  * CRM-specific convenience methods
  */
 export const crmApi = {
+  async getModules(appId: string) {
+    return zohoApi({
+      appId,
+      app: 'crm',
+      path: '/crm/v6/settings/modules',
+    });
+  },
+
   async getFields(appId: string, module: string) {
     return zohoApi({
       appId,
@@ -271,6 +279,10 @@ export const booksApi = {
 
   async getContacts(appId: string) {
     return zohoApi({ appId, app: 'books', path: '/books/v3/contacts' });
+  },
+
+  async getItems(appId: string) {
+    return zohoApi({ appId, app: 'books', path: '/books/v3/items' });
   },
 };
 

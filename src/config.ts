@@ -101,7 +101,8 @@ export const ZOHO_DC = {
 } as const;
 
 export type ZohoDC = keyof typeof ZOHO_DC;
-export type ZohoApp = 'crm' | 'desk' | 'bookings' | 'salesiq' | 'books' | 'projects' | 'forms' | 'mail';
+export const ZOHO_STUDIO_SERVICES = ['crm', 'forms', 'mail', 'salesiq', 'bookings', 'desk', 'books', 'projects'] as const;
+export type ZohoApp = typeof ZOHO_STUDIO_SERVICES[number];
 
 export const ZOHO_SCOPES = [
   'ZohoCRM.modules.ALL',
@@ -129,3 +130,45 @@ export const ZOHO_SCOPES = [
   'ZohoMail.organization.accounts.READ',
   'ZohoMail.organization.domains.READ',
 ] as const;
+
+export const ZOHO_SERVICE_SCOPES: Record<ZohoApp, readonly string[]> = {
+  crm: [
+    'ZohoCRM.modules.ALL',
+    'ZohoCRM.settings.ALL',
+    'ZohoCRM.settings.fields.ALL',
+    'ZohoCRM.settings.layouts.ALL',
+    'ZohoCRM.settings.pipeline.ALL',
+    'ZohoCRM.org.READ',
+    'ZohoCRM.notifications.ALL',
+  ],
+  forms: [],
+  mail: [
+    'ZohoMail.accounts.ALL',
+    'ZohoMail.organization.accounts.READ',
+    'ZohoMail.organization.domains.READ',
+  ],
+  salesiq: [
+    'SalesIQ.portals.ALL',
+    'SalesIQ.visitors.ALL',
+    'SalesIQ.conversations.ALL',
+  ],
+  bookings: [
+    'ZohoBookings.data.ALL',
+  ],
+  desk: [
+    'Desk.tickets.ALL',
+    'Desk.contacts.ALL',
+    'Desk.basic.ALL',
+    'Desk.settings.ALL',
+  ],
+  books: [
+    'ZohoBooks.invoices.ALL',
+    'ZohoBooks.contacts.ALL',
+    'ZohoBooks.settings.ALL',
+  ],
+  projects: [
+    'ZohoProjects.projects.ALL',
+    'ZohoProjects.tasks.ALL',
+    'ZohoProjects.portals.ALL',
+  ],
+};

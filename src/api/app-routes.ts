@@ -10,6 +10,7 @@ import {
   getIntegrationConfig,
   getToolSupportSummary,
 } from './export-utils';
+import { buildReferencePayload, loadAppContext, promptModeSchema } from './zoho-capabilities';
 
 // ── Schemas ─────────────────────────────────────────
 const createAppSchema = z.object({
@@ -27,6 +28,12 @@ const updateAppSchema = z.object({
   zoho_tools: z.array(z.enum(['crm', 'desk', 'bookings', 'salesiq', 'books', 'projects'])).optional(),
   is_active: z.boolean().optional(),
   settings: z.record(z.any()).optional(),
+});
+
+const promptQuerySchema = z.object({
+  service: z.enum(['crm', 'forms', 'mail', 'salesiq', 'bookings', 'desk', 'books', 'projects']).optional(),
+  mode: promptModeSchema.optional(),
+  goal: z.string().trim().max(1000).optional(),
 });
 
 /**
@@ -303,6 +310,23 @@ export async function appRoutesPlugin(app: FastifyInstance) {
   app.get('/api/apps/:appId/prompt', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { appId } = request.params as { appId: string };
     const userId = (request as any).userId;
+    const promptQuery = promptQuerySchema.parse(request.query);
+
+    if (promptQuery.service) {
+      const context = await loadAppContext(userId, appId, reply);
+      if (!context) return;
+
+      const mode = promptQuery.mode || 'work-from-config';
+      const goal = promptQuery.goal?.trim() || (mode === 'augment-native'
+        ? `Inspect the existing ${promptQuery.service.toUpperCase()} setup and augment it without breaking native Zoho behavior.`
+        : mode === 'build-custom-route'
+          ? `Build a new ${promptQuery.service.toUpperCase()} route or embed surface for the user app.`
+          : `Work from the saved ${promptQuery.service.toUpperCase()} studio configuration and move the integration forward.`);
+      const payload = await buildReferencePayload(context, promptQuery.service, goal, mode);
+
+      reply.type('text/markdown');
+      return payload.prompt;
+    }
 
     const appRecord = await queryOne(
       `SELECT a.*, zt.zoho_dc, zt.zoho_org_id,
