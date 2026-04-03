@@ -448,6 +448,19 @@
     .toast.error { border-color: rgba(181,68,33,0.24); }
     .toast.success { border-color: rgba(19,108,78,0.24); }
 
+    /* ── Entities panel ──────────────────────────── */
+    .entity-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-top: 14px; }
+    .entity-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+    .entity-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .entity-card-header h3 { margin: 0; font-size: 13px; font-family: var(--display); }
+    .entity-badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+    .entity-badge.deployed { background: rgba(76,175,80,0.12); color: #2e7d32; }
+    .entity-badge.available { background: rgba(0,0,0,0.06); color: var(--muted); }
+    .entity-service-tag { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .entity-stats { font-size: 11px; color: var(--secondary); margin-bottom: 10px; }
+    .entity-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .entity-actions .btn { font-size: 10px; padding: 5px 10px; }
+
     @media (max-width: 1020px) {
       .split,
       .auth-grid {
@@ -702,6 +715,24 @@
           </div>
         </div>
       </div>
+
+      <!-- Entities panel (shows all Zoho modules with deploy status + embed code + LLM prompt) -->
+      <div id="entitiesContent" class="hidden">
+        <div class="breadcrumb" id="entitiesBreadcrumb">Account &rsaquo; Entities</div>
+        <div class="main-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <h2 style="font-family:var(--display);font-size:15px;margin:0;">Entities</h2>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;">Zoho modules you can deploy or have already deployed</div>
+            </div>
+            <button class="btn btn-ghost" id="refreshEntitiesBtn" style="font-size:10px;padding:6px 10px;">Refresh</button>
+          </div>
+        </div>
+        <div id="entityGrid" class="entity-grid"></div>
+        <div id="entityEmpty" class="main-card hidden" style="text-align:center;color:var(--muted);padding:40px 20px;">
+          <p>No connected services found. Connect a Zoho service to discover deployable entities.</p>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -720,6 +751,7 @@
       details: {},
       projectContext: null,
       handoff: null,
+      entities: null,
     };
 
     const byId = (id) => document.getElementById(id);
@@ -836,6 +868,7 @@
       byId('emptyState').classList.add('hidden');
       byId('workspaceCreate').classList.add('hidden');
       byId('serviceContent').classList.add('hidden');
+      byId('entitiesContent').classList.add('hidden');
     }
 
     function showEmptyState() {
@@ -908,14 +941,30 @@
 
     function renderServicePanel(appRecord) {
       byId('servicePanelHeader').textContent = appRecord.name;
-      byId('servicePanelList').innerHTML = state.services.map((service) => `
+      const entitiesItem = `
+        <div class="service-panel-item ${state.activeService === '__entities__' ? 'active' : ''}" data-sid="__entities__">
+          <span class="service-panel-dot ready"></span>
+          Entities
+        </div>
+      `;
+      const serviceItems = state.services.map((service) => `
         <div class="service-panel-item ${state.activeService === service.id ? 'active' : ''}" data-sid="${service.id}">
           <span class="service-panel-dot ${service.status}"></span>
           ${escapeHtml(service.name)}
         </div>
       `).join('');
+      byId('servicePanelList').innerHTML = entitiesItem + serviceItems;
       Array.from(document.querySelectorAll('[data-sid]')).forEach((el) => {
-        el.addEventListener('click', () => selectService(el.dataset.sid));
+        el.addEventListener('click', () => {
+          if (el.dataset.sid === '__entities__') {
+            state.activeService = '__entities__';
+            const app = state.apps.find((a) => a.id === state.currentAppId);
+            if (app) renderServicePanel(app);
+            loadEntities();
+          } else {
+            selectService(el.dataset.sid);
+          }
+        });
       });
     }
 
@@ -947,6 +996,84 @@
         state.details[serviceId] = { resources, actions, references };
       }
       renderServiceDetail();
+    }
+
+    async function loadEntities() {
+      hideAllMainPanels();
+      byId('entitiesContent').classList.remove('hidden');
+      const appRecord = state.apps.find((a) => a.id === state.currentAppId);
+      byId('entitiesBreadcrumb').textContent = `${appRecord ? appRecord.name : 'Account'} \u203A Entities`;
+      byId('entityGrid').innerHTML = '<div class="main-card" style="text-align:center;color:var(--muted);padding:20px;">Loading entities\u2026</div>';
+      byId('entityEmpty').classList.add('hidden');
+      try {
+        const result = await api(`/api/apps/${state.currentAppId}/entities`);
+        state.entities = result.entities || [];
+        renderEntities();
+      } catch (error) {
+        byId('entityGrid').innerHTML = '';
+        byId('entityEmpty').classList.remove('hidden');
+        byId('entityEmpty').querySelector('p').textContent = 'Failed to load entities. ' + (error.message || '');
+      }
+    }
+
+    function renderEntities() {
+      const entities = state.entities || [];
+      if (entities.length === 0) {
+        byId('entityGrid').innerHTML = '';
+        byId('entityEmpty').classList.remove('hidden');
+        return;
+      }
+      byId('entityEmpty').classList.add('hidden');
+      byId('entityGrid').innerHTML = entities.map((entity, index) => {
+        const safeStatus = entity.status === 'deployed' ? 'deployed' : 'available';
+        return `
+        <div class="entity-card">
+          <div class="entity-service-tag">${escapeHtml(entity.service)}</div>
+          <div class="entity-card-header">
+            <h3>${escapeHtml(entity.name)}</h3>
+            <span class="entity-badge ${safeStatus}">${safeStatus === 'deployed' ? 'Deployed' : 'Available'}</span>
+          </div>
+          <div class="entity-stats">
+            Module: ${escapeHtml(entity.module)}${entity.status === 'deployed' ? ' &bull; ' + entity.submissions_count + ' submission' + (entity.submissions_count !== 1 ? 's' : '') : ''}
+          </div>
+          <div class="entity-actions">
+            <button class="btn btn-ghost" onclick="copyEntityEmbed(${index})">Copy Embed Code</button>
+            <button class="btn btn-ghost" onclick="copyEntityPrompt(${index})">Copy LLM Prompt</button>
+            ${safeStatus === 'available' ? `<button class="btn btn-primary" onclick="quickDeploy(${index})">Deploy</button>` : ''}
+          </div>
+        </div>
+      `}).join('');
+    }
+
+    function copyEntityEmbed(index) {
+      const entity = (state.entities || [])[index];
+      if (!entity) return;
+      navigator.clipboard.writeText(entity.embed_code).then(
+        () => showToast('Embed code copied!', 'success'),
+        () => showToast('Failed to copy'),
+      );
+    }
+
+    function copyEntityPrompt(index) {
+      const entity = (state.entities || [])[index];
+      if (!entity) return;
+      navigator.clipboard.writeText(entity.llm_prompt).then(
+        () => showToast('LLM prompt copied!', 'success'),
+        () => showToast('Failed to copy'),
+      );
+    }
+
+    async function quickDeploy(index) {
+      const entity = (state.entities || [])[index];
+      if (!entity || !entity.quick_deploy_payload) return;
+      try {
+        await api('/api/forms', { method: 'POST', body: entity.quick_deploy_payload });
+        showToast(`${entity.name} deployed!`, 'success');
+        state.entities = null;
+        await loadEntities();
+      } catch (error) {
+        showToast('Deploy failed: ' + (error.message || 'Unknown error'));
+      }
     }
 
     function renderServiceDetail() {
@@ -1277,6 +1404,7 @@
     byId('generateHandoffBtn').addEventListener('click', generateHandoff);
     byId('copyPromptBtn').addEventListener('click', () => copyFrom('handoffPrompt'));
     byId('copyRefsBtn').addEventListener('click', () => copyFrom('handoffRefs'));
+    byId('refreshEntitiesBtn').addEventListener('click', () => { state.entities = null; loadEntities(); });
 
     bootstrap();
   </script>
