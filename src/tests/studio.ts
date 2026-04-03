@@ -24,7 +24,7 @@ function jsonResponse(body: unknown, status = 200) {
 
 async function main() {
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = (async (input: RequestInfo | URL) => {
+  globalThis.fetch = (async (input: string | URL | Request) => {
     const url = String(input);
 
     if (url.includes('/crm/v6/org')) {
