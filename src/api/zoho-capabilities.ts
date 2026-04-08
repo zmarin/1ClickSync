@@ -5,6 +5,7 @@ import { authenticate } from '../auth';
 import { env, ZOHO_SERVICE_SCOPES, ZOHO_STUDIO_SERVICES } from '../config';
 import { query, queryOne } from '../db';
 import { buildSalesIQExport, getToolSupportSummary } from './export-utils';
+import { generateEmbedCode } from './forms';
 import { ZohoApiError, booksApi, bookingsApi, crmApi, deskApi, projectsApi, zohoApi } from '../zoho/client';
 
 const serviceSchema = z.enum(ZOHO_STUDIO_SERVICES);
@@ -512,6 +513,14 @@ export async function zohoCapabilitiesPlugin(app: FastifyInstance) {
       ...payload,
       action: body.action || null,
     };
+  });
+
+  app.get('/api/apps/:appId/entities', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const appId = z.string().uuid().parse((request.params as { appId: string }).appId);
+    const context = await loadAppContext((request as any).userId, appId, reply);
+    if (!context) return;
+    const entities = await getEntities(context);
+    return { entities };
   });
 
   app.post('/api/zoho/services/:service/actions/:action', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
@@ -2052,4 +2061,263 @@ function pickFirstObject(...candidates: any[]): any | null {
     if (candidate && typeof candidate === 'object') return candidate;
   }
   return null;
+}
+
+// ── Entities feature ─────────────────────────────────────────
+
+interface Entity {
+  id: string;
+  name: string;
+  service: string;
+  module: string;
+  status: 'deployed' | 'available';
+  submissions_count: number;
+  form_key: string | null;
+  embed_code: string;
+  llm_prompt: string;
+  quick_deploy_payload: Record<string, any> | null;
+}
+
+const CRM_KEY_MODULES = ['Leads', 'Contacts', 'Deals', 'Accounts'];
+
+function extractDeployableEntities(
+  service: ServiceId,
+  resources: ResourceSummary[],
+): Array<{ module: string; name: string; metadata?: Record<string, any> }> {
+  switch (service) {
+    case 'crm':
+      return resources
+        .filter((r) => r.type === 'module' && CRM_KEY_MODULES.includes(r.name))
+        .map((r) => ({ module: r.name, name: r.name }));
+    case 'desk':
+      return [{ module: 'Tickets', name: 'Support Tickets' }];
+    case 'bookings': {
+      const services = resources.filter((r) => r.type === 'service');
+      if (services.length > 0) {
+        return services.map((r) => ({
+          module: 'Appointments',
+          name: r.name || 'Booking',
+          metadata: { service_id: r.id },
+        }));
+      }
+      return [{ module: 'Appointments', name: 'Appointments' }];
+    }
+    case 'books':
+      return [{ module: 'Contacts', name: 'Books Contacts' }];
+    case 'projects': {
+      const taskTarget = resources.find((r) => r.type === 'task_target');
+      if (taskTarget?.metadata) {
+        return [{
+          module: 'Tasks',
+          name: taskTarget.name || 'Project Tasks',
+          metadata: taskTarget.metadata,
+        }];
+      }
+      return [{ module: 'Tasks', name: 'Project Tasks' }];
+    }
+    default:
+      return [];
+  }
+}
+
+function buildEntityPrompt(
+  appName: string,
+  service: string,
+  module: string,
+  fields: Array<{ name: string; label: string; type: string; required?: boolean; zoho_field: string }>,
+  submitUrl: string,
+  embedCode: string,
+  isDeployed: boolean,
+): string {
+  const fieldRows = fields.map(
+    (f) => `| ${f.name} | ${f.type} | ${f.required ? 'yes' : 'no'} | ${f.zoho_field} |`,
+  );
+  const sampleBody = Object.fromEntries(
+    fields.map((f) => {
+      switch (f.type) {
+        case 'email': return [f.name, 'user@example.com'];
+        case 'tel': return [f.name, '+1-555-0100'];
+        case 'date': return [f.name, '2026-04-15'];
+        case 'time': return [f.name, '10:00'];
+        case 'number': return [f.name, '1'];
+        default: return [f.name, `Example ${f.label}`];
+      }
+    }),
+  );
+
+  return [
+    `# ${appName} — ${module} Integration`,
+    '',
+    '## Entity',
+    `- Service: Zoho ${service.toUpperCase()}`,
+    `- Module: ${module}`,
+    `- Status: ${isDeployed ? 'deployed' : 'available to deploy'}`,
+    `- Submit endpoint: POST ${submitUrl}`,
+    '',
+    '## Fields',
+    '| Form Field | Type | Required | Zoho Field |',
+    '|---|---|---|---|',
+    ...fieldRows,
+    '',
+    '## Embed Code',
+    '```html',
+    embedCode,
+    '```',
+    '',
+    '## Sample Request',
+    '```javascript',
+    `const response = await fetch('${submitUrl}', {`,
+    "  method: 'POST',",
+    "  headers: { 'Content-Type': 'application/json' },",
+    `  body: JSON.stringify(${JSON.stringify(sampleBody, null, 2).split('\n').join('\n  ')})`,
+    '});',
+    'const result = await response.json();',
+    '```',
+    '',
+    '## Integration Notes',
+    '- Preserve field names in the JSON payload exactly as shown',
+    '- The submit endpoint handles Zoho sync automatically',
+    '- Adapt HTML/CSS styling freely — only the fetch payload shape matters',
+    '- For framework integration (React, Vue, etc.), extract the fetch call into your form handler',
+    '',
+  ].join('\n');
+}
+
+async function getEntities(context: AppContext): Promise<Entity[]> {
+  const formRows = await query<{
+    id: string;
+    form_key: string;
+    name: string;
+    route_type: string;
+    target_module: string;
+    is_active: boolean;
+    submissions_count: number;
+    field_mapping: Record<string, string> | null;
+    style_config: Record<string, any> | null;
+  }>(
+    `SELECT id, form_key, name, route_type, target_module, is_active,
+            submissions_count, field_mapping, style_config
+       FROM form_configs
+      WHERE app_id = $1
+      ORDER BY created_at DESC`,
+    [context.id],
+  );
+
+  // Index deployed routes by "routeType:targetModule" (with optional service_id for bookings)
+  const deployedMap = new Map<string, typeof formRows[number]>();
+  for (const row of formRows) {
+    const serviceId = row.style_config?.service_id;
+    const key = serviceId
+      ? `${row.route_type}:${row.target_module}:${serviceId}`
+      : `${row.route_type}:${row.target_module}`;
+    if (!deployedMap.has(key)) deployedMap.set(key, row);
+  }
+
+  const deployableServices: RouteType[] = ['crm', 'desk', 'bookings', 'books', 'projects'];
+  const entities: Entity[] = [];
+
+  // Discover resources for connected services in parallel
+  const connectedServices = deployableServices.filter((svc) => {
+    const conn = serviceConnectionFor(context, svc);
+    return conn.connected;
+  });
+
+  const resourcesByService = await Promise.all(
+    connectedServices.map(async (svc) => ({
+      service: svc,
+      resources: await discoverResources(context, svc),
+    })),
+  );
+
+  for (const { service, resources } of resourcesByService) {
+    const deployables = extractDeployableEntities(service, resources);
+    const routeType = service as RouteType;
+
+    for (const deployable of deployables) {
+      const serviceSpecificKey = deployable.metadata?.service_id
+        ? `${routeType}:${deployable.module}:${deployable.metadata.service_id}`
+        : null;
+      const genericKey = `${routeType}:${deployable.module}`;
+      const existingRoute = (serviceSpecificKey && deployedMap.get(serviceSpecificKey)) || deployedMap.get(genericKey);
+      const isDeployed = !!existingRoute;
+
+      const fields = isDeployed && existingRoute.style_config?.fields
+        ? existingRoute.style_config.fields
+        : DEFAULT_ROUTE_FIELDS[routeType];
+
+      const style = isDeployed && existingRoute.style_config
+        ? existingRoute.style_config
+        : {};
+
+      const formKey = isDeployed ? existingRoute.form_key : 'PLACEHOLDER_DEPLOY_FIRST';
+      const submitUrl = isDeployed
+        ? `${env.APP_URL}/api/f/${existingRoute.form_key}`
+        : `${env.APP_URL}/api/f/{form_key}`;
+
+      const embedCode = generateEmbedCode(formKey, deployable.name, fields, style, submitUrl);
+
+      const llmPrompt = buildEntityPrompt(
+        context.name,
+        service,
+        deployable.module,
+        fields,
+        submitUrl,
+        embedCode,
+        isDeployed,
+      );
+
+      const quickDeployPayload = isDeployed ? null : {
+        app_id: context.id,
+        route_type: routeType,
+        name: `${deployable.name} Form`,
+        target_module: deployable.module,
+        fields: DEFAULT_ROUTE_FIELDS[routeType],
+        style: {
+          ...(deployable.metadata || {}),
+        },
+      };
+
+      entities.push({
+        id: isDeployed ? existingRoute.id : `${routeType}:${deployable.module}`,
+        name: deployable.name,
+        service,
+        module: deployable.module,
+        status: isDeployed ? 'deployed' : 'available',
+        submissions_count: isDeployed ? existingRoute.submissions_count : 0,
+        form_key: isDeployed ? existingRoute.form_key : null,
+        embed_code: embedCode,
+        llm_prompt: llmPrompt,
+        quick_deploy_payload: quickDeployPayload,
+      });
+    }
+  }
+
+  // Also include deployed routes that aren't in connected-service discovery
+  // (e.g. user created a route for a service that's now disconnected)
+  for (const row of formRows) {
+    const mapKey = `${row.route_type}:${row.target_module}`;
+    const alreadyIncluded = entities.some((e) => e.status === 'deployed' && e.id === row.id);
+    if (!alreadyIncluded) {
+      const routeType = row.route_type as RouteType;
+      const fields = row.style_config?.fields || DEFAULT_ROUTE_FIELDS[routeType] || DEFAULT_ROUTE_FIELDS.crm;
+      const submitUrl = `${env.APP_URL}/api/f/${row.form_key}`;
+      const embedCode = generateEmbedCode(row.form_key, row.name, fields, row.style_config || {}, submitUrl);
+      const llmPrompt = buildEntityPrompt(context.name, row.route_type, row.target_module, fields, submitUrl, embedCode, true);
+
+      entities.push({
+        id: row.id,
+        name: row.name,
+        service: row.route_type,
+        module: row.target_module,
+        status: 'deployed',
+        submissions_count: row.submissions_count,
+        form_key: row.form_key,
+        embed_code: embedCode,
+        llm_prompt: llmPrompt,
+        quick_deploy_payload: null,
+      });
+    }
+  }
+
+  return entities;
 }
