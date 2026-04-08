@@ -584,6 +584,17 @@
     .entity-actions { display: flex; gap: 6px; flex-wrap: wrap; }
     .entity-actions .btn { font-size: 10px; padding: 5px 10px; }
 
+    /* ── Guided CRM form flow ────────────────────── */
+    .create-form-tile:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(220, 76, 62, 0.15); transform: translateY(-1px); }
+    .create-form-tile.selected { border-color: var(--accent); background: var(--accent-soft); }
+    .forms-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+    .forms-card h3 { margin: 0 0 6px; font-size: 13px; font-family: var(--display); }
+    .forms-card-meta { font-size: 10px; color: var(--muted); margin-bottom: 8px; }
+    .forms-field-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; padding: 6px 8px; border-bottom: 1px dashed #eef0f5; }
+    .forms-field-row:last-child { border-bottom: none; }
+    .forms-field-row .forms-field-name { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--secondary); }
+    .forms-field-row .forms-field-meta { color: var(--muted); font-size: 10px; }
+
     @media (max-width: 1020px) {
       .split,
       .auth-grid {
@@ -893,10 +904,84 @@
           <p>No connected services found. Connect a Zoho service to discover deployable entities.</p>
         </div>
       </div>
+
+      <!-- Guided Forms panel (shows existing forms + CTA to create a new CRM form) -->
+      <div id="formsContent" class="hidden">
+        <div class="breadcrumb" id="formsBreadcrumb">Account &rsaquo; Forms</div>
+        <div class="main-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <div>
+              <h2 style="font-family:var(--display);font-size:15px;margin:0;" id="formsHeading">Forms</h2>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;">Guided form builder that writes leads straight into Zoho CRM.</div>
+            </div>
+            <button class="btn btn-primary" id="openCreateFormBtn" style="font-size:11px;padding:10px 16px;">+ Create form for Zoho CRM</button>
+          </div>
+        </div>
+        <div id="formsList" class="entity-grid">
+          <div class="main-card" style="text-align:center;color:var(--muted);padding:20px;">Loading forms&hellip;</div>
+        </div>
+        <div id="formsEmpty" class="main-card hidden" style="text-align:center;color:var(--muted);padding:40px 20px;">
+          <h3 style="font-family:var(--display);font-size:14px;margin:0 0 6px;color:var(--ink);">No forms yet</h3>
+          <p style="margin:0;">No forms yet &mdash; create your first one to start collecting leads in Zoho CRM.</p>
+        </div>
+        <div id="formsEmbedResult" class="main-card hidden" style="margin-top:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <p class="main-card-title" style="margin:0;">Embed code</p>
+            <button class="btn btn-ghost" id="copyFormEmbedBtn" style="font-size:9px;padding:4px 10px;">Copy</button>
+          </div>
+          <p class="helper" id="formsEmbedMeta" style="margin-top:0;margin-bottom:8px;"></p>
+          <div class="code-block-wrap">
+            <pre id="formsEmbedCode" class="code"></pre>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
   <div id="toastWrap" class="toast-wrap"></div>
+
+  <!-- Create-form modal: pick CRM module, preview preset fields, save -->
+  <div id="createFormModal" class="hidden" style="position:fixed;inset:0;z-index:500;background:rgba(23,33,47,0.42);display:flex;align-items:center;justify-content:center;padding:24px;">
+    <div role="dialog" aria-modal="true" aria-labelledby="createFormModalTitle" style="background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:0 20px 60px rgba(23,33,47,0.25);max-width:680px;width:100%;max-height:92vh;overflow:auto;padding:22px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h3 id="createFormModalTitle" style="font-family:var(--display);font-size:18px;margin:0;">Create form for Zoho CRM</h3>
+        <button class="btn btn-ghost" id="closeCreateFormBtn" style="font-size:10px;padding:4px 10px;">Close</button>
+      </div>
+      <p class="helper" style="margin:0 0 14px;">Choose which CRM module this form should populate. We will auto-generate the fields from the Zoho preset.</p>
+      <div id="createFormTiles" style="display:grid;grid-template-columns:repeat(3, minmax(0,1fr));gap:10px;margin-bottom:16px;">
+        <button type="button" class="create-form-tile" data-module="Leads" style="text-align:left;padding:18px;border-radius:var(--radius-lg);border:1px solid var(--line);background:var(--panel);cursor:pointer;transition:0.15s ease;">
+          <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:4px;">Leads</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.35;">Capture new prospects into the Leads module.</div>
+        </button>
+        <button type="button" class="create-form-tile" data-module="Contacts" style="text-align:left;padding:18px;border-radius:var(--radius-lg);border:1px solid var(--line);background:var(--panel);cursor:pointer;transition:0.15s ease;">
+          <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:4px;">Contacts</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.35;">Add people directly to the Contacts module.</div>
+        </button>
+        <button type="button" class="create-form-tile" data-module="Deals" style="text-align:left;padding:18px;border-radius:var(--radius-lg);border:1px solid var(--line);background:var(--panel);cursor:pointer;transition:0.15s ease;">
+          <div style="font-family:var(--display);font-size:15px;font-weight:600;margin-bottom:4px;">Deals</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.35;">Kick off a new deal in the Deals module.</div>
+        </button>
+      </div>
+      <div id="createFormPreview" class="hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <p class="main-card-title" style="margin:0;">Preview &mdash; <span id="createFormPreviewModule"></span></p>
+          <span class="tag" id="createFormPreviewCount">0 fields</span>
+        </div>
+        <label class="label" for="createFormNameInput" style="margin-top:6px;">Form name</label>
+        <input class="field" id="createFormNameInput" placeholder="Website lead capture">
+        <label class="label" for="createFormLeadSourceInput" style="margin-top:10px;">Lead source (optional)</label>
+        <input class="field" id="createFormLeadSourceInput" placeholder="Website A">
+        <div style="margin-top:12px;">
+          <p class="main-card-title" style="margin:0 0 6px;">Fields</p>
+          <div id="createFormFieldsPreview" style="display:grid;gap:6px;max-height:240px;overflow:auto;padding:4px;border:1px solid var(--line);border-radius:var(--radius);background:#fafbfc;"></div>
+        </div>
+        <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px;">
+          <button class="btn btn-ghost" id="cancelCreateFormBtn" style="font-size:11px;padding:8px 14px;">Cancel</button>
+          <button class="btn btn-primary" id="saveCreateFormBtn" style="font-size:11px;padding:8px 16px;">Save form</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     const state = {
@@ -1029,6 +1114,7 @@
       byId('workspaceCreate').classList.add('hidden');
       byId('serviceContent').classList.add('hidden');
       byId('entitiesContent').classList.add('hidden');
+      byId('formsContent').classList.add('hidden');
     }
 
     function showEmptyState() {
@@ -1078,29 +1164,28 @@
       state.projectContext = (await api(`/api/project-context?app_id=${state.currentAppId}`)).projectContext;
       state.services = (await api(`/api/zoho/services?app_id=${state.currentAppId}`)).services;
       state.details = {};
-      renderServicePanel(appRecord);
       const params = new URLSearchParams(window.location.search);
       const requestedService = params.get('service');
-      const nextService = requestedService && state.services.find((s) => s.id === requestedService)
-        ? requestedService
-        : (state.activeService && state.services.find((s) => s.id === state.activeService)
-          ? state.activeService
-          : (state.services.find((s) => s.status === 'ready')
-            ? state.services.find((s) => s.status === 'ready').id
-            : (state.services[0] ? state.services[0].id : null)));
-      if (nextService) {
-        await selectService(nextService);
+      // If a service is explicitly requested via URL, honour the previous service-first flow.
+      // Otherwise default to the guided CRM Forms panel (additive to the existing UI).
+      if (requestedService && state.services.find((s) => s.id === requestedService)) {
+        renderServicePanel(appRecord);
+        await selectService(requestedService);
       } else {
-        hideAllMainPanels();
-        byId('serviceContent').classList.remove('hidden');
-        byId('breadcrumb').textContent = appRecord.name;
-        byId('serviceTitle').textContent = 'No services available';
-        byId('serviceMeta').textContent = 'Connect Zoho to discover services';
+        state.activeService = '__forms__';
+        renderServicePanel(appRecord);
+        await loadFormsPanel();
       }
     }
 
     function renderServicePanel(appRecord) {
       byId('servicePanelHeader').textContent = appRecord.name;
+      const formsItem = `
+        <div class="service-panel-item ${state.activeService === '__forms__' ? 'active' : ''}" data-sid="__forms__">
+          <span class="service-panel-dot ready"></span>
+          CRM Forms
+        </div>
+      `;
       const entitiesItem = `
         <div class="service-panel-item ${state.activeService === '__entities__' ? 'active' : ''}" data-sid="__entities__">
           <span class="service-panel-dot ready"></span>
@@ -1113,10 +1198,15 @@
           ${escapeHtml(service.name)}
         </div>
       `).join('');
-      byId('servicePanelList').innerHTML = entitiesItem + serviceItems;
+      byId('servicePanelList').innerHTML = formsItem + entitiesItem + serviceItems;
       Array.from(document.querySelectorAll('[data-sid]')).forEach((el) => {
         el.addEventListener('click', () => {
-          if (el.dataset.sid === '__entities__') {
+          if (el.dataset.sid === '__forms__') {
+            state.activeService = '__forms__';
+            const app = state.apps.find((a) => a.id === state.currentAppId);
+            if (app) renderServicePanel(app);
+            loadFormsPanel();
+          } else if (el.dataset.sid === '__entities__') {
             state.activeService = '__entities__';
             const app = state.apps.find((a) => a.id === state.currentAppId);
             if (app) renderServicePanel(app);
@@ -1233,6 +1323,156 @@
         await loadEntities();
       } catch (error) {
         showToast('Deploy failed: ' + (error.message || 'Unknown error'));
+      }
+    }
+
+    // ── Guided CRM form flow ────────────────────────────────────────────────
+    const formsState = {
+      list: null,
+      selectedModule: null,
+      preset: null,
+    };
+
+    async function loadFormsPanel() {
+      hideAllMainPanels();
+      byId('formsContent').classList.remove('hidden');
+      const appRecord = state.apps.find((a) => a.id === state.currentAppId);
+      const appName = appRecord ? appRecord.name : 'Account';
+      byId('formsBreadcrumb').textContent = `${appName} \u203A Forms`;
+      byId('formsHeading').textContent = `Forms for ${appName}`;
+      byId('formsEmbedResult').classList.add('hidden');
+      const listEl = byId('formsList');
+      const emptyEl = byId('formsEmpty');
+      listEl.innerHTML = '<div class="main-card" style="text-align:center;color:var(--muted);padding:20px;">Loading forms\u2026</div>';
+      emptyEl.classList.add('hidden');
+      if (!state.currentAppId) {
+        listEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      try {
+        const forms = await api(`/api/forms?app_id=${encodeURIComponent(state.currentAppId)}`);
+        formsState.list = Array.isArray(forms) ? forms : [];
+        renderFormsList();
+      } catch (error) {
+        formsState.list = [];
+        listEl.innerHTML = `<div class="main-card" style="text-align:center;color:var(--muted);padding:20px;">Failed to load forms. ${escapeHtml(error.message || '')}</div>`;
+      }
+    }
+
+    function renderFormsList() {
+      const listEl = byId('formsList');
+      const emptyEl = byId('formsEmpty');
+      const forms = formsState.list || [];
+      if (forms.length === 0) {
+        listEl.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        return;
+      }
+      emptyEl.classList.add('hidden');
+      listEl.innerHTML = forms.map((form) => {
+        const submissions = typeof form.submissions_count === 'number' ? form.submissions_count : 0;
+        const targetModule = form.target_module || '—';
+        const activeLabel = form.is_active === false ? 'Inactive' : 'Active';
+        const activeClass = form.is_active === false ? 'available' : 'deployed';
+        return `
+          <div class="forms-card">
+            <div class="entity-service-tag">${escapeHtml(form.route_type || 'crm')} &rsaquo; ${escapeHtml(targetModule)}</div>
+            <div class="entity-card-header">
+              <h3>${escapeHtml(form.name || form.form_key || 'Untitled form')}</h3>
+              <span class="entity-badge ${activeClass}">${activeLabel}</span>
+            </div>
+            <div class="forms-card-meta">${submissions} submission${submissions === 1 ? '' : 's'}${form.lead_source ? ' &bull; Lead source: ' + escapeHtml(form.lead_source) : ''}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openCreateFormModal() {
+      if (!state.currentAppId) return showToast('Select a workspace first.');
+      formsState.selectedModule = null;
+      formsState.preset = null;
+      byId('createFormPreview').classList.add('hidden');
+      byId('createFormFieldsPreview').innerHTML = '';
+      byId('createFormNameInput').value = '';
+      byId('createFormLeadSourceInput').value = '';
+      Array.from(document.querySelectorAll('.create-form-tile')).forEach((tile) => tile.classList.remove('selected'));
+      byId('createFormModal').classList.remove('hidden');
+    }
+
+    function closeCreateFormModal() {
+      byId('createFormModal').classList.add('hidden');
+    }
+
+    async function selectCreateFormModule(moduleName) {
+      formsState.selectedModule = moduleName;
+      Array.from(document.querySelectorAll('.create-form-tile')).forEach((tile) => {
+        tile.classList.toggle('selected', tile.dataset.module === moduleName);
+      });
+      const previewEl = byId('createFormPreview');
+      const fieldsEl = byId('createFormFieldsPreview');
+      previewEl.classList.remove('hidden');
+      byId('createFormPreviewModule').textContent = moduleName;
+      byId('createFormPreviewCount').textContent = 'Loading\u2026';
+      fieldsEl.innerHTML = '<div style="padding:10px;font-size:11px;color:var(--muted);">Loading preset fields\u2026</div>';
+      if (!byId('createFormNameInput').value) {
+        byId('createFormNameInput').value = `${moduleName} capture form`;
+      }
+      try {
+        const preset = await api(`/api/forms/presets/${encodeURIComponent(moduleName)}?route_type=crm`);
+        formsState.preset = preset;
+        const fields = Array.isArray(preset.fields) ? preset.fields : [];
+        byId('createFormPreviewCount').textContent = `${fields.length} field${fields.length === 1 ? '' : 's'}`;
+        fieldsEl.innerHTML = fields.length
+          ? fields.map((field) => `
+              <div class="forms-field-row">
+                <span class="forms-field-name">${escapeHtml(field.label || field.name || '')}</span>
+                <span class="forms-field-meta">${escapeHtml(field.type || 'text')}${field.required ? ' &bull; required' : ''}${field.zoho_field ? ' &bull; \u2192 ' + escapeHtml(field.zoho_field) : ''}</span>
+              </div>
+            `).join('')
+          : '<div style="padding:10px;font-size:11px;color:var(--muted);">No fields returned by preset.</div>';
+      } catch (error) {
+        formsState.preset = null;
+        byId('createFormPreviewCount').textContent = 'Error';
+        fieldsEl.innerHTML = `<div style="padding:10px;font-size:11px;color:var(--danger);">Failed to load preset: ${escapeHtml(error.message || '')}</div>`;
+      }
+    }
+
+    async function saveCreateForm() {
+      if (!state.currentAppId) return showToast('Select a workspace first.');
+      if (!formsState.selectedModule || !formsState.preset) return showToast('Pick a CRM module first.');
+      const name = byId('createFormNameInput').value.trim();
+      if (!name) return showToast('Give the form a name first.');
+      const leadSource = byId('createFormLeadSourceInput').value.trim();
+      const body = {
+        name,
+        app_id: state.currentAppId,
+        target_module: formsState.selectedModule,
+        route_type: 'crm',
+        fields: formsState.preset.fields || [],
+        style: formsState.preset.style || {},
+      };
+      if (leadSource) body.lead_source = leadSource;
+      const saveBtn = byId('saveCreateFormBtn');
+      saveBtn.disabled = true;
+      try {
+        const result = await api('/api/forms', { method: 'POST', body });
+        showToast('Form created.', 'success');
+        closeCreateFormModal();
+        await loadFormsPanel();
+        const embedCode = result && result.embed_code ? result.embed_code : '';
+        const submitUrl = result && result.submit_url ? result.submit_url : '';
+        const formKey = result && result.form_key ? result.form_key : (result && result.form && result.form.form_key ? result.form.form_key : '');
+        byId('formsEmbedCode').textContent = embedCode || submitUrl || '';
+        byId('formsEmbedMeta').textContent = [
+          formKey ? `Form key: ${formKey}` : '',
+          submitUrl ? `Submit URL: ${submitUrl}` : '',
+        ].filter(Boolean).join(' \u2022 ') || 'Form saved.';
+        byId('formsEmbedResult').classList.remove('hidden');
+      } catch (error) {
+        showToast('Save failed: ' + (error.message || 'Unknown error'));
+      } finally {
+        saveBtn.disabled = false;
       }
     }
 
@@ -1703,6 +1943,26 @@
     byId('copyPromptBtn').addEventListener('click', () => copyFrom('handoffPrompt'));
     byId('copyRefsBtn').addEventListener('click', () => copyFrom('handoffRefs'));
     byId('refreshEntitiesBtn').addEventListener('click', () => { state.entities = null; loadEntities(); });
+
+    // Guided CRM form flow bindings
+    byId('openCreateFormBtn').addEventListener('click', openCreateFormModal);
+    byId('closeCreateFormBtn').addEventListener('click', closeCreateFormModal);
+    byId('cancelCreateFormBtn').addEventListener('click', closeCreateFormModal);
+    byId('createFormModal').addEventListener('click', (event) => {
+      if (event.target === byId('createFormModal')) closeCreateFormModal();
+    });
+    Array.from(document.querySelectorAll('.create-form-tile')).forEach((tile) => {
+      tile.addEventListener('click', () => selectCreateFormModule(tile.dataset.module));
+    });
+    byId('saveCreateFormBtn').addEventListener('click', saveCreateForm);
+    byId('copyFormEmbedBtn').addEventListener('click', () => {
+      const text = byId('formsEmbedCode').textContent || '';
+      if (!text) return showToast('Nothing to copy yet.');
+      navigator.clipboard.writeText(text).then(
+        () => showToast('Embed code copied!', 'success'),
+        () => showToast('Failed to copy'),
+      );
+    });
 
     bootstrap();
   </script>
