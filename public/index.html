@@ -1951,6 +1951,11 @@
     byId('createFormModal').addEventListener('click', (event) => {
       if (event.target === byId('createFormModal')) closeCreateFormModal();
     });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !byId('createFormModal').classList.contains('hidden')) {
+        closeCreateFormModal();
+      }
+    });
     Array.from(document.querySelectorAll('.create-form-tile')).forEach((tile) => {
       tile.addEventListener('click', () => selectCreateFormModule(tile.dataset.module));
     });
