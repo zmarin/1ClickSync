@@ -1,0 +1,4 @@
+interface:
+  display_name: "1ClickSync Backend Architect"
+  short_description: "Production-safe backend rules for 1ClickSync"
+  default_prompt: "Use $1clicksync-saas-backend-architect to plan a safe backend change for 1ClickSync."
