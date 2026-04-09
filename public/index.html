@@ -355,14 +355,64 @@
 
       <!-- Step 2: Connect Zoho -->
       <div id="step2" class="hidden">
-        <div class="card">
-          <h2>Connect Zoho</h2>
-          <p class="sub">Link your Zoho account so we can access CRM, forms, and other services.</p>
-          <div id="zohoStatus"></div>
-          <button class="btn btn-primary btn-block" id="connectZohoBtn">Connect to Zoho</button>
-          <div class="btn-row btn-row-between" style="margin-top:12px;">
-            <button class="btn btn-ghost" id="step2Back">&larr; Back</button>
-            <button class="btn btn-secondary hidden" id="step2Next">Continue &rarr;</button>
+        <!-- Already connected state -->
+        <div id="step2Connected" class="hidden">
+          <div class="card">
+            <div id="zohoStatus"></div>
+            <div class="btn-row btn-row-between">
+              <button class="btn btn-ghost" id="step2BackConnected">&larr; Back</button>
+              <button class="btn btn-primary" id="step2Next">Continue &rarr;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Not connected: choose path -->
+        <div id="step2Choose" class="hidden">
+          <div class="card">
+            <h2>Connect Zoho</h2>
+            <p class="sub">Do you already have a Zoho account?</p>
+            <div class="tile-grid">
+              <div class="tile" id="zohoHaveAccount">
+                <h3>Yes, connect it</h3>
+                <p>I already have a Zoho account. Connect it now via sign-in.</p>
+              </div>
+              <div class="tile" id="zohoNeedAccount">
+                <h3>No, I need one</h3>
+                <p>Sign up for free — takes 2 minutes. Free for up to 5 users.</p>
+              </div>
+            </div>
+            <div class="btn-row" style="margin-top:12px;">
+              <button class="btn btn-ghost" id="step2Back">&larr; Back</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Path A: Have account → connect -->
+        <div id="step2Connect" class="hidden">
+          <div class="card">
+            <h2>Sign in to Zoho</h2>
+            <p class="sub">You'll be redirected to Zoho to sign in and grant access. If you have multiple Zoho accounts, you can pick which one to use.</p>
+            <button class="btn btn-primary btn-block" id="connectZohoBtn">Connect to Zoho</button>
+            <div class="btn-row" style="margin-top:12px;">
+              <button class="btn btn-ghost" id="step2ConnectBack">&larr; Back</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Path B: Need account → signup first -->
+        <div id="step2Signup" class="hidden">
+          <div class="card">
+            <h2>Create your Zoho account</h2>
+            <p class="sub">Sign up for a free Zoho account. It takes about 2 minutes. Free for up to 5 users.</p>
+            <a href="https://go.zoho.com/oKk6" target="_blank" rel="noopener" class="btn btn-primary btn-block" id="zohoSignupBtn">Sign up at Zoho (opens new tab)</a>
+            <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:var(--radius-lg);border:1px solid var(--line);">
+              <p style="font-size:0.88rem;font-weight:600;margin-bottom:6px;">After you've signed up:</p>
+              <p style="font-size:0.82rem;color:var(--muted);line-height:1.5;margin:0;">Come back here and click "Connect" below. You'll sign in with your new Zoho account.</p>
+            </div>
+            <button class="btn btn-secondary btn-block" id="zohoSignupDoneBtn" style="margin-top:12px;">I've signed up — Connect now</button>
+            <div class="btn-row" style="margin-top:12px;">
+              <button class="btn btn-ghost" id="step2SignupBack">&larr; Back</button>
+            </div>
           </div>
         </div>
       </div>
@@ -777,12 +827,15 @@
     }
 
     // ═══════════════════════════════════════════════════════
-    // Step 2: Connect Zoho
+    // Step 2: Connect Zoho (sub-views)
     // ═══════════════════════════════════════════════════════
+    function hideStep2Panels() {
+      ['step2Connected','step2Choose','step2Connect','step2Signup'].forEach(id => byId(id).classList.add('hidden'));
+    }
+
     async function checkZohoConnection() {
+      hideStep2Panels();
       const statusEl = byId('zohoStatus');
-      const connectBtn = byId('connectZohoBtn');
-      const nextBtn = byId('step2Next');
       statusEl.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;padding:8px 0;">Checking connection...</div>';
       try {
         const conn = await api(`/api/connection/${state.currentAppId}`);
@@ -790,18 +843,28 @@
         if (app) app.zoho_connected = conn.connected;
         if (conn.connected) {
           statusEl.innerHTML = `<div class="connect-status ok"><div class="connect-dot ok"></div><div><strong>Zoho connected</strong><div style="font-size:0.82rem;color:var(--muted);">Region: ${escapeHtml(conn.dc || 'unknown')} &bull; Org: ${escapeHtml(conn.org_id || 'unknown')}</div></div></div>`;
-          connectBtn.classList.add('hidden');
-          nextBtn.classList.remove('hidden');
+          byId('step2Connected').classList.remove('hidden');
         } else {
-          statusEl.innerHTML = '<div class="connect-status pending"><div class="connect-dot pending"></div><div><strong>Not connected yet</strong><div style="font-size:0.82rem;color:var(--muted);">Click below to connect your Zoho account.</div></div></div>';
-          connectBtn.classList.remove('hidden');
-          nextBtn.classList.add('hidden');
+          byId('step2Choose').classList.remove('hidden');
         }
       } catch (error) {
-        statusEl.innerHTML = '';
-        connectBtn.classList.remove('hidden');
-        nextBtn.classList.add('hidden');
+        byId('step2Choose').classList.remove('hidden');
       }
+    }
+
+    function showStep2Connect() {
+      hideStep2Panels();
+      byId('step2Connect').classList.remove('hidden');
+    }
+
+    function showStep2Signup() {
+      hideStep2Panels();
+      byId('step2Signup').classList.remove('hidden');
+    }
+
+    function showStep2Choose() {
+      hideStep2Panels();
+      byId('step2Choose').classList.remove('hidden');
     }
 
     async function connectZoho() {
@@ -999,10 +1062,18 @@
 
     // Step navigation
     byId('step2Back').addEventListener('click', () => showStep(1));
+    byId('step2BackConnected').addEventListener('click', () => showStep(1));
     byId('step2Next').addEventListener('click', () => showStep(3));
     byId('step3Back').addEventListener('click', () => showStep(2));
     byId('step4crmBack').addEventListener('click', () => showStep(3));
     byId('step4emailBack').addEventListener('click', () => showStep(3));
+
+    // Step 2 sub-navigation
+    byId('zohoHaveAccount').addEventListener('click', showStep2Connect);
+    byId('zohoNeedAccount').addEventListener('click', showStep2Signup);
+    byId('step2ConnectBack').addEventListener('click', showStep2Choose);
+    byId('step2SignupBack').addEventListener('click', showStep2Choose);
+    byId('zohoSignupDoneBtn').addEventListener('click', connectZoho);
 
     // Zoho connect
     byId('connectZohoBtn').addEventListener('click', connectZoho);
