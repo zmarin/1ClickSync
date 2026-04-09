@@ -427,22 +427,25 @@
           </div>
         </div>
 
-        <!-- Path B: Need new org → instructions + connect -->
+        <!-- Path B: Need new org → direct links -->
         <div id="step2NewOrg" class="hidden">
           <div class="card">
-            <h2>Create a new Zoho org</h2>
-            <p class="sub">You can create a new organization under your existing Zoho login. Each org is completely separate — different CRM data, different settings.</p>
-            <div style="padding:16px;background:var(--bg);border-radius:var(--radius-lg);border:1px solid var(--line);margin-bottom:16px;">
-              <p style="font-size:0.88rem;font-weight:600;margin-bottom:8px;">How to create a new org:</p>
-              <ol style="font-size:0.82rem;color:var(--muted);line-height:1.7;margin:0;padding-left:18px;">
-                <li>Go to <a href="https://crm.zoho.com" target="_blank" rel="noopener" style="color:var(--accent);">crm.zoho.com</a></li>
-                <li>Click your profile icon (top right)</li>
-                <li>Select <strong>"Switch to another account"</strong> or <strong>"Create New Org"</strong></li>
-                <li>Set up the new org with your project name</li>
-                <li>Come back here and click Connect</li>
-              </ol>
+            <h2>Add a new Zoho org</h2>
+            <p class="sub">Create a new organization under your Zoho login. Each org is fully separate — its own CRM, mail, and settings.</p>
+            <div class="tile-grid" style="grid-template-columns:1fr;">
+              <div class="tile" onclick="window.open('https://accounts.zoho.com','zoho-accounts','width=900,height=700,scrollbars=yes')">
+                <h3>Open Zoho Accounts</h3>
+                <p>Manage your organizations — create new ones, switch between them.</p>
+              </div>
+              <div class="tile" onclick="window.open('https://store.zoho.com','zoho-store','width=900,height=700,scrollbars=yes')">
+                <h3>Zoho Store</h3>
+                <p>Purchase Zoho products (CRM, Mail, etc.) for a new organization.</p>
+              </div>
             </div>
-            <button class="btn btn-primary btn-block" id="newOrgConnectBtn">I've created it — Connect now</button>
+            <div style="margin-top:16px;padding:14px;background:var(--bg);border-radius:var(--radius-lg);border:1px solid var(--line);">
+              <p style="font-size:0.82rem;color:var(--muted);margin:0;line-height:1.5;">Create your org in Zoho, then come back here and click Connect. The sign-in popup will let you pick which org to link.</p>
+            </div>
+            <button class="btn btn-primary btn-block" id="newOrgConnectBtn" style="margin-top:12px;">Connect my new org</button>
             <div class="btn-row" style="margin-top:12px;">
               <button class="btn btn-ghost" id="step2NewOrgBack">&larr; Back</button>
             </div>
@@ -478,8 +481,8 @@
               <p>Create lead capture forms that write straight into Zoho CRM.</p>
             </div>
             <div class="tile" data-service="email">
-              <h3>Email Setup</h3>
-              <p>Get free Zoho Mail and IMAP/SMTP settings for your project.</p>
+              <h3>Zoho Mail</h3>
+              <p>Get professional email for your project domain.</p>
             </div>
           </div>
           <div class="btn-row" style="margin-top:16px;">
@@ -514,28 +517,22 @@
         </div>
       </div>
 
-      <!-- Step 4b: Email Setup -->
+      <!-- Step 4b: Get Zoho Mail -->
       <div id="step4email" class="hidden">
         <div class="card">
-          <h2>Email Setup</h2>
-          <p class="sub">Get free professional email for your project with Zoho Mail — free for up to 5 users.</p>
-          <a href="https://go.zoho.com/oKk6" target="_blank" rel="noopener" class="btn btn-primary btn-block">Sign Up for Zoho Mail</a>
-          <div class="auth-divider" style="margin:20px 0;">Already signed up?</div>
-          <div class="setting-group">
-            <h3>Incoming Mail (IMAP)</h3>
-            <div class="setting-row"><span class="setting-label">Server</span><span class="setting-value">imappro.zoho.com</span></div>
-            <div class="setting-row"><span class="setting-label">Port</span><span class="setting-value">993</span></div>
-            <div class="setting-row"><span class="setting-label">Security</span><span class="setting-value">SSL/TLS</span></div>
-          </div>
-          <div class="setting-group">
-            <h3>Outgoing Mail (SMTP)</h3>
-            <div class="setting-row"><span class="setting-label">Server</span><span class="setting-value">smtppro.zoho.com</span></div>
-            <div class="setting-row"><span class="setting-label">Port</span><span class="setting-value">465</span></div>
-            <div class="setting-row"><span class="setting-label">Security</span><span class="setting-value">SSL/TLS</span></div>
-          </div>
-          <div class="note">
-            <strong>Username:</strong> your full Zoho email address<br>
-            <strong>Password:</strong> your Zoho password (or app-specific password if 2FA is on)
+          <h2>Get Zoho Mail</h2>
+          <p class="sub">Professional email for your project domain. Free for up to 5 users.</p>
+          <a href="https://go.zoho.com/oKk6" target="_blank" rel="noopener" class="btn btn-primary btn-block">Sign up for Zoho Mail</a>
+          <div class="auth-divider" style="margin:20px 0;">Already have a Zoho account?</div>
+          <div class="tile-grid" style="grid-template-columns:1fr;">
+            <div class="tile" onclick="window.open('https://store.zoho.com/buyProduct.do?product=mail','zoho-store','width=900,height=700,scrollbars=yes')">
+              <h3>Add Mail to your org</h3>
+              <p>Purchase Zoho Mail for an existing organization. Starts at $1/user/month.</p>
+            </div>
+            <div class="tile" onclick="window.open('https://mailadmin.zoho.com','zoho-mailadmin','width=900,height=700,scrollbars=yes')">
+              <h3>Manage your mail</h3>
+              <p>Open the Mail admin console to add domains, users, and configure your email.</p>
+            </div>
           </div>
         </div>
         <div class="btn-row" style="margin-top:16px;">

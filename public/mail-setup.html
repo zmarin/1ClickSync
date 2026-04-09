@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>1ClickSync — Free Email Setup</title>
-  <meta name="description" content="Get free professional email for your project with Zoho Mail. Free for up to 5 users.">
+  <title>1ClickSync — Get Zoho Mail</title>
+  <meta name="description" content="Get professional email for your project domain with Zoho Mail.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -17,12 +17,10 @@
       --line: rgba(31, 42, 33, 0.12);
       --accent: #1f8f5f;
       --accent-2: #0b3d2e;
-      --gold: #cc9b2f;
       --radius: 24px;
     }
 
     * { box-sizing: border-box; margin: 0; }
-    html { scroll-behavior: smooth; }
     body {
       font-family: 'IBM Plex Sans', sans-serif;
       color: var(--ink);
@@ -43,7 +41,6 @@
       font-weight: 700;
       font-size: 1.5rem;
       color: var(--accent-2);
-      letter-spacing: -0.02em;
     }
 
     .card {
@@ -62,7 +59,6 @@
       font-family: 'Space Grotesk', sans-serif;
       font-size: 1.75rem;
       font-weight: 700;
-      color: var(--ink);
       margin-bottom: 8px;
     }
 
@@ -88,23 +84,8 @@
       border: none;
       text-decoration: none;
     }
-
-    .btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(20, 37, 27, 0.14);
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: var(--accent-2);
-      border: 1.5px solid var(--line);
-      margin-top: 12px;
-    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(20, 37, 27, 0.14); }
+    .btn-primary { background: var(--accent); color: #fff; }
 
     .divider {
       display: flex;
@@ -114,112 +95,27 @@
       color: var(--muted);
       font-size: 0.85rem;
     }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 
-    .divider::before,
-    .divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--line);
-    }
-
-    .settings {
-      display: none;
-      margin-top: 24px;
-      animation: slideIn 0.25s ease;
-    }
-
-    .settings.visible { display: block; }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .setting-group {
-      background: #f8f6f0;
-      border: 1px solid var(--line);
+    .action-tile {
+      display: block;
+      padding: 18px 20px;
+      border: 1.5px solid var(--line);
       border-radius: 14px;
-      padding: 20px;
+      cursor: pointer;
+      transition: 0.15s;
       margin-bottom: 12px;
+      text-decoration: none;
+      color: inherit;
     }
-
-    .setting-group h3 {
+    .action-tile:hover { border-color: var(--accent); box-shadow: 0 4px 16px rgba(31, 143, 95, 0.1); transform: translateY(-1px); }
+    .action-tile h3 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--accent-2);
-      margin-bottom: 12px;
-    }
-
-    .setting-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 6px 0;
-      font-size: 0.88rem;
-    }
-
-    .setting-row + .setting-row {
-      border-top: 1px solid var(--line);
-    }
-
-    .setting-label {
-      color: var(--muted);
-    }
-
-    .setting-value {
-      font-weight: 600;
-      font-family: 'IBM Plex Sans', monospace;
-      color: var(--ink);
-      user-select: all;
-    }
-
-    .note {
-      margin-top: 16px;
-      padding: 14px 16px;
-      background: rgba(31, 143, 95, 0.06);
-      border-radius: 10px;
-      font-size: 0.82rem;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .note strong { color: var(--ink); }
-
-    .user-badge {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-      padding: 14px 16px;
-      background: rgba(31, 143, 95, 0.06);
-      border-radius: 12px;
-    }
-
-    .user-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 1rem;
-      flex-shrink: 0;
-    }
-
-    .user-name {
-      font-weight: 600;
       font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 4px;
     }
-
-    .user-email {
-      color: var(--muted);
-      font-size: 0.82rem;
-    }
+    .action-tile p { font-size: 0.82rem; color: var(--muted); line-height: 1.4; margin: 0; }
 
     @media (max-width: 540px) {
       .card { padding: 32px 24px; }
@@ -231,156 +127,31 @@
 
   <div class="brand">1ClickSync</div>
 
-  <div class="card" id="card">
-    <!-- Loading state -->
-    <div id="loading" style="text-align:center;padding:20px 0;color:var(--muted);">Checking session…</div>
+  <div class="card">
+    <h1>Get Zoho Mail</h1>
+    <p class="subtitle">Professional email for your project domain. Free for up to 5 users.</p>
 
-    <!-- Signed-in state (hidden by default) -->
-    <div id="authed" style="display:none;">
-      <div class="user-badge">
-        <div class="user-avatar" id="avatar"></div>
-        <div>
-          <div class="user-name" id="userName"></div>
-          <div class="user-email" id="userEmail"></div>
-        </div>
-      </div>
+    <a href="https://go.zoho.com/oKk6" target="_blank" rel="noopener" class="btn btn-primary">
+      Sign up for Zoho Mail
+    </a>
 
-      <h1>Connect Your Mail</h1>
-      <p class="subtitle">Use these settings in any email app to send and receive mail from your Zoho account.</p>
+    <div class="divider">Already have a Zoho account?</div>
 
-      <div class="setting-group">
-        <h3>Incoming Mail (IMAP)</h3>
-        <div class="setting-row">
-          <span class="setting-label">Server</span>
-          <span class="setting-value">imappro.zoho.com</span>
-        </div>
-        <div class="setting-row">
-          <span class="setting-label">Port</span>
-          <span class="setting-value">993</span>
-        </div>
-        <div class="setting-row">
-          <span class="setting-label">Security</span>
-          <span class="setting-value">SSL/TLS</span>
-        </div>
-      </div>
+    <a class="action-tile" href="#" onclick="window.open('https://store.zoho.com/buyProduct.do?product=mail','zoho-store','width=900,height=700,scrollbars=yes');return false;">
+      <h3>Add Mail to your org</h3>
+      <p>Purchase Zoho Mail for an existing organization. Starts at $1/user/month.</p>
+    </a>
 
-      <div class="setting-group">
-        <h3>Outgoing Mail (SMTP)</h3>
-        <div class="setting-row">
-          <span class="setting-label">Server</span>
-          <span class="setting-value">smtppro.zoho.com</span>
-        </div>
-        <div class="setting-row">
-          <span class="setting-label">Port</span>
-          <span class="setting-value">465</span>
-        </div>
-        <div class="setting-row">
-          <span class="setting-label">Security</span>
-          <span class="setting-value">SSL/TLS</span>
-        </div>
-      </div>
+    <a class="action-tile" href="#" onclick="window.open('https://mailadmin.zoho.com','zoho-mailadmin','width=900,height=700,scrollbars=yes');return false;">
+      <h3>Manage your mail</h3>
+      <p>Open the Mail admin console to add domains, users, and configure email.</p>
+    </a>
 
-      <div class="note">
-        <strong>Username:</strong> your full Zoho email address<br>
-        <strong>Password:</strong> your Zoho password (or app-specific password if 2FA is on)
-      </div>
-    </div>
-
-    <!-- Signed-out state (hidden by default) -->
-    <div id="guest" style="display:none;">
-      <h1>New Project? Get Free Email</h1>
-      <p class="subtitle">
-        Sign up for Zoho Mail — free for up to 5 users. Get professional email for your project in minutes.
-      </p>
-
-      <a href="https://go.zoho.com/oKk6" target="_blank" rel="noopener" class="btn btn-primary">
-        Sign Up for Zoho Mail
-      </a>
-
-      <div class="divider">Already signed up?</div>
-
-      <button class="btn btn-secondary" onclick="toggleSettings()">
-        Connect Your Mail — View Settings
-      </button>
-
-      <div class="settings" id="guestSettings">
-        <div class="setting-group">
-          <h3>Incoming Mail (IMAP)</h3>
-          <div class="setting-row">
-            <span class="setting-label">Server</span>
-            <span class="setting-value">imappro.zoho.com</span>
-          </div>
-          <div class="setting-row">
-            <span class="setting-label">Port</span>
-            <span class="setting-value">993</span>
-          </div>
-          <div class="setting-row">
-            <span class="setting-label">Security</span>
-            <span class="setting-value">SSL/TLS</span>
-          </div>
-        </div>
-
-        <div class="setting-group">
-          <h3>Outgoing Mail (SMTP)</h3>
-          <div class="setting-row">
-            <span class="setting-label">Server</span>
-            <span class="setting-value">smtppro.zoho.com</span>
-          </div>
-          <div class="setting-row">
-            <span class="setting-label">Port</span>
-            <span class="setting-value">465</span>
-          </div>
-          <div class="setting-row">
-            <span class="setting-label">Security</span>
-            <span class="setting-value">SSL/TLS</span>
-          </div>
-        </div>
-
-        <div class="note">
-          <strong>Username:</strong> your full Zoho email address<br>
-          <strong>Password:</strong> your Zoho password (or app-specific password if 2FA is on)
-        </div>
-      </div>
-    </div>
+    <a class="action-tile" href="#" onclick="window.open('https://accounts.zoho.com','zoho-accounts','width=900,height=700,scrollbars=yes');return false;">
+      <h3>Zoho Accounts</h3>
+      <p>Manage your organizations — create new ones, switch between them.</p>
+    </a>
   </div>
-
-  <script>
-    function toggleSettings() {
-      document.getElementById('guestSettings').classList.toggle('visible');
-    }
-
-    (async function init() {
-      const token = localStorage.getItem('token');
-      const loading = document.getElementById('loading');
-      const authed = document.getElementById('authed');
-      const guest = document.getElementById('guest');
-
-      if (!token) {
-        loading.style.display = 'none';
-        guest.style.display = 'block';
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/auth/me', {
-          headers: { Authorization: 'Bearer ' + token }
-        });
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        const user = data.user;
-
-        document.getElementById('userName').textContent = user.name || user.email;
-        document.getElementById('userEmail').textContent = user.email;
-        document.getElementById('avatar').textContent = (user.name || user.email).charAt(0).toUpperCase();
-
-        loading.style.display = 'none';
-        authed.style.display = 'block';
-      } catch {
-        loading.style.display = 'none';
-        guest.style.display = 'block';
-      }
-    })();
-  </script>
 
 </body>
 </html>
