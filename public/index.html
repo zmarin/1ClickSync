@@ -277,6 +277,24 @@
     .note { padding: 12px 14px; background: rgba(76,175,80,0.06); border-radius: var(--radius); font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
     .note strong { color: var(--ink); }
 
+    /* ── Field picker ──────────────────────────── */
+    .field-check {
+      display: flex; align-items: center; gap: 8px; padding: 7px 8px;
+      border-bottom: 1px solid rgba(0,0,0,0.04); font-size: 0.82rem;
+      cursor: pointer; transition: background 0.1s;
+    }
+    .field-check:hover { background: rgba(0,0,0,0.02); }
+    .field-check:last-child { border-bottom: none; }
+    .field-check input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; }
+    .field-check-label { flex: 1; font-weight: 500; }
+    .field-check-meta { font-size: 0.72rem; color: var(--muted); }
+    .field-check-required { font-size: 0.68rem; color: var(--accent); font-weight: 600; }
+    .custom-field-row {
+      display: flex; gap: 6px; align-items: center; margin-bottom: 6px;
+    }
+    .custom-field-row input { flex: 1; padding: 6px 8px; font-size: 0.82rem; }
+    .custom-field-row button { flex-shrink: 0; }
+
     /* ── Responsive ────────────────────────────── */
     @media (max-width: 540px) {
       .topbar { padding: 0 12px; }
@@ -517,24 +535,33 @@
 
   <!-- ═══════ CREATE FORM MODAL ═══════ -->
   <div id="createFormModal" class="modal-overlay hidden">
-    <div class="modal" role="dialog" aria-modal="true">
-      <h3>Create form for Zoho CRM</h3>
-      <p class="sub">Pick a CRM module. We'll auto-generate the fields.</p>
-      <div class="tile-grid tile-grid-3" id="moduleTiles">
-        <div class="tile" data-module="Leads">
-          <h3>Leads</h3>
-          <p>Capture new prospects.</p>
+    <div class="modal" role="dialog" aria-modal="true" style="max-width:720px;">
+      <h3 id="formModalTitle">Create form for Zoho CRM</h3>
+      <p class="sub">Pick a CRM module, then choose which fields to include in your form.</p>
+
+      <!-- Step 1: Pick module -->
+      <div id="formStep1">
+        <div class="tile-grid tile-grid-3" id="moduleTiles">
+          <div class="tile" data-module="Leads">
+            <h3>Leads</h3>
+            <p>Capture new prospects.</p>
+          </div>
+          <div class="tile" data-module="Contacts">
+            <h3>Contacts</h3>
+            <p>Add to Contacts directly.</p>
+          </div>
+          <div class="tile" data-module="Deals">
+            <h3>Deals</h3>
+            <p>Kick off a new deal.</p>
+          </div>
         </div>
-        <div class="tile" data-module="Contacts">
-          <h3>Contacts</h3>
-          <p>Add to Contacts directly.</p>
-        </div>
-        <div class="tile" data-module="Deals">
-          <h3>Deals</h3>
-          <p>Kick off a new deal.</p>
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="btn btn-ghost" id="closeModalBtn">Close</button>
         </div>
       </div>
-      <div id="formPreview" class="hidden" style="margin-top:16px;">
+
+      <!-- Step 2: Configure fields -->
+      <div id="formStep2" class="hidden">
         <div class="field-group">
           <label for="formNameInput">Form name</label>
           <input class="field" id="formNameInput" placeholder="Website lead capture">
@@ -543,20 +570,36 @@
           <label for="formLeadSourceInput">Lead source (optional)</label>
           <input class="field" id="formLeadSourceInput" placeholder="Website A">
         </div>
-        <div style="margin-top:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <label style="font-size:0.78rem;font-weight:600;color:var(--secondary);text-transform:uppercase;letter-spacing:0.3px;margin:0;">Fields</label>
-            <span class="badge badge-off" id="fieldCount">0 fields</span>
+
+        <div style="margin-top:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <label style="font-size:0.78rem;font-weight:600;color:var(--secondary);text-transform:uppercase;letter-spacing:0.3px;margin:0;">Zoho CRM Fields</label>
+            <span class="badge badge-off" id="fieldCount">0 selected</span>
           </div>
-          <div id="fieldsPreview" style="border:1px solid var(--line);border-radius:var(--radius);background:#fafbfc;padding:4px;max-height:220px;overflow:auto;"></div>
+          <p style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">Check the fields you want on your form. Required Zoho fields are pre-selected.</p>
+          <div id="fieldsPreview" style="border:1px solid var(--line);border-radius:var(--radius);background:#fafbfc;padding:6px;max-height:300px;overflow:auto;"></div>
+          <div id="fieldsLoading" class="hidden" style="text-align:center;color:var(--muted);padding:16px;font-size:0.85rem;">Loading fields from your Zoho CRM...</div>
+          <div id="fieldsFallback" class="hidden" style="padding:10px;background:rgba(255,193,7,0.1);border-radius:var(--radius);margin-top:8px;">
+            <p style="font-size:0.82rem;color:#a67c00;margin:0;">Could not fetch live fields from Zoho — using default presets. Your form will still work.</p>
+          </div>
         </div>
-        <div class="btn-row btn-row-end" style="margin-top:16px;">
-          <button class="btn btn-ghost" id="cancelFormBtn">Cancel</button>
-          <button class="btn btn-primary" id="saveFormBtn">Save form</button>
+
+        <div style="margin-top:12px;padding:12px;border:1px dashed var(--line);border-radius:var(--radius);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <label style="font-size:0.78rem;font-weight:600;color:var(--secondary);text-transform:uppercase;letter-spacing:0.3px;margin:0;">Custom fields</label>
+            <button class="btn btn-ghost" id="addCustomFieldBtn" style="font-size:0.78rem;padding:4px 10px;">+ Add field</button>
+          </div>
+          <p style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">Add fields that don't exist in your CRM yet. Data will be saved locally.</p>
+          <div id="customFields"></div>
         </div>
-      </div>
-      <div class="btn-row" id="modalCloseRow" style="margin-top:12px;">
-        <button class="btn btn-ghost" id="closeModalBtn">Close</button>
+
+        <div class="btn-row btn-row-between" style="margin-top:16px;">
+          <button class="btn btn-ghost" id="formStep2Back">&larr; Change module</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost" id="cancelFormBtn">Cancel</button>
+            <button class="btn btn-primary" id="saveFormBtn">Save form</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -577,7 +620,7 @@
       selectedService: null,
     };
 
-    const formsState = { list: null, selectedModule: null, preset: null };
+    const formsState = { list: null, selectedModule: null, preset: null, liveFields: null, allFields: null, customFields: [] };
 
     const byId = (id) => document.getElementById(id);
 
@@ -946,12 +989,18 @@
       if (!state.currentAppId) return showToast('Select an account first.');
       formsState.selectedModule = null;
       formsState.preset = null;
-      byId('formPreview').classList.add('hidden');
-      byId('modalCloseRow').classList.remove('hidden');
+      formsState.liveFields = null;
+      formsState.customFields = [];
+      byId('formStep1').classList.remove('hidden');
+      byId('formStep2').classList.add('hidden');
       byId('fieldsPreview').innerHTML = '';
+      byId('customFields').innerHTML = '';
       byId('formNameInput').value = '';
       byId('formLeadSourceInput').value = '';
+      byId('fieldsFallback').classList.add('hidden');
+      byId('fieldsLoading').classList.add('hidden');
       byId('moduleTiles').querySelectorAll('.tile').forEach(t => t.classList.remove('selected'));
+      byId('formModalTitle').textContent = 'Create form for Zoho CRM';
       byId('createFormModal').classList.remove('hidden');
     }
 
@@ -959,38 +1008,153 @@
       byId('createFormModal').classList.add('hidden');
     }
 
+    function mapZohoType(dataType) {
+      const map = { varchar: 'text', email: 'email', phone: 'tel', textarea: 'textarea', date: 'date', integer: 'number', double: 'number', bigint: 'number', currency: 'number', picklist: 'select', multiselectpicklist: 'select' };
+      return map[dataType] || 'text';
+    }
+
     async function selectModule(moduleName) {
       formsState.selectedModule = moduleName;
       byId('moduleTiles').querySelectorAll('.tile').forEach(t => t.classList.toggle('selected', t.dataset.module === moduleName));
-      byId('formPreview').classList.remove('hidden');
-      byId('modalCloseRow').classList.add('hidden');
+      byId('formStep1').classList.add('hidden');
+      byId('formStep2').classList.remove('hidden');
+      byId('formModalTitle').textContent = `${moduleName} — Select fields`;
+      byId('fieldsPreview').innerHTML = '';
+      byId('fieldsLoading').classList.remove('hidden');
+      byId('fieldsFallback').classList.add('hidden');
       byId('fieldCount').textContent = 'Loading...';
-      byId('fieldsPreview').innerHTML = '<div style="padding:8px;font-size:0.82rem;color:var(--muted);">Loading preset fields...</div>';
       if (!byId('formNameInput').value) byId('formNameInput').value = `${moduleName} capture form`;
+
+      // Try live fields first, fall back to presets
+      let fields = [];
+      let usedLive = false;
       try {
-        const preset = await api(`/api/forms/presets/${encodeURIComponent(moduleName)}?route_type=crm`);
-        formsState.preset = preset;
-        const fields = Array.isArray(preset.fields) ? preset.fields : [];
-        byId('fieldCount').textContent = `${fields.length} field${fields.length === 1 ? '' : 's'}`;
-        byId('fieldsPreview').innerHTML = fields.length
-          ? fields.map(f => `<div class="form-field-row"><span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:0.82rem;">${escapeHtml(f.label || f.name)}</span><span style="color:var(--muted);font-size:0.78rem;">${escapeHtml(f.type || 'text')}${f.required ? ' &bull; required' : ''}</span></div>`).join('')
-          : '<div style="padding:8px;font-size:0.82rem;color:var(--muted);">No fields returned.</div>';
-      } catch (error) {
-        formsState.preset = null;
-        byId('fieldCount').textContent = 'Error';
-        byId('fieldsPreview').innerHTML = `<div style="padding:8px;font-size:0.82rem;color:var(--danger);">Failed: ${escapeHtml(error.message)}</div>`;
+        const live = await api(`/api/crm/${state.currentAppId}/fields/${encodeURIComponent(moduleName)}`);
+        if (live.fields && live.fields.length) {
+          formsState.liveFields = live.fields;
+          fields = live.fields.map(f => ({
+            api_name: f.api_name,
+            label: f.display_label,
+            type: mapZohoType(f.data_type),
+            required: f.required,
+            zoho_field: f.api_name,
+            data_type: f.data_type,
+            pick_list_values: f.pick_list_values || [],
+          }));
+          usedLive = true;
+        }
+      } catch (e) { /* fall through to presets */ }
+
+      if (!usedLive) {
+        try {
+          const preset = await api(`/api/forms/presets/${encodeURIComponent(moduleName)}?route_type=crm`);
+          formsState.preset = preset;
+          fields = (preset.fields || []).map(f => ({
+            api_name: f.zoho_field,
+            label: f.label,
+            type: f.type,
+            required: f.required,
+            zoho_field: f.zoho_field,
+            data_type: f.type,
+            pick_list_values: [],
+          }));
+          byId('fieldsFallback').classList.remove('hidden');
+        } catch (err) {
+          byId('fieldsLoading').classList.add('hidden');
+          byId('fieldsPreview').innerHTML = `<div style="padding:10px;color:var(--danger);font-size:0.82rem;">Failed to load fields.</div>`;
+          return;
+        }
       }
+
+      byId('fieldsLoading').classList.add('hidden');
+      formsState.allFields = fields;
+
+      // Common form fields to pre-select
+      const commonFields = ['First_Name','Last_Name','Email','Phone','Company','Description','Subject','Mobile','Title'];
+
+      byId('fieldsPreview').innerHTML = fields.map((f, i) => {
+        const checked = f.required || commonFields.includes(f.api_name) ? 'checked' : '';
+        return `<label class="field-check">
+          <input type="checkbox" data-idx="${i}" ${checked} ${f.required ? 'disabled' : ''}>
+          <span class="field-check-label">${escapeHtml(f.label)}</span>
+          <span class="field-check-meta">${escapeHtml(f.data_type)}</span>
+          ${f.required ? '<span class="field-check-required">Required</span>' : ''}
+        </label>`;
+      }).join('');
+
+      updateFieldCount();
+
+      byId('fieldsPreview').addEventListener('change', updateFieldCount);
+    }
+
+    function updateFieldCount() {
+      const checked = byId('fieldsPreview').querySelectorAll('input[type="checkbox"]:checked').length;
+      const custom = formsState.customFields ? formsState.customFields.length : 0;
+      byId('fieldCount').textContent = `${checked + custom} selected`;
+    }
+
+    function addCustomField() {
+      const id = Date.now();
+      formsState.customFields.push({ id });
+      const row = document.createElement('div');
+      row.className = 'custom-field-row';
+      row.dataset.cfId = id;
+      row.innerHTML = `
+        <input class="field" placeholder="Field label" data-cf-label="${id}">
+        <select class="field" style="max-width:100px;" data-cf-type="${id}">
+          <option value="text">Text</option><option value="email">Email</option>
+          <option value="tel">Phone</option><option value="textarea">Long text</option>
+          <option value="number">Number</option><option value="date">Date</option>
+        </select>
+        <button class="btn btn-ghost" style="font-size:0.78rem;padding:4px 8px;color:var(--danger);" data-cf-remove="${id}">&times;</button>
+      `;
+      byId('customFields').appendChild(row);
+      row.querySelector(`[data-cf-remove="${id}"]`).addEventListener('click', () => {
+        formsState.customFields = formsState.customFields.filter(c => c.id !== id);
+        row.remove();
+        updateFieldCount();
+      });
+      row.querySelector(`[data-cf-label="${id}"]`).addEventListener('input', updateFieldCount);
+      updateFieldCount();
+    }
+
+    function getSelectedFields() {
+      const fields = [];
+      // Zoho fields
+      const checkboxes = byId('fieldsPreview').querySelectorAll('input[type="checkbox"]:checked');
+      checkboxes.forEach(cb => {
+        const f = formsState.allFields[parseInt(cb.dataset.idx)];
+        if (!f) return;
+        const name = f.api_name.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+        fields.push({
+          name, label: f.label, type: f.type, required: f.required,
+          zoho_field: f.zoho_field,
+          options: f.pick_list_values.length ? f.pick_list_values.map(v => v.display_value || v.actual_value || v) : undefined,
+        });
+      });
+      // Custom fields
+      byId('customFields').querySelectorAll('.custom-field-row').forEach(row => {
+        const id = row.dataset.cfId;
+        const label = row.querySelector(`[data-cf-label="${id}"]`).value.trim();
+        if (!label) return;
+        const type = row.querySelector(`[data-cf-type="${id}"]`).value;
+        const name = 'custom_' + label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        fields.push({ name, label, type, required: false, zoho_field: name });
+      });
+      return fields;
     }
 
     async function saveForm() {
       if (!state.currentAppId) return showToast('Select an account first.');
-      if (!formsState.selectedModule || !formsState.preset) return showToast('Pick a CRM module first.');
+      if (!formsState.selectedModule) return showToast('Pick a CRM module first.');
       const name = byId('formNameInput').value.trim();
       if (!name) return showToast('Give the form a name.');
+      const fields = getSelectedFields();
+      if (!fields.length) return showToast('Select at least one field.');
       const leadSource = byId('formLeadSourceInput').value.trim();
       const body = {
         name, app_id: state.currentAppId, target_module: formsState.selectedModule, route_type: 'crm',
-        fields: formsState.preset.fields || [], style: formsState.preset.style || {},
+        fields, style: formsState.preset ? formsState.preset.style || {} : {},
       };
       if (leadSource) body.lead_source = leadSource;
       byId('saveFormBtn').disabled = true;
@@ -1103,6 +1267,12 @@
     byId('moduleTiles').querySelectorAll('[data-module]').forEach(tile => {
       tile.addEventListener('click', () => selectModule(tile.dataset.module));
     });
+    byId('formStep2Back').addEventListener('click', () => {
+      byId('formStep2').classList.add('hidden');
+      byId('formStep1').classList.remove('hidden');
+      byId('formModalTitle').textContent = 'Create form for Zoho CRM';
+    });
+    byId('addCustomFieldBtn').addEventListener('click', addCustomField);
     byId('saveFormBtn').addEventListener('click', saveForm);
     byId('copyEmbedBtn').addEventListener('click', () => {
       const text = byId('embedCode').textContent || '';

@@ -240,7 +240,22 @@ export async function formsPlugin(app: FastifyInstance) {
         idx++;
       }
     }
-    if (body.style) {
+
+    // Allow updating fields and field_mapping
+    if (body.fields && Array.isArray(body.fields)) {
+      const newMapping: Record<string, string> = {};
+      for (const field of body.fields) {
+        if (field.name && field.zoho_field) newMapping[field.name] = field.zoho_field;
+      }
+      sets.push(`field_mapping = $${idx}`);
+      values.push(JSON.stringify(newMapping));
+      idx++;
+      // Also update fields in style_config
+      const existingStyle = (form.style_config as any) || {};
+      sets.push(`style_config = $${idx}`);
+      values.push(JSON.stringify({ ...existingStyle, ...(body.style || {}), fields: body.fields }));
+      idx++;
+    } else if (body.style) {
       // Merge style into existing style_config
       const existingStyle = form.style_config as any;
       sets.push(`style_config = $${idx}`);
@@ -295,6 +310,54 @@ export async function formsPlugin(app: FastifyInstance) {
       modules,
       style: createFormSchema.shape.style._def.defaultValue(),
     };
+  });
+
+  // ── Fetch live CRM modules from user's Zoho (authenticated) ──
+  app.get('/api/crm/:appId/modules', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { appId } = request.params as { appId: string };
+    const userId = (request as any).userId;
+
+    const owner = await queryOne('SELECT id FROM apps WHERE id = $1 AND user_id = $2', [appId, userId]);
+    if (!owner) return reply.status(404).send({ error: 'App not found' });
+
+    try {
+      const result = await crmApi.getModules(appId);
+      const modules = (result.modules || [])
+        .filter((m: any) => m.api_supported && m.editable)
+        .map((m: any) => ({ api_name: m.api_name, plural_label: m.plural_label, singular_label: m.singular_label }));
+      return { modules };
+    } catch (error: any) {
+      return reply.status(502).send({ error: 'Failed to fetch modules from Zoho: ' + (error.message || '') });
+    }
+  });
+
+  // ── Fetch live CRM fields for a module from user's Zoho (authenticated) ──
+  app.get('/api/crm/:appId/fields/:module', { preHandler: [authenticate] }, async (request: FastifyRequest, reply: FastifyReply) => {
+    const { appId, module } = request.params as { appId: string; module: string };
+    const userId = (request as any).userId;
+
+    const owner = await queryOne('SELECT id FROM apps WHERE id = $1 AND user_id = $2', [appId, userId]);
+    if (!owner) return reply.status(404).send({ error: 'App not found' });
+
+    try {
+      const result = await crmApi.getFields(appId, module);
+      const fields = (result.fields || []).map((f: any) => ({
+        api_name: f.api_name,
+        display_label: f.display_label || f.field_label,
+        data_type: f.data_type,
+        json_type: f.json_type,
+        length: f.length,
+        required: f.system_mandatory || false,
+        read_only: f.read_only || false,
+        custom_field: f.custom_field || false,
+        pick_list_values: f.pick_list_values || [],
+      }));
+      // Filter out system-only / read-only fields for form building
+      const formFields = fields.filter((f: any) => !f.read_only);
+      return { module, fields: formFields, all_fields: fields };
+    } catch (error: any) {
+      return reply.status(502).send({ error: 'Failed to fetch fields from Zoho: ' + (error.message || '') });
+    }
   });
 
   // ══════════════════════════════════════════════════
