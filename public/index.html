@@ -384,87 +384,23 @@
           </div>
         </div>
 
-        <!-- Not connected: choose path -->
+        <!-- Not connected -->
         <div id="step2Choose" class="hidden">
           <div class="card">
-            <h2>Connect Zoho</h2>
-            <p class="sub">How would you like to connect?</p>
-            <div class="tile-grid" style="grid-template-columns:1fr;">
-              <div class="tile" id="zohoHaveAccount">
-                <h3>I have a Zoho account</h3>
-                <p>Sign in and connect your existing Zoho. If you have multiple orgs, you can pick which one.</p>
-              </div>
-              <div class="tile" id="zohoNewOrg">
-                <h3>I need a new org for this project</h3>
-                <p>Already have Zoho but need a separate org? Create one in Zoho first, then connect it here.</p>
-              </div>
-              <div class="tile" id="zohoNeedAccount">
-                <h3>I'm brand new to Zoho</h3>
-                <p>No Zoho account yet? Sign up for free — takes 2 minutes, free for up to 5 users.</p>
-              </div>
-            </div>
-            <div class="btn-row" style="margin-top:12px;">
-              <button class="btn btn-ghost" id="step2Back">&larr; Back</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Path A: Have account → popup OAuth -->
-        <div id="step2Connect" class="hidden">
-          <div class="card">
-            <h2>Connect your Zoho account</h2>
-            <p class="sub">A popup will open for you to sign in to Zoho. If you have multiple orgs, pick the one for this project.</p>
-            <button class="btn btn-primary btn-block" id="connectZohoBtn">Open Zoho sign-in</button>
+            <h2>Connect your Zoho One account</h2>
+            <p class="sub">One Zoho account powers everything — CRM, Mail, and more for your apps.</p>
+            <button class="btn btn-primary btn-block" id="connectZohoBtn">Connect Zoho One</button>
             <div id="connectingStatus" class="hidden" style="margin-top:12px;">
               <div class="connect-status pending">
                 <div class="connect-dot pending"></div>
                 <div><strong>Waiting for Zoho sign-in...</strong><div style="font-size:0.82rem;color:var(--muted);">Complete the sign-in in the popup window.</div></div>
               </div>
             </div>
-            <div class="btn-row" style="margin-top:12px;">
-              <button class="btn btn-ghost" id="step2ConnectBack">&larr; Back</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Path B: Need new org → direct links -->
-        <div id="step2NewOrg" class="hidden">
-          <div class="card">
-            <h2>Add a new Zoho org</h2>
-            <p class="sub">Create a new organization under your Zoho login. Each org is fully separate — its own CRM, mail, and settings.</p>
-            <div class="tile-grid" style="grid-template-columns:1fr;">
-              <div class="tile" onclick="window.open('https://accounts.zoho.com','zoho-accounts','width=900,height=700,scrollbars=yes')">
-                <h3>Open Zoho Accounts</h3>
-                <p>Manage your organizations — create new ones, switch between them.</p>
-              </div>
-              <div class="tile" onclick="window.open('https://store.zoho.com','zoho-store','width=900,height=700,scrollbars=yes')">
-                <h3>Zoho Store</h3>
-                <p>Purchase Zoho products (CRM, Mail, etc.) for a new organization.</p>
-              </div>
-            </div>
-            <div style="margin-top:16px;padding:14px;background:var(--bg);border-radius:var(--radius-lg);border:1px solid var(--line);">
-              <p style="font-size:0.82rem;color:var(--muted);margin:0;line-height:1.5;">Create your org in Zoho, then come back here and click Connect. The sign-in popup will let you pick which org to link.</p>
-            </div>
-            <button class="btn btn-primary btn-block" id="newOrgConnectBtn" style="margin-top:12px;">Connect my new org</button>
-            <div class="btn-row" style="margin-top:12px;">
-              <button class="btn btn-ghost" id="step2NewOrgBack">&larr; Back</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Path C: Brand new → signup first -->
-        <div id="step2Signup" class="hidden">
-          <div class="card">
-            <h2>Create your Zoho account</h2>
-            <p class="sub">Sign up for a free Zoho account. Free for up to 5 users.</p>
-            <a href="https://go.zoho.com/oKk6" target="_blank" rel="noopener" class="btn btn-primary btn-block">Sign up at Zoho (opens new tab)</a>
-            <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:var(--radius-lg);border:1px solid var(--line);">
-              <p style="font-size:0.88rem;font-weight:600;margin-bottom:6px;">After you've signed up:</p>
-              <p style="font-size:0.82rem;color:var(--muted);line-height:1.5;margin:0;">Come back here and click Connect below. A popup will open — sign in with your new Zoho account.</p>
-            </div>
-            <button class="btn btn-secondary btn-block" id="zohoSignupDoneBtn" style="margin-top:12px;">I've signed up — Connect now</button>
-            <div class="btn-row" style="margin-top:12px;">
-              <button class="btn btn-ghost" id="step2SignupBack">&larr; Back</button>
+            <div class="auth-divider" style="margin:20px 0;">Don't have Zoho yet?</div>
+            <a href="https://go.zoho.com/oKk6" target="_blank" rel="noopener" class="btn btn-secondary btn-block">Sign up for Zoho One</a>
+            <p style="font-size:0.78rem;color:var(--muted);margin-top:8px;text-align:center;">After signing up, come back and click Connect above.</p>
+            <div class="btn-row" style="margin-top:16px;">
+              <button class="btn btn-ghost" id="step2Back">&larr; Back</button>
             </div>
           </div>
         </div>
@@ -902,7 +838,7 @@
     // Step 2: Connect Zoho (sub-views + popup OAuth)
     // ═══════════════════════════════════════════════════════
     function hideStep2Panels() {
-      ['step2Connected','step2Choose','step2Connect','step2NewOrg','step2Signup'].forEach(id => byId(id).classList.add('hidden'));
+      ['step2Connected','step2Choose'].forEach(id => byId(id).classList.add('hidden'));
     }
 
     async function checkZohoConnection() {
@@ -924,9 +860,6 @@
       }
     }
 
-    function showStep2Connect() { hideStep2Panels(); byId('step2Connect').classList.remove('hidden'); }
-    function showStep2NewOrg() { hideStep2Panels(); byId('step2NewOrg').classList.remove('hidden'); }
-    function showStep2Signup() { hideStep2Panels(); byId('step2Signup').classList.remove('hidden'); }
     function showStep2Choose() { hideStep2Panels(); byId('step2Choose').classList.remove('hidden'); }
 
     // Popup OAuth
@@ -1278,16 +1211,6 @@
     byId('step3Back').addEventListener('click', () => showStep(2));
     byId('step4crmBack').addEventListener('click', () => showStep(3));
     byId('step4emailBack').addEventListener('click', () => showStep(3));
-
-    // Step 2 sub-navigation
-    byId('zohoHaveAccount').addEventListener('click', showStep2Connect);
-    byId('zohoNewOrg').addEventListener('click', showStep2NewOrg);
-    byId('zohoNeedAccount').addEventListener('click', showStep2Signup);
-    byId('step2ConnectBack').addEventListener('click', showStep2Choose);
-    byId('step2NewOrgBack').addEventListener('click', showStep2Choose);
-    byId('step2SignupBack').addEventListener('click', showStep2Choose);
-    byId('newOrgConnectBtn').addEventListener('click', connectZohoPopup);
-    byId('zohoSignupDoneBtn').addEventListener('click', connectZohoPopup);
 
     // Zoho connect (popup)
     byId('connectZohoBtn').addEventListener('click', connectZohoPopup);
