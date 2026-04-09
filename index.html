@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1ClickSync - Free Email for Your Project</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f7fa; color: #333; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem 1rem; }
+        h1 { font-size: 2rem; margin-bottom: 0.25rem; }
+        .subtitle { color: #666; margin-bottom: 2.5rem; }
+        .card { background: #fff; border-radius: 12px; padding: 2rem; max-width: 480px; width: 100%; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-bottom: 1.5rem; }
+        .card h2 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .card p { color: #555; margin-bottom: 1.25rem; line-height: 1.5; }
+        .btn { display: inline-block; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 1rem; font-weight: 600; text-decoration: none; cursor: pointer; border: none; text-align: center; width: 100%; }
+        .btn-primary { background: #2563eb; color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-secondary { background: #e5e7eb; color: #333; }
+        .btn-secondary:hover { background: #d1d5db; }
+        .badge { display: inline-block; background: #dcfce7; color: #166534; font-size: 0.8rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 20px; margin-bottom: 0.75rem; }
+        .settings { margin-top: 1.25rem; display: none; }
+        .settings.show { display: block; }
+        .settings-group { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+        .settings-group h3 { font-size: 0.9rem; color: #2563eb; margin-bottom: 0.5rem; }
+        .row { display: flex; justify-content: space-between; padding: 0.3rem 0; font-size: 0.9rem; }
+        .row .label { color: #666; }
+        .row .value { font-weight: 600; font-family: monospace; }
+        .step { font-size: 0.8rem; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    </style>
+</head>
+<body>
+    <h1>1ClickSync</h1>
+    <p class="subtitle">Get professional email for your project</p>
+
+    <div class="card">
+        <div class="step">Step 1</div>
+        <h2>New Project? Get Free Email</h2>
+        <span class="badge">Free for up to 5 users</span>
+        <p>Sign up for a free Zoho Mail account and get professional email for your project domain.</p>
+        <a href="https://go.zoho.com/oKk6" target="_blank" rel="noopener" class="btn btn-primary">Sign Up for Zoho Mail</a>
+    </div>
+
+    <div class="card">
+        <div class="step">Step 2</div>
+        <h2>Already signed up?</h2>
+        <p>View the settings your apps need to send and receive mail.</p>
+        <button class="btn btn-secondary" onclick="document.querySelector('.settings').classList.toggle('show'); this.textContent = this.textContent === 'Connect Your Mail' ? 'Hide Settings' : 'Connect Your Mail'">Connect Your Mail</button>
+        <div class="settings">
+            <div class="settings-group">
+                <h3>Incoming Mail (IMAP)</h3>
+                <div class="row"><span class="label">Server</span><span class="value">imappro.zoho.com</span></div>
+                <div class="row"><span class="label">Port</span><span class="value">993</span></div>
+                <div class="row"><span class="label">Security</span><span class="value">SSL/TLS</span></div>
+            </div>
+            <div class="settings-group">
+                <h3>Outgoing Mail (SMTP)</h3>
+                <div class="row"><span class="label">Server</span><span class="value">smtppro.zoho.com</span></div>
+                <div class="row"><span class="label">Port</span><span class="value">465</span></div>
+                <div class="row"><span class="label">Security</span><span class="value">SSL/TLS</span></div>
+            </div>
+            <div class="settings-group">
+                <h3>Your Credentials</h3>
+                <div class="row"><span class="label">Username</span><span class="value">your@domain.com</span></div>
+                <div class="row"><span class="label">Password</span><span class="value">your Zoho password</span></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
