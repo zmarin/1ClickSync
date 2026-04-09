@@ -21,6 +21,21 @@ const setupStartSchema = z.object({
   template_id: z.string().min(1).max(255),
 });
 
+function popupCallbackPage(status: string, service: string | null, orgId: string | null): string {
+  const data = JSON.stringify({ type: 'zoho-oauth-result', status, service, orgId });
+  return `<!DOCTYPE html><html><head><title>Connecting...</title></head><body>
+<script>
+  if (window.opener) {
+    window.opener.postMessage(${data}, '${env.APP_URL}');
+    window.close();
+  } else {
+    window.location.href = '${env.APP_URL}/app?connected=' + (${JSON.stringify(status)} === 'success' ? 'true' : 'false');
+  }
+</script>
+<p style="font-family:sans-serif;text-align:center;margin-top:40px;">Connected! This window will close automatically.</p>
+</body></html>`;
+}
+
 export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
   // ── Health check (public) ─────────────────────────
@@ -78,6 +93,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
       app_id: z.string().uuid(),
       service: z.enum(ZOHO_STUDIO_SERVICES),
       dc: z.string().optional(),
+      popup: z.string().optional(),
     }).parse(request.query);
 
     if (!(await ensureOwnedApp(queryParams.app_id, (request as any).userId))) {
@@ -89,6 +105,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
       customer_id: queryParams.app_id,
       user_id: (request as any).userId,
       service: queryParams.service,
+      popup: queryParams.popup === '1',
       ts: Date.now(),
     })).toString('base64url');
 
@@ -157,6 +174,9 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
           tokens.expiresIn,
           [...ZOHO_SERVICE_SCOPES[service]]
         );
+        if (stateData.popup) {
+          return reply.type('text/html').send(popupCallbackPage('success', service, orgId));
+        }
         return reply.redirect(`${env.APP_URL}/app?connected=true&service=${service}`);
       }
 
@@ -170,9 +190,20 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
         [...ZOHO_SCOPES]
       );
 
+      if (stateData.popup) {
+        return reply.type('text/html').send(popupCallbackPage('success', null, orgId));
+      }
       return reply.redirect(`${env.APP_URL}/app?connected=true`);
     } catch (err: any) {
       request.log.error({ err: err.message }, 'Token exchange failed');
+      if (state) {
+        try {
+          const sd = JSON.parse(Buffer.from(state, 'base64url').toString());
+          if (sd.popup) {
+            return reply.type('text/html').send(popupCallbackPage('error', null, null));
+          }
+        } catch { /* ignore parse errors */ }
+      }
       return reply.redirect(`${env.APP_URL}/app?error=token_exchange_failed`);
     }
   });
