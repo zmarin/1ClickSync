@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1ClickSync — Free Email Setup</title>
+  <meta name="description" content="Get free professional email for your project with Zoho Mail. Free for up to 5 users.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f3efe5;
+      --panel: rgba(255, 255, 255, 0.82);
+      --ink: #1f2a21;
+      --muted: #566257;
+      --line: rgba(31, 42, 33, 0.12);
+      --accent: #1f8f5f;
+      --accent-2: #0b3d2e;
+      --gold: #cc9b2f;
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; margin: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'IBM Plex Sans', sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(204, 155, 47, 0.16), transparent 28%),
+        radial-gradient(circle at 85% 20%, rgba(31, 143, 95, 0.14), transparent 22%),
+        linear-gradient(180deg, #fbf7ef 0%, #f1ebdf 48%, #f8f4ea 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 20px;
+    }
+
+    .brand {
+      margin-top: 48px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--accent-2);
+      letter-spacing: -0.02em;
+    }
+
+    .card {
+      margin-top: 40px;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 48px 40px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 24px 60px rgba(20, 37, 27, 0.10);
+    }
+
+    h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 14px 24px;
+      border-radius: 14px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      border: none;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(20, 37, 27, 0.14);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent-2);
+      border: 1.5px solid var(--line);
+      margin-top: 12px;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 28px 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+    }
+
+    .settings {
+      display: none;
+      margin-top: 24px;
+      animation: slideIn 0.25s ease;
+    }
+
+    .settings.visible { display: block; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .setting-group {
+      background: #f8f6f0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 12px;
+    }
+
+    .setting-group h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent-2);
+      margin-bottom: 12px;
+    }
+
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 0.88rem;
+    }
+
+    .setting-row + .setting-row {
+      border-top: 1px solid var(--line);
+    }
+
+    .setting-label {
+      color: var(--muted);
+    }
+
+    .setting-value {
+      font-weight: 600;
+      font-family: 'IBM Plex Sans', monospace;
+      color: var(--ink);
+      user-select: all;
+    }
+
+    .note {
+      margin-top: 16px;
+      padding: 14px 16px;
+      background: rgba(31, 143, 95, 0.06);
+      border-radius: 10px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .note strong { color: var(--ink); }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 14px 16px;
+      background: rgba(31, 143, 95, 0.06);
+      border-radius: 12px;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .user-email {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 540px) {
+      .card { padding: 32px 24px; }
+      h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="brand">1ClickSync</div>
+
+  <div class="card" id="card">
+    <!-- Loading state -->
+    <div id="loading" style="text-align:center;padding:20px 0;color:var(--muted);">Checking session…</div>
+
+    <!-- Signed-in state (hidden by default) -->
+    <div id="authed" style="display:none;">
+      <div class="user-badge">
+        <div class="user-avatar" id="avatar"></div>
+        <div>
+          <div class="user-name" id="userName"></div>
+          <div class="user-email" id="userEmail"></div>
+        </div>
+      </div>
+
+      <h1>Connect Your Mail</h1>
+      <p class="subtitle">Use these settings in any email app to send and receive mail from your Zoho account.</p>
+
+      <div class="setting-group">
+        <h3>Incoming Mail (IMAP)</h3>
+        <div class="setting-row">
+          <span class="setting-label">Server</span>
+          <span class="setting-value">imappro.zoho.com</span>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Port</span>
+          <span class="setting-value">993</span>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Security</span>
+          <span class="setting-value">SSL/TLS</span>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <h3>Outgoing Mail (SMTP)</h3>
+        <div class="setting-row">
+          <span class="setting-label">Server</span>
+          <span class="setting-value">smtppro.zoho.com</span>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Port</span>
+          <span class="setting-value">465</span>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Security</span>
+          <span class="setting-value">SSL/TLS</span>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>Username:</strong> your full Zoho email address<br>
+        <strong>Password:</strong> your Zoho password (or app-specific password if 2FA is on)
+      </div>
+    </div>
+
+    <!-- Signed-out state (hidden by default) -->
+    <div id="guest" style="display:none;">
+      <h1>New Project? Get Free Email</h1>
+      <p class="subtitle">
+        Sign up for Zoho Mail — free for up to 5 users. Get professional email for your project in minutes.
+      </p>
+
+      <a href="https://go.zoho.com/oKk6" target="_blank" rel="noopener" class="btn btn-primary">
+        Sign Up for Zoho Mail
+      </a>
+
+      <div class="divider">Already signed up?</div>
+
+      <button class="btn btn-secondary" onclick="toggleSettings()">
+        Connect Your Mail — View Settings
+      </button>
+
+      <div class="settings" id="guestSettings">
+        <div class="setting-group">
+          <h3>Incoming Mail (IMAP)</h3>
+          <div class="setting-row">
+            <span class="setting-label">Server</span>
+            <span class="setting-value">imappro.zoho.com</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Port</span>
+            <span class="setting-value">993</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Security</span>
+            <span class="setting-value">SSL/TLS</span>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <h3>Outgoing Mail (SMTP)</h3>
+          <div class="setting-row">
+            <span class="setting-label">Server</span>
+            <span class="setting-value">smtppro.zoho.com</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Port</span>
+            <span class="setting-value">465</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Security</span>
+            <span class="setting-value">SSL/TLS</span>
+          </div>
+        </div>
+
+        <div class="note">
+          <strong>Username:</strong> your full Zoho email address<br>
+          <strong>Password:</strong> your Zoho password (or app-specific password if 2FA is on)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleSettings() {
+      document.getElementById('guestSettings').classList.toggle('visible');
+    }
+
+    (async function init() {
+      const token = localStorage.getItem('token');
+      const loading = document.getElementById('loading');
+      const authed = document.getElementById('authed');
+      const guest = document.getElementById('guest');
+
+      if (!token) {
+        loading.style.display = 'none';
+        guest.style.display = 'block';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth/me', {
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const user = data.user;
+
+        document.getElementById('userName').textContent = user.name || user.email;
+        document.getElementById('userEmail').textContent = user.email;
+        document.getElementById('avatar').textContent = (user.name || user.email).charAt(0).toUpperCase();
+
+        loading.style.display = 'none';
+        authed.style.display = 'block';
+      } catch {
+        loading.style.display = 'none';
+        guest.style.display = 'block';
+      }
+    })();
+  </script>
+
+</body>
+</html>
