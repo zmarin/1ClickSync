@@ -133,7 +133,7 @@ export const ZOHO_SCOPES = [
   'ZohoProjects.tasks.ALL',
   'ZohoProjects.portals.ALL',
   'ZohoMail.accounts.ALL',
-  'ZohoMail.organization.accounts.READ',
+  'ZohoMail.organization.accounts.ALL',
   'ZohoMail.organization.domains.READ',
 ] as const;
 
@@ -150,7 +150,7 @@ export const ZOHO_SERVICE_SCOPES: Record<ZohoApp, readonly string[]> = {
   forms: [],
   mail: [
     'ZohoMail.accounts.ALL',
-    'ZohoMail.organization.accounts.READ',
+    'ZohoMail.organization.accounts.ALL',
     'ZohoMail.organization.domains.READ',
   ],
   salesiq: [

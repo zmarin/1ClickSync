@@ -320,6 +320,63 @@ export const projectsApi = {
 };
 
 /**
+ * Zoho Mail Admin API
+ */
+export const mailApi = {
+  async getAccounts(appId: string) {
+    return zohoApi({
+      appId,
+      app: 'mail',
+      path: '/api/accounts',
+    });
+  },
+
+  async getOrganization(appId: string) {
+    return zohoApi({
+      appId,
+      app: 'mail',
+      path: '/api/organization',
+    });
+  },
+
+  async getAccountDetails(appId: string, accountId: string) {
+    return zohoApi({
+      appId,
+      app: 'mail',
+      path: `/api/accounts/${accountId}`,
+    });
+  },
+
+  async getAliases(appId: string, zoid: string, accountId: string) {
+    return zohoApi({
+      appId,
+      app: 'mail',
+      path: `/api/organization/${zoid}/accounts/${accountId}/emailalias`,
+    });
+  },
+
+  async addAlias(appId: string, zoid: string, accountId: string, aliases: string[]) {
+    return zohoApi({
+      appId,
+      app: 'mail',
+      path: `/api/organization/${zoid}/accounts/${accountId}/emailalias`,
+      method: 'POST',
+      body: { emailAlias: aliases },
+    });
+  },
+
+  async deleteAlias(appId: string, zoid: string, accountId: string, aliases: string[]) {
+    return zohoApi({
+      appId,
+      app: 'mail',
+      path: `/api/organization/${zoid}/accounts/${accountId}/emailalias`,
+      method: 'DELETE',
+      body: { emailAlias: aliases },
+    });
+  },
+};
+
+/**
  * Custom error for Zoho API failures
  */
 export class ZohoApiError extends Error {

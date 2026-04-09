@@ -16,6 +16,7 @@ import { googleAuthPlugin } from './auth/google';
 import { securityPlugin } from './security';
 import { billingPlugin } from './billing';
 import { formsPlugin } from './api/forms';
+import { mailRoutesPlugin } from './api/mail-routes';
 import { pool } from './db';
 
 interface BuildServerOptions {
@@ -100,6 +101,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
   await app.register(formsPlugin);
   await app.register(appRoutesPlugin);
   await app.register(zohoCapabilitiesPlugin);
+  await app.register(mailRoutesPlugin);
   app.log.info('Workspace routes (projects + prompts + capabilities) enabled');
 
   loadTemplates();

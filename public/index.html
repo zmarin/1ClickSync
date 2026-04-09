@@ -453,24 +453,43 @@
         </div>
       </div>
 
-      <!-- Step 4b: Get Zoho Mail -->
+      <!-- Step 4b: Zoho Mail + Aliases -->
       <div id="step4email" class="hidden">
         <div class="card">
-          <h2>Get Zoho Mail</h2>
-          <p class="sub">Professional email for your project domain. Free for up to 5 users.</p>
-          <a href="https://go.zoho.com/oKk6" target="_blank" rel="noopener" class="btn btn-primary btn-block">Sign up for Zoho Mail</a>
-          <div class="auth-divider" style="margin:20px 0;">Already have a Zoho account?</div>
-          <div class="tile-grid" style="grid-template-columns:1fr;">
-            <div class="tile" onclick="window.open('https://store.zoho.com/buyProduct.do?product=mail','zoho-store','width=900,height=700,scrollbars=yes')">
-              <h3>Add Mail to your org</h3>
-              <p>Purchase Zoho Mail for an existing organization. Starts at $1/user/month.</p>
+          <h2>Zoho Mail</h2>
+          <p class="sub">Manage your mail accounts and aliases.</p>
+
+          <!-- Mail accounts list -->
+          <div id="mailAccountsList">
+            <div style="text-align:center;color:var(--muted);padding:16px;font-size:0.85rem;">Loading mail accounts...</div>
+          </div>
+          <div id="mailNoAccounts" class="hidden" style="text-align:center;padding:20px 0;">
+            <p style="color:var(--muted);font-size:0.88rem;margin-bottom:12px;">No mail accounts found. Set up Zoho Mail first.</p>
+            <a href="https://go.zoho.com/oKk6" target="_blank" rel="noopener" class="btn btn-primary" style="width:auto;">Get Zoho Mail</a>
+          </div>
+
+          <!-- Alias management (shown per account) -->
+          <div id="aliasSection" class="hidden" style="margin-top:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <h3 style="font-family:var(--display);font-size:0.95rem;margin:0;" id="aliasAccountName">Aliases</h3>
+              <span class="badge badge-off" id="aliasCount">0</span>
             </div>
-            <div class="tile" onclick="window.open('https://mailadmin.zoho.com','zoho-mailadmin','width=900,height=700,scrollbars=yes')">
-              <h3>Manage your mail</h3>
-              <p>Open the Mail admin console to add domains, users, and configure your email.</p>
+            <div id="aliasList" style="margin-bottom:12px;"></div>
+            <div style="display:flex;gap:8px;">
+              <input class="field" id="newAliasInput" placeholder="support@yourdomain.com" style="flex:1;">
+              <button class="btn btn-primary" id="addAliasBtn" style="white-space:nowrap;">Add alias</button>
             </div>
           </div>
         </div>
+
+        <!-- Quick links -->
+        <div class="card" style="margin-top:12px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary" style="flex:1;" onclick="window.open('https://mailadmin.zoho.com','zoho-mailadmin','width=900,height=700,scrollbars=yes')">Mail Admin</button>
+            <button class="btn btn-secondary" style="flex:1;" onclick="window.open('https://store.zoho.com/buyProduct.do?product=mail','zoho-store','width=900,height=700,scrollbars=yes')">Add Mail Plan</button>
+          </div>
+        </div>
+
         <div class="btn-row" style="margin-top:16px;">
           <button class="btn btn-ghost" id="step4emailBack">&larr; Back to tools</button>
         </div>
@@ -723,7 +742,7 @@
       else if (num === 3) { byId('step3').classList.remove('hidden'); }
       else if (num === 4) {
         if (state.selectedService === 'crm') { byId('step4crm').classList.remove('hidden'); loadFormsPanel(); }
-        else if (state.selectedService === 'email') { byId('step4email').classList.remove('hidden'); }
+        else if (state.selectedService === 'email') { byId('step4email').classList.remove('hidden'); loadMailAccounts(); }
       }
     }
 
@@ -1154,6 +1173,112 @@
     }
 
     // ═══════════════════════════════════════════════════════
+    // Step 4b: Mail accounts + aliases
+    // ═══════════════════════════════════════════════════════
+    const mailState = { accounts: [], selectedAccountId: null, aliases: [] };
+
+    async function loadMailAccounts() {
+      const listEl = byId('mailAccountsList');
+      const noEl = byId('mailNoAccounts');
+      const aliasEl = byId('aliasSection');
+      listEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:16px;font-size:0.85rem;">Loading mail accounts...</div>';
+      noEl.classList.add('hidden');
+      aliasEl.classList.add('hidden');
+      try {
+        const result = await api(`/api/mail/${state.currentAppId}/accounts`);
+        mailState.accounts = result.accounts || [];
+        if (!mailState.accounts.length) {
+          listEl.innerHTML = '';
+          noEl.classList.remove('hidden');
+          return;
+        }
+        listEl.innerHTML = mailState.accounts.map((acc, i) => `
+          <div class="tile ${i === 0 ? 'selected' : ''}" data-mail-acc="${acc.accountId}" style="margin-bottom:8px;">
+            <h3 style="margin:0;">${escapeHtml(acc.displayName)}</h3>
+            <p style="margin:2px 0 0;">${escapeHtml(acc.email)}</p>
+          </div>
+        `).join('');
+        listEl.querySelectorAll('[data-mail-acc]').forEach(el => {
+          el.addEventListener('click', () => {
+            listEl.querySelectorAll('.tile').forEach(t => t.classList.remove('selected'));
+            el.classList.add('selected');
+            selectMailAccount(el.dataset.mailAcc);
+          });
+        });
+        // Auto-select first account
+        selectMailAccount(mailState.accounts[0].accountId);
+      } catch (error) {
+        listEl.innerHTML = '';
+        noEl.classList.remove('hidden');
+        noEl.querySelector('p').textContent = 'Could not load mail accounts. Connect Zoho Mail first.';
+      }
+    }
+
+    async function selectMailAccount(accountId) {
+      mailState.selectedAccountId = accountId;
+      const acc = mailState.accounts.find(a => a.accountId === accountId);
+      byId('aliasAccountName').textContent = `Aliases for ${acc ? acc.email : 'account'}`;
+      byId('aliasSection').classList.remove('hidden');
+      byId('aliasList').innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:4px;">Loading aliases...</div>';
+      try {
+        const result = await api(`/api/mail/${state.currentAppId}/accounts/${accountId}/aliases`);
+        mailState.aliases = result.aliases || [];
+        renderAliases();
+      } catch (error) {
+        mailState.aliases = [];
+        byId('aliasList').innerHTML = `<div style="color:var(--muted);font-size:0.82rem;padding:4px;">Could not load aliases. You may need to reconnect Zoho Mail with updated permissions.</div>`;
+        byId('aliasCount').textContent = '?';
+      }
+    }
+
+    function renderAliases() {
+      const list = byId('aliasList');
+      byId('aliasCount').textContent = `${mailState.aliases.length}`;
+      if (!mailState.aliases.length) {
+        list.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:8px 0;">No aliases yet. Add one below.</div>';
+        return;
+      }
+      list.innerHTML = mailState.aliases.map(alias => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px;border-bottom:1px solid var(--line);">
+          <span style="font-size:0.88rem;font-weight:500;">${escapeHtml(typeof alias === 'string' ? alias : alias.emailAlias || alias.alias || alias)}</span>
+          <button class="btn btn-ghost" style="color:var(--danger);font-size:0.78rem;padding:4px 8px;" data-del-alias="${escapeHtml(typeof alias === 'string' ? alias : alias.emailAlias || alias.alias || alias)}">Remove</button>
+        </div>
+      `).join('');
+      list.querySelectorAll('[data-del-alias]').forEach(btn => {
+        btn.addEventListener('click', () => removeAlias(btn.dataset.delAlias));
+      });
+    }
+
+    async function addAlias() {
+      const input = byId('newAliasInput');
+      const alias = input.value.trim();
+      if (!alias) return showToast('Enter an email alias.');
+      if (!alias.includes('@')) return showToast('Enter a valid email address.');
+      if (!mailState.selectedAccountId) return showToast('Select a mail account first.');
+      byId('addAliasBtn').disabled = true;
+      try {
+        await api(`/api/mail/${state.currentAppId}/accounts/${mailState.selectedAccountId}/aliases`, {
+          method: 'POST', body: { alias },
+        });
+        input.value = '';
+        showToast('Alias added!', 'success');
+        await selectMailAccount(mailState.selectedAccountId);
+      } catch (error) { showToast('Failed to add alias: ' + (error.message || '')); }
+      finally { byId('addAliasBtn').disabled = false; }
+    }
+
+    async function removeAlias(alias) {
+      if (!mailState.selectedAccountId) return;
+      try {
+        await api(`/api/mail/${state.currentAppId}/accounts/${mailState.selectedAccountId}/aliases`, {
+          method: 'DELETE', body: { alias },
+        });
+        showToast('Alias removed.', 'success');
+        await selectMailAccount(mailState.selectedAccountId);
+      } catch (error) { showToast('Failed to remove alias: ' + (error.message || '')); }
+    }
+
+    // ═══════════════════════════════════════════════════════
     // Bootstrap
     // ═══════════════════════════════════════════════════════
     async function loadApps() {
@@ -1211,6 +1336,8 @@
     byId('step3Back').addEventListener('click', () => showStep(2));
     byId('step4crmBack').addEventListener('click', () => showStep(3));
     byId('step4emailBack').addEventListener('click', () => showStep(3));
+    byId('addAliasBtn').addEventListener('click', addAlias);
+    byId('newAliasInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addAlias(); });
 
     // Zoho connect (popup)
     byId('connectZohoBtn').addEventListener('click', connectZohoPopup);
